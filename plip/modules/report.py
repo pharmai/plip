@@ -202,4 +202,5 @@ class TextOutput():
         interactions.append(format_interactions('pi_stacks', self.pication_features, self.pication_info))
         interactions.append(format_interactions('pi_cation_interactions', self.pication_features, self.pication_info))
         interactions.append(format_interactions('halogen_bonds', self.halogen_features, self.halogen_info))
+        #@todo values for ITYPE are missing
         return report

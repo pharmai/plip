@@ -62,7 +62,8 @@ def process_pdb(pdbfile, outpath, is_zipped=False):
         visualize_in_pymol(tmpmol, site, show=False, pics=True)
     sys.stdout = sys.__stdout__  # Change back to original stdout, gets changed when PyMOL has been used before
     tree = et.ElementTree(report)
-    tree.write('%s/%s.xml' % (outpath, tmpmol.pymol_name), pretty_print=True, xml_declaration=True)
+    print outpath, tmpmol.pymol_name
+    tree.write('%s/%s.xml' % (tilde_expansion(outpath), tmpmol.pymol_name), pretty_print=True, xml_declaration=True)
 
 
 def main(args):
