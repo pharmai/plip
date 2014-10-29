@@ -474,7 +474,7 @@ class PDBComplex():
         if not is_zipped:  # It's a PDB file
             self.protcomplex = read_pdb(pdbpath, safe=True)
             # Counting is different from PDB if TER records present
-            self.idx_to_pdb_mapping = idx_to_pdb_mapping(open(pdbpath).readlines())
+            self.idx_to_pdb_mapping = idx_to_pdb_mapping(open(tilde_expansion(pdbpath)).readlines())
         #@todo Also implement functionality for opening gzipped files for normal scripts
         else:  # It's a gzipped file
             obc = pybel.ob.OBConversion()

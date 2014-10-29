@@ -17,43 +17,29 @@ import urllib2
 import lxml.etree as et
 
 
-class PDBRepo(object):
-    """Copy from Joachim's repo"""
+def check_pdb_status(pdbid):
+    """Returns the status of a file in the PDB"""
+    url = 'http://www.rcsb.org/pdb/rest/idStatus?structureId=%s' % pdbid
+    xmlf = urllib2.urlopen(url)
+    xml = et.parse(xmlf)
+    xmlf.close()
+    status = None
+    current_pdbid = pdbid
+    for df in xml.xpath('//record'):
+        status = df.attrib['status']
+        if status == 'OBSOLETE':
+            current_pdbid = df.attrib['replacedBy']
+    return [status, current_pdbid.lower()]
 
-    def __init__(self, pdbpath='~/lib/pdb', obsoletefile='~/lib/pdbsuppl/obsolete.dat'):
-        # read mapping of obsolete PDB ids
-        path = os.path.expanduser(obsoletefile)
-        f = open(path, 'r')
 
-        self.succ = dict()  # dictionary mapping a pdb id to its successor
-
-        for line in f:
-            line = line.strip().split()
-            try:
-                self.succ[line[2].lower()] = line[3].lower()
-            except IndexError:
-                pass
-        f.close()
-        self.pdbpath = pdbpath
-
-    def getpdbid(self, pdbid):
-        return pdbid.lower()
-
-    def getlatestpdbid(self, pdbid):
-        """Checks the list of obsolete PDB IDs and returns the successor."""
-        pdbid = self.getpdbid(pdbid)
-        if pdbid in self.succ:
-            pdbid = self.succ[pdbid]
-        return pdbid
-
-    def getpdbfile(self, pdbid):
-        """Returns the path to the file of a given pdb id."""
-        pdbid = self.getlatestpdbid(pdbid)
-        pdbdir = os.path.expanduser(self.pdbpath)
-        pdbfile = os.path.join(pdbdir, pdbid[1:3], 'pdb'+pdbid+'.ent.gz')
-        if not os.path.exists(pdbfile):
-            raise IOError("No such file: '"+pdbfile+"'")
-        return pdbfile
+def fetch_pdb(pdbid):
+    """Get the newest entry from the RCSB server for the given PDB ID. Exits with '1' if PDB ID is invalid."""
+    pdbid = pdbid.lower()
+    status = check_pdb_status(pdbid)
+    if status[0] == 'UNKNOWN':
+        raise(ValueError, 'Invalid PDB ID')
+    pdburl = 'http://www.rcsb.org/pdb/files/%s.pdb' % status[1]
+    return [urllib2.urlopen(pdburl).read(), status[1]]
 
 
 def process_pdb(pdbfile, outpath, is_zipped=False):
@@ -86,14 +72,16 @@ def main(args):
     if args.input is not None:  # Process PDB file
         #@todo Implement checking function for uploaded PDB files here. e.g. os.path.getsize(f) == 0
         process_pdb(args.input, outp)
-    else:  # Fetch from biodata and process PDB file if corresponding PDB can be found
+    else:  # Try to fetch the current PDB structure directly from the RCBS server
         try:
-            pdbfile = pdbrepo.getpdbfile(args.pdbid)
-            process_pdb(pdbfile, outp, is_zipped=True)  # All files in the repo are ent.gz archives
-        except IOError:
-            sys.stderr.write("Error: PDB file for PDB ID %s not found in the database in %s\n"
-                             % (args.pdbid, pdbrepo.pdbpath))
-            sys.exit()
+            pdbfile, pdbid = fetch_pdb(args.pdbid.lower())
+            pdbpath = '%s/%s.pdb' % (args.outpath, pdbid)
+            create_folder_if_not_exists(args.outpath)
+            with open(tilde_expansion(pdbpath), 'w') as g:
+                g.write(pdbfile)
+            process_pdb(tilde_expansion(pdbpath), tilde_expansion(outp))
+        except ValueError:
+            sys.exit(1)
 
 if __name__ == '__main__':
 
@@ -105,9 +93,5 @@ if __name__ == '__main__':
     pdbstructure.add_argument("-f", dest="input")
     pdbstructure.add_argument("-i", dest="pdbid")
     parser.add_argument("-o", dest="outpath", default="/tmp/")
-    parser.add_argument("-pdbrepo", dest="pdbrepo", default="/biodata/biodb/ABG/databases/pdb")
-    parser.add_argument("-obsolete", dest="obsolete", default="~/lib/pdbsuppl/obsolete.dat")
     arguments = parser.parse_args()
-
-    pdbrepo = PDBRepo(pdbpath=arguments.pdbrepo, obsoletefile=arguments.obsolete)
     main(arguments)
