@@ -174,13 +174,14 @@ class TextOutput():
             for j, single_contact in enumerate(interaction_information):
                 new_contact = et.SubElement(interaction, element_name[:-1], id=str(j+1))
                 for i, feature in enumerate(single_contact):
-                    feat = et.SubElement(new_contact, features[i].lower())
                     # Just assign the value unless it's an atom list, use subelements in this case
                     if features[i] == 'LIG_IDX_LIST':
+                        feat = et.SubElement(new_contact, features[i].lower())
                         for k, atm_idx in enumerate(feature.split(',')):
                             idx = et.SubElement(feat, 'idx', id=str(k+1))
                             idx.text = str(atm_idx)
                     elif features[i] in ['LIGCOO', 'PROTCOO']:
+                        feat = et.SubElement(new_contact, features[i].lower())
                         xc, yc, zc = feature
                         xcoo = et.SubElement(feat, 'x')
                         xcoo.text = str(xc)
@@ -191,6 +192,7 @@ class TextOutput():
                     elif features[i] == 'ITYPE':
                         pass
                     else:
+                        feat = et.SubElement(new_contact, features[i].lower())
                         feat.text = str(feature)
             return interaction
 
@@ -202,5 +204,4 @@ class TextOutput():
         interactions.append(format_interactions('pi_stacks', self.pication_features, self.pication_info))
         interactions.append(format_interactions('pi_cation_interactions', self.pication_features, self.pication_info))
         interactions.append(format_interactions('halogen_bonds', self.halogen_features, self.halogen_info))
-        #@todo values for ITYPE are missing
         return report

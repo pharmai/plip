@@ -95,7 +95,7 @@ if __name__ == '__main__':
     ##############################
     # Parse command line arguments
     ##############################
-    parser = ArgumentParser(prog="PLIP Webserver")
+    parser = ArgumentParser(prog="PLIP")
     pdbstructure = parser.add_mutually_exclusive_group(required=True)
     pdbstructure.add_argument("-f", dest="input")
     pdbstructure.add_argument("-i", dest="pdbid")
