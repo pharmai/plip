@@ -17,6 +17,11 @@ import urllib2
 import lxml.etree as et
 
 
+def sysexit(code, msg):
+    sys.stderr.write(msg)
+    sys.exit(code)
+
+
 def check_pdb_status(pdbid):
     """Returns the status of a file in the PDB"""
     url = 'http://www.rcsb.org/pdb/rest/idStatus?structureId=%s' % pdbid
@@ -62,7 +67,7 @@ def process_pdb(pdbfile, outpath, is_zipped=False):
         visualize_in_pymol(tmpmol, site, show=False, pics=True)
     sys.stdout = sys.__stdout__  # Change back to original stdout, gets changed when PyMOL has been used before
     tree = et.ElementTree(report)
-    print outpath, tmpmol.pymol_name
+    create_folder_if_not_exists(tilde_expansion(outpath))
     tree.write('%s/%s.xml' % (tilde_expansion(outpath), tmpmol.pymol_name), pretty_print=True, xml_declaration=True)
 
 
@@ -71,7 +76,8 @@ def main(args):
 
     outp = "".join([args.outpath, '/']) if not args.outpath.endswith('/') else args.outpath
     if args.input is not None:  # Process PDB file
-        #@todo Implement checking function for uploaded PDB files here. e.g. os.path.getsize(f) == 0
+        if os.path.getsize(args.input) == 0:
+            sysexit(2, 'Error: Empty PDB file')
         process_pdb(args.input, outp)
     else:  # Try to fetch the current PDB structure directly from the RCBS server
         try:
