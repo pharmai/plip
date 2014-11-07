@@ -1,0 +1,157 @@
+<report>
+  <pdbid> </pdbid>
+  <bindingsite id="1">
+    <identifiers>
+      <hetid> </hetid>
+      <chain> </chain>
+      <position> </position>
+    </identifiers>
+    <interactions>
+      <hydrophobic_interactions>
+        <hydrophobic_interaction id="1">
+          <resnr> </resnr>
+          <restype> </restype>
+          <dist> </dist>
+          <ligcarbonidx> </ligcarbonidx>
+          <protcarbonidx> </protcarbonidx>
+          <ligcoo>
+            <x> </x>
+            <y> </y>
+            <z> </z>
+          </ligcoo>
+          <protcoo>
+            <x> </x>
+            <y> </y>
+            <z> </z>
+          </protcoo>
+        </hydrophobic_interaction>
+      </hydrophobic_interactions>
+      <hydrogen_bonds>
+        <hydrogen_bond id="1">
+          <resnr> </resnr>
+          <restype> </restype>
+          <dist_h-a> </dist_h-a>
+          <dist_d-a> </dist_d-a>
+          <don_angle> </don_angle>
+          <protisdon> </protisdon>
+          <donoridx> </donoridx>
+          <acceptoridx> </acceptoridx>
+          <ligcoo>
+            <x> </x>
+            <y> </y>
+            <z> </z>
+          </ligcoo>
+          <protcoo>
+            <x> </x>
+            <y> </y>
+            <z> </z>
+          </protcoo>
+        </hydrogen_bond>
+      </hydrogen_bonds>
+      <water_bridges>
+        <water_bridge id="1">
+          <resnr> </resnr>
+          <restype> </restype>
+          <dist_a-w> </dist_a-w>
+          <dist_d-w> </dist_d-w>
+          <don_angle> </don_angle>
+          <water_angle> </water_angle>
+          <protisdon> </protisdon>
+          <donor_idx> </donor_idx>
+          <acceptor_idx> </acceptor_idx>
+          <water_idx> </water_idx>
+        </water_bridge>
+      </water_bridges>
+      <pi_stacks>
+        <pi_stack id="1">
+          <resnr> </resnr>
+          <restype> </restype>
+          <centdist> </centdist>
+          <angle> </angle>
+          <offset> </offset>
+          <type> </type>
+            <lig_idx_list>
+              <idx id="1"> </idx>>
+            </lig_idx_list>
+            <ligcoo>
+              <x> </x>
+              <y> </y>
+              <z> </z>
+            </ligcoo>
+            <protcoo>
+              <x> </x>
+              <y> </y>
+              <z> </z>
+            </protcoo>
+        </pi_stack>
+      </pi_stacks>
+      <pi_cation_interactions>
+        <pi_cation_interaction id="1">
+          <resnr> </resnr>
+          <restype> </restype>
+          <dist> </dist>
+          <offset> </offset>
+          <protcharged> </protcharged>
+          <lig_group> </lig_group>
+            <lig_idx_list>
+              <idx id="1"> </idx>>
+            </lig_idx_list>
+            <ligcoo>
+              <x> </x>
+              <y> </y>
+              <z> </z>
+            </ligcoo>
+            <protcoo>
+              <x> </x>
+              <y> </y>
+              <z> </z>
+            </protcoo>
+        </pi_cation_interaction>
+      </pi_cation_interactions>
+      <halogen_bonds>
+        <halogen_bond id="1">
+            <resnr> </resnr>
+            <restype> </restype>
+            <dist> </dist>
+            <don_angle> </don_angle>
+            <acc_angle> </acc_angle>
+            <donortype> </donortype>
+            <don_idx> </don_idx>
+            <acc_idx> </acc_idx>
+            <ligcoo>
+              <x> </x>
+              <y> </y>
+              <z> </z>
+            </ligcoo>
+            <protcoo>
+              <x> </x>
+              <y> </y>
+              <z> </z>
+            </protcoo>
+        </halogen_bond>
+      </halogen_bonds>
+      <salt_bridges>
+        <salt_bridge id="1">
+          <resnr> </resnr>
+          <restype> </restype>
+          <dist> </dist>
+          <protispos> </protispos>
+          <lig_group> </lig_group>
+          <lig_idx_list>
+            <idx id="1"> </idx>>
+          </lig_idx_list>
+          <ligcoo>
+            <x> </x>
+            <y> </y>
+            <z> </z>
+          </ligcoo>
+          <protcoo>
+            <x> </x>
+            <y> </y>
+            <z> </z>
+          </protcoo>
+        </salt_bridge>
+      </salt_bridges>
+    </interactions>
+  </bindingsite>
+</report>
