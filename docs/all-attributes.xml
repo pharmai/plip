@@ -71,11 +71,7 @@
           <offset> </offset>
           <type> </type>
             <lig_idx_list>
-<<<<<<< HEAD
               <idx id="1"> </idx>
-=======
-              <idx id="1"> </idx>>
->>>>>>> 8f903733d1ba036e67b73aaa058d223ddf51f3fa
             </lig_idx_list>
             <ligcoo>
               <x> </x>
@@ -98,11 +94,7 @@
           <protcharged> </protcharged>
           <lig_group> </lig_group>
             <lig_idx_list>
-<<<<<<< HEAD
               <idx id="1"> </idx>
-=======
-              <idx id="1"> </idx>>
->>>>>>> 8f903733d1ba036e67b73aaa058d223ddf51f3fa
             </lig_idx_list>
             <ligcoo>
               <x> </x>
@@ -146,11 +138,7 @@
           <protispos> </protispos>
           <lig_group> </lig_group>
           <lig_idx_list>
-<<<<<<< HEAD
             <idx id="1"> </idx>
-=======
-            <idx id="1"> </idx>>
->>>>>>> 8f903733d1ba036e67b73aaa058d223ddf51f3fa
           </lig_idx_list>
           <ligcoo>
             <x> </x>
