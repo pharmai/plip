@@ -31,4 +31,8 @@ class SpecialCasesTest(unittest.TestCase):
         exitcode = subprocess.call('python ../plip-cmd.py -f ./special/empty.pdb', shell=True)
         self.assertEqual(exitcode, 2)
 
+    def test_invalid_pdb_id(self):
+        """A PDB ID with no valid PDB record is provided."""
+        exitcode = subprocess.call('python ../plip-cmd.py -i xx1x', shell=True)
+        self.assertEqual(exitcode, 3)
 

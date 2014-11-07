@@ -88,7 +88,7 @@ def main(args):
                 g.write(pdbfile)
             process_pdb(tilde_expansion(pdbpath), tilde_expansion(outp))
         except ValueError:
-            sys.exit(1)
+            sysexit(3, 'Error: Invalid PDB ID')
 
 if __name__ == '__main__':
 
