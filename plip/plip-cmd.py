@@ -68,7 +68,7 @@ def process_pdb(pdbfile, outpath, is_zipped=False):
     sys.stdout = sys.__stdout__  # Change back to original stdout, gets changed when PyMOL has been used before
     tree = et.ElementTree(report)
     create_folder_if_not_exists(tilde_expansion(outpath))
-    tree.write('%s/%s.xml' % (tilde_expansion(outpath), tmpmol.pymol_name), pretty_print=True, xml_declaration=True)
+    tree.write('%s/report.xml' % tilde_expansion(outpath), pretty_print=True, xml_declaration=True)
 
 
 def main(args):

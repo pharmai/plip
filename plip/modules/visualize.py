@@ -332,9 +332,7 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False):
     cmd.disable('%sCartoon' % pdbid)
     cmd.hide('everything', 'hydrogens')
 
-    out = "".join([save_to, "visualization/"])
-    create_folder_if_not_exists(out)
-    filename = '%s/%s:%s' % (out, pdbid.upper(), "-".join(ligdata.bs_id).upper())
+    filename = '%s-%s' % (pdbid.upper(), "-".join(ligdata.bs_id).upper())
     cmd.save('%s.pse' % filename)
 
     # Create output pictures (experimental)
