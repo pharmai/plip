@@ -22,13 +22,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 from supplemental import *
 
 
-def png_workaround(filepath, width=1024, height=768):
+def png_workaround(filepath, width=1200, height=800):
     """Workaround for (a) severe bug(s) in PyMOL preventing ray-traced images to be produced in command-line mode.
     Use this function in case neither cmd.ray() or cmd.png() work.
     """
+    cmd.feedback('disable', 'movie', 'everything')
+    cmd.viewport(width, height)
     cmd.set('ray_trace_frames', 1)  # Frames are raytraced before saving an image.
-    cmd.viewport(width, height)  # Set resolution
-    ### Workaround for raytracing in command-line mode
     cmd.mpng(filepath, 1, 1)  # Use batch png mode with 1 frame only
     cmd.mplay()  # cmd.mpng needs the animation to 'run'
     os.rename("".join([filepath, '0001.png']), "".join([filepath, '.png']))  # Remove frame number in filename

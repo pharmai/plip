@@ -86,7 +86,7 @@ def process_pdb(pdbfile, outpath, is_zipped=False, text=False, verbose=False, pi
         bindingsite.set('id', str(i+1))
         report.insert(i+1, bindingsite)
         visualize_in_pymol(tmpmol, site, show=False, pics=pics)
-    sys.stdout = sys.__stdout__  # Change back to original stdout, gets changed when PyMOL has been used before
+        sys.stdout = sys.__stdout__  # Change back to original stdout, gets changed when PyMOL has been used before
     tree = et.ElementTree(report)
     create_folder_if_not_exists(tilde_expansion(outpath))
     tree.write('%s/report.xml' % tilde_expansion(outpath), pretty_print=True, xml_declaration=True)

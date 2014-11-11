@@ -347,9 +347,7 @@ def start_pymol(quiet=False, options='-p', run=False):
     if run:
         initialize_pymol(options)
     if quiet:
-        cmd.feedback('disable', 'all', 'actions')
-        cmd.feedback('disable', 'all', 'results')
-        cmd.feedback('disable', 'all', 'errors')
+        cmd.feedback('disable', 'all', 'everything')
 
 
 def get_bs_coordinates(fil, dist, lig):
