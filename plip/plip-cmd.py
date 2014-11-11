@@ -16,6 +16,10 @@ import urllib2
 # External libraries
 import lxml.etree as et
 
+__version__ = '0.9.3'
+
+hlp = "is a command-line based tool to analyze interactions in a protein-ligand complex."
+
 
 def sysexit(code, msg):
     sys.stderr.write(msg)
@@ -95,10 +99,11 @@ if __name__ == '__main__':
     ##############################
     # Parse command line arguments
     ##############################
-    parser = ArgumentParser(prog="PLIP")
+    parser = ArgumentParser(prog="PLIP", description='Protein-Ligand Interaction Profiler (PLIP) '
+                                                     'v%s %s' % (__version__, hlp))
     pdbstructure = parser.add_mutually_exclusive_group(required=True)
     pdbstructure.add_argument("-f", dest="input")
     pdbstructure.add_argument("-i", dest="pdbid")
-    parser.add_argument("-o", dest="outpath", default="/tmp/")
+    parser.add_argument("-o", dest="outpath", default="./")
     arguments = parser.parse_args()
     main(arguments)

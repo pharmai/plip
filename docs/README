@@ -1,0 +1,33 @@
+PLIProfiler
+===========
+
+The Protein-Ligand Interaction Profiler (PLIP) is a tool to analyze and visualize protein-ligand interactions in PDB files.
+
+Features
+--------
+* Direct download of PDB structures from RCSB PDB server if PDB ID is given
+* Processing of custom PDB files (e.g. from docking)
+* Automatic detection of bound ligands in a PDB file
+* No need for special preparation of a PDB file, works out of the box
+* Atom-level interaction reports in txt and XML formats for easy parsing
+* Generation of [PyMOL] session files (.pse) for each pairing, showing a publication-ready illustration of interactions
+
+Quickstart
+----------
+Run the PLIP python script with the option `-h` to show a quick start tutorial and list all available command line options.
+
+Publication
+-----------
+Publication reference...
+
+Documentation
+-------------
+
+Contributions
+-------------
+Joachim Haupt [...]
+Sven Schreiber [...]
+
+## Contact Me
+
+Questions or comments about `PLIProfiler`? Write me an email to [sebastian.salentin@biotec.tu-dresden.de](mailto:sebastian.salentin@biotec.tu-dresden.de).
