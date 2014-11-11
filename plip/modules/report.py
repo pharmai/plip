@@ -158,6 +158,12 @@ class TextOutput():
             self.write_section(section[0], section[1], section[2], f)
         f.close()
 
+    def generate_txt(self):
+        #@todo Implement function
+        """Generates an flat text report for a single binding site"""
+        pass
+        return None
+
     def generate_xml(self):
         """Generates an XML-formatted report for a single binding site"""
         report = et.Element('bindingsite')

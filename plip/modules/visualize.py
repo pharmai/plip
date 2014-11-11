@@ -22,6 +22,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 from supplemental import *
 
 
+def png_workaround(filepath, width=1024, height=768):
+    """Workaround for (a) severe bug(s) in PyMOL preventing ray-traced images to be produced in command-line mode.
+    Use this function in case neither cmd.ray() or cmd.png() work.
+    """
+    cmd.set('ray_trace_frames', 1)  # Frames are raytraced before saving an image.
+    cmd.viewport(width, height)  # Set resolution
+    ### Workaround for raytracing in command-line mode
+    cmd.mpng(filepath, 1, 1)  # Use batch png mode with 1 frame only
+    cmd.mplay()  # cmd.mpng needs the animation to 'run'
+    os.rename("".join([filepath, '0001.png']), "".join([filepath, '.png']))  # Remove frame number in filename
+
+
 def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False):
     """Visualizes the protein-ligand pliprofiler at one site in PyMOL."""
 
@@ -336,12 +348,5 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False):
     cmd.save('%s.pse' % filename)
 
     # Create output pictures (experimental)
-    #@todo Make it more reliable
-    #@todo Destroys XML file right now, fix this
-    #if pics:
-    #    cmd.set('ray_trace_frames', 1)  # Frames are raytraced before saving an image.
-    #    ### Workaround for raytracing in command-line mode
-    #    cmd.mplay()  # cmd.mpng needs the animation to 'run'
-    #    cmd.mpng(filename, 1, 1)
-    #    cmd.refresh()
-    #    #@todo Rename files
+    if pics:
+        png_workaround("".join([save_to, filename]))
