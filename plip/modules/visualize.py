@@ -28,13 +28,18 @@ def png_workaround(filepath, width=1200, height=800):
     """
     cmd.feedback('disable', 'movie', 'everything')
     cmd.viewport(width, height)
-    cmd.zoom('visible')  # Adapt the zoom to the viewport
+    cmd.zoom('visible', 1.5)  # Adapt the zoom to the viewport
     cmd.set('ray_trace_frames', 1)  # Frames are raytraced before saving an image.
     cmd.mpng(filepath, 1, 1)  # Use batch png mode with 1 frame only
     cmd.mplay()  # cmd.mpng needs the animation to 'run'
     cmd.refresh()
-    #@todo Implement a function to check for file creation and wait until renaming
-    #os.rename("".join([filepath, '0001.png']), "".join([filepath, '.png']))  # Remove frame number in filename
+
+    def f():
+        os.rename("".join([filepath, '0001.png']), "".join([filepath, '.png']))  # Remove frame number in filename
+    p = Process(target=f)  # make the file reading a separate process
+    p.start()
+    p.join()
+    del p
     cmd.refresh()
 
 
