@@ -472,7 +472,7 @@ class PDBComplex():
         """Loads a pdb file with protein AND ligand(s), separates and prepares them."""
         self.sourcefiles['pdbcomplex'] = pdbpath
         if not is_zipped:  # It's a PDB file
-            self.protcomplex = read_pdb(pdbpath, safe=True)
+            self.protcomplex = read_pdb(pdbpath, safe=False)  # Don't do safe reading
             # Counting is different from PDB if TER records present
             self.idx_to_pdb_mapping = idx_to_pdb_mapping(open(tilde_expansion(pdbpath)).readlines())
         #@todo Also implement functionality for opening gzipped files for normal scripts

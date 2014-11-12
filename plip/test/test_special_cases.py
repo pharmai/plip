@@ -29,10 +29,22 @@ class SpecialCasesTest(unittest.TestCase):
     def test_empty_input_file(self):
         """Input file is empty."""
         exitcode = subprocess.call('python ../plip-cmd.py -f ./special/empty.pdb', shell=True)
-        self.assertEqual(exitcode, 2)
+        self.assertEqual(exitcode, 2)  # Specific exitcode 2
 
     def test_invalid_pdb_id(self):
         """A PDB ID with no valid PDB record is provided."""
         exitcode = subprocess.call('python ../plip-cmd.py -i xx1x', shell=True)
-        self.assertEqual(exitcode, 3)
+        self.assertEqual(exitcode, 3)  # Specific exitcode 3
+
+    def test_invalid_input_file(self):
+        """A file is provided which is not a PDB file."""
+        exitcode = subprocess.call('python ../plip-cmd.py -f ./special/non-pdb.pdb', shell=True)
+        self.assertEqual(exitcode, 4)  # Specific exitcode 4
+
+
+#@todo Implement other unit tests below
+# Other ideas #
+# 4pth (largest PDB file with > 100 MB size)
+# 1EVE with no interactions for e.g. NAG-A-3003
+# 2PF1 with no ligands
 
