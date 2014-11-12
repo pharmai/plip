@@ -451,12 +451,11 @@ def read_pdb(pdbfname, safe=False):
     """Reads a given PDB file and returns a Pybel Molecule. If requested, do it
     safely to except Open Babel crashes. All bonds are read in as single bonds
     if requested, saving a lot of time at OpenBabel import."""
-
+    #@todo Make OpenBabel errors quiet
     #workaround for a bug in OpenBabel
     global exitcode
     resource.setrlimit(resource.RLIMIT_STACK, (2**28, -1))  # set stack size to 256MB
     sys.setrecursionlimit(10**5)  # increase Python recoursion limit
-
     success = True
     if safe:  # read the file safely, since it can happen, that babel crashes on large files
         if os.path.exists(pdbfname):
@@ -475,6 +474,9 @@ def read_pdb(pdbfname, safe=False):
             exitcode = 1
     if success:
         mol = readmol('pdb', pdbfname)  # only read the file iff it was successful before
+    elif exitcode == 4:
+        sys.stderr.write('Error: Input file could not be read by OpenBabel.')
+        sys.exit(4)
     else:
         mol = pybel.Molecule(pybel.ob.OBMol())
         print("  Error: Failed to read '%s' with OpenBabel (exit code %d)!" % (pdbfname, exitcode))
@@ -490,4 +492,6 @@ def readmol(fformat='mol', path=None):
     mol = pybel.ob.OBMol()
     with open(path) as f:
         obc.ReadString(mol, str(f.read()))
+        if mol.Empty():
+            sys.exit(4)
     return pybel.Molecule(mol)

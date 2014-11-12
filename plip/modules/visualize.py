@@ -28,10 +28,14 @@ def png_workaround(filepath, width=1200, height=800):
     """
     cmd.feedback('disable', 'movie', 'everything')
     cmd.viewport(width, height)
+    cmd.zoom('visible')  # Adapt the zoom to the viewport
     cmd.set('ray_trace_frames', 1)  # Frames are raytraced before saving an image.
     cmd.mpng(filepath, 1, 1)  # Use batch png mode with 1 frame only
     cmd.mplay()  # cmd.mpng needs the animation to 'run'
-    os.rename("".join([filepath, '0001.png']), "".join([filepath, '.png']))  # Remove frame number in filename
+    cmd.refresh()
+    #@todo Implement a function to check for file creation and wait until renaming
+    #os.rename("".join([filepath, '0001.png']), "".join([filepath, '.png']))  # Remove frame number in filename
+    cmd.refresh()
 
 
 def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False):
