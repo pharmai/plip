@@ -354,7 +354,7 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False):
     cmd.hide('everything', 'hydrogens')
 
     filename = '%s-%s' % (pdbid.upper(), "-".join(ligdata.bs_id).upper())
-    cmd.save('%s.pse' % filename)
+    cmd.save("".join([save_to, "%s.pse" % filename]))
 
     # Create output pictures (experimental)
     if pics:

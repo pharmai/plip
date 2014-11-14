@@ -42,9 +42,10 @@ class SpecialCasesTest(unittest.TestCase):
         self.assertEqual(exitcode, 4)  # Specific exitcode 4
 
 
-#@todo Implement other unit tests below
+#@todo Implement other unit tests below, also check if output files exists and exit code is 0
 # Other ideas #
 # 4pth (largest PDB file with > 100 MB size)
 # 1EVE with no interactions for e.g. NAG-A-3003
 # 2PF1 with no ligands
+# 3wu2 with most ligands
 

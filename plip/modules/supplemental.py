@@ -135,6 +135,7 @@ def is_mod_aa(hetid):
 
 def is_lig(hetid):
     #@todo Exclude atomic ions (like chloride)
+    #@todo Check if the set of excluded ligands is sufficient (see e.g. 3WU2)
     """Checks if a PDB compound can be excluded as a small molecule ligand"""
     h = hetid.upper()
     return not (h == 'HOH' or is_mod_aa(h) or is_dna(h) or is_metalion(h))
