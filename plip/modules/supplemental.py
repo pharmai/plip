@@ -26,6 +26,7 @@ from collections import namedtuple
 import os
 from multiprocessing import Process
 import resource
+import subprocess
 
 # External libraries
 import pybel
@@ -322,6 +323,10 @@ def create_folder_if_not_exists(folder_path):
     direc = os.path.dirname(folder_path)
     if not folder_exists(direc):
         os.makedirs(direc)
+
+
+def cmd_exists(c):
+    return subprocess.call("type " + c, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
 
 ################
 # PyMOL-specific

@@ -20,12 +20,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 # Own modules
 from supplemental import *
+from time import sleep
 
 
 def png_workaround(filepath, width=1200, height=800):
     """Workaround for (a) severe bug(s) in PyMOL preventing ray-traced images to be produced in command-line mode.
     Use this function in case neither cmd.ray() or cmd.png() work.
     """
+    sys.stdout = sys.__stdout__
     cmd.feedback('disable', 'movie', 'everything')
     cmd.viewport(width, height)
     cmd.zoom('visible', 1.5)  # Adapt the zoom to the viewport
@@ -33,13 +35,33 @@ def png_workaround(filepath, width=1200, height=800):
     cmd.mpng(filepath, 1, 1)  # Use batch png mode with 1 frame only
     cmd.mplay()  # cmd.mpng needs the animation to 'run'
     cmd.refresh()
+    originalfile = "".join([filepath, '0001.png'])
+    newfile = "".join([filepath, '.png'])
 
-    def f():
-        os.rename("".join([filepath, '0001.png']), "".join([filepath, '.png']))  # Remove frame number in filename
-    p = Process(target=f)  # make the file reading a separate process
-    p.start()
-    p.join()
-    del p
+    #################################################
+    # Wait for file for max. 1 second and rename it #
+    #################################################
+
+    attempts = 0
+    while not os.path.isfile(originalfile) and attempts <= 10:
+        sleep(0.1)
+        attempts += 1
+    os.rename(originalfile, newfile)  # Remove frame number in filename
+    while not os.path.isfile(newfile) and attempts <= 10:
+        sleep(0.1)
+        attempts += 1
+
+    #  Check if imagemagick is available and crop + resize the images
+    if cmd_exists('convert'):
+        #@todo Refactor code
+        command0 = 'convert -trim ' + newfile + ' ' + newfile + ';'
+        command1 = 'w=`convert ' + newfile + ' -ping -format "%w" info:`;'  # Get the width of the new image
+        command2 = 'h=`convert ' + newfile + ' -ping -format "%h" info:`;'  # Get the hight of the new image
+        newres = 'if [ "$w" -gt "$h" ]; then newr="${w%.*}x$w"; else newr="${h%.*}x$h"; fi;'  # Set quadratic ratio
+        command3 = 'convert ' + newfile + ' -gravity center -extent "$newr" ' + newfile  # Fill with whitespace
+        os.system(command0+command1+command2+newres+command3)
+    else:
+        print('Imagemagick not available. Images will not be resized or cropped.')
     cmd.refresh()
 
 
