@@ -44,12 +44,23 @@ def check_pdb_status(pdbid):
     return [status, current_pdbid.lower()]
 
 
-def fetch_pdb(pdbid):
+def fetch_pdb(pdbid, verbose_mode):
     """Get the newest entry from the RCSB server for the given PDB ID. Exits with '1' if PDB ID is invalid."""
     pdbid = pdbid.lower()
+    if verbose_mode:
+        sys.stdout.write('Checking status of PDB ID %s ... ' % pdbid)
     status = check_pdb_status(pdbid)
+    if verbose_mode:
+        if status[0] == 'OBSOLETE':
+            sys.stdout.write('entry is obsolete, getting %s instead.\n' % status[1])
+        elif status[0] == 'UNKOWN':
+            pass
+        else:
+            sys.stdout.write('entry is up to date.\n')
     if status[0] == 'UNKNOWN':
         raise(ValueError, 'Invalid PDB ID')
+    if verbose_mode:
+        sys.stdout.write('Downloading file from PDB ... ')
     pdburl = 'http://www.rcsb.org/pdb/files/%s.pdb' % status[1]
     return [urllib2.urlopen(pdburl).read(), status[1]]
 
@@ -69,11 +80,11 @@ def process_pdb(pdbfile, outpath, is_zipped=False, text=False, verbose=False, pi
     if verbose:
         num_ligs = len(tmpmol.interaction_sets)
         if num_ligs == 1:
-            print("\nAnalyzing %s with one ligand." % tmpmol.pymol_name)
+            sys.stdout.write("Analyzing %s with one ligand.\n" % tmpmol.pymol_name)
         elif num_ligs > 1:
-            print("\nAnalyzing %s with %i ligands." % (tmpmol.pymol_name, num_ligs))
+            sys.stdout.write("Analyzing %s with %i ligands.\n" % (tmpmol.pymol_name, num_ligs))
         else:
-            print("\n%s contains no ligands." % tmpmol.pymol_name)
+            sys.stdout.write("%s contains no ligands.\n" % tmpmol.pymol_name)
 
     ###########################################################################################
     # Generate XML- and rST-formatted reports for each binding site#
@@ -81,7 +92,7 @@ def process_pdb(pdbfile, outpath, is_zipped=False, text=False, verbose=False, pi
     for i, site in enumerate(tmpmol.interaction_sets):
         s = tmpmol.interaction_sets[site]
         if verbose:
-            print("  @ %s" % site)
+            sys.stdout.write("  @ %s\n" % site)
         bindingsite = TextOutput(s).generate_xml()
         bindingsite.set('id', str(i+1))
         report.insert(i+1, bindingsite)
@@ -105,8 +116,13 @@ def process_pdb(pdbfile, outpath, is_zipped=False, text=False, verbose=False, pi
 
 def main(args):
     """Main function. Processes command line arguments and processes PDB files in single or batch mode."""
+    pdbid, outp = None, None
     if args.verbose:
-        print("*** Protein-Ligand Interaction Profiler v%s ***" % __version__)
+        title = "* Protein-Ligand Interaction Profiler v%s *" % __version__
+        sys.stdout.write('\n'+'*'*len(title)+'\n')
+        sys.stdout.write(title)
+        sys.stdout.write('\n'+'*'*len(title)+'\n\n')
+
     outp = "".join([args.outpath, '/']) if not args.outpath.endswith('/') else args.outpath
     if args.input is not None:  # Process PDB file
         if os.path.getsize(args.input) == 0:
@@ -114,8 +130,10 @@ def main(args):
         process_pdb(args.input, outp, text=args.txt, verbose=args.verbose, pics=args.pics)
     else:  # Try to fetch the current PDB structure directly from the RCBS server
         try:
-            pdbfile, pdbid = fetch_pdb(args.pdbid.lower())
+            pdbfile, pdbid = fetch_pdb(args.pdbid.lower(), verbose_mode=args.verbose)
             pdbpath = '%s/%s.pdb' % (args.outpath, pdbid)
+            if args.verbose:
+                sys.stdout.write('file downloaded as %s\n\n' % pdbpath)
             create_folder_if_not_exists(args.outpath)
             with open(tilde_expansion(pdbpath), 'w') as g:
                 g.write(pdbfile)
@@ -123,6 +141,10 @@ def main(args):
                         pics=args.pics)
         except ValueError:
             sysexit(3, 'Error: Invalid PDB ID')
+    if pdbid is not None and outp is not None:
+        if outp in ['.', './']:
+            outp = 'the working directory.'
+        sys.stdout.write('\nFinished with analysis of %s. Find the result files in %s\n\n' % (pdbid, outp))
 
 if __name__ == '__main__':
     ##############################

@@ -47,21 +47,25 @@ def png_workaround(filepath, width=1200, height=800):
         sleep(0.1)
         attempts += 1
     os.rename(originalfile, newfile)  # Remove frame number in filename
-    while not os.path.isfile(newfile) and attempts <= 10:
-        sleep(0.1)
-        attempts += 1
 
     #  Check if imagemagick is available and crop + resize the images
-    #@todo There seem to be timing problems, e.g. in 2REG. Imagemagick says the file is corrupt (truncated)
     if cmd_exists('convert'):
+        attempts, ecode = 0, 1
+        # Check if file is truncated and wait if that's the case
+        while ecode != 0 and attempts <= 10:
+            ecode = subprocess.call(['convert', newfile, 'null'], stdout=open('/dev/null', 'w'),
+                                    stderr=subprocess.STDOUT)
+            sleep(0.1)
+            attempts += 1
         trim = 'convert -trim ' + newfile + ' -bordercolor White -border 20x20 ' + newfile + ';'  # Trim the image
+        os.system(trim)
         getwidth = 'w=`convert ' + newfile + ' -ping -format "%w" info:`;'  # Get the width of the new image
         getheight = 'h=`convert ' + newfile + ' -ping -format "%h" info:`;'  # Get the hight of the new image
         newres = 'if [ "$w" -gt "$h" ]; then newr="${w%.*}x$w"; else newr="${h%.*}x$h"; fi;'  # Set quadratic ratio
         quadratic = 'convert ' + newfile + ' -gravity center -extent "$newr" ' + newfile  # Fill with whitespace
-        os.system(trim+getwidth+getheight+newres+quadratic)
+        os.system(getwidth+getheight+newres+quadratic)
     else:
-        print('Imagemagick not available. Images will not be resized or cropped.')
+        sys.stderr.write('Imagemagick not available. Images will not be resized or cropped.')
     cmd.refresh()
 
 

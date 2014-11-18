@@ -146,7 +146,7 @@ class TextOutput():
         #@todo Make cell_width dependent on maximum value in table column, not row
         cell_width = 2 + max(reduce(lambda x, y: x+y, [[len(item) for item in row] for row in array], []))
         num_cols = len(array[0])
-        rst = num_cols*('+' + cell_width*'-') + '+\n'
+        rst = num_cols*('+' + cell_width*'-') + '+\n'  # First row (top line)
         for i, row in enumerate(array):
             rst = rst + '| ' + '| '.join([(x + ((cell_width-1 - len(x)) * ' ')) for x in row]) + '|\n'
             if i == 0:
