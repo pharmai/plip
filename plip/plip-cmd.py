@@ -19,7 +19,7 @@ import time
 # External libraries
 import lxml.etree as et
 
-__version__ = '0.9.3'
+__version__ = '0.9.4'
 descript = "Protein-Ligand Interaction Profiler (PLIP) v%s " \
            "is a command-line based tool to analyze interactions in a protein-ligand complex." % __version__
 
@@ -76,7 +76,7 @@ def process_pdb(pdbfile, outpath, is_zipped=False, text=False, verbose=False, pi
             print("\n%s contains no ligands." % tmpmol.pymol_name)
 
     ###########################################################################################
-    # Generate XML-formatted reports for each binding site and send to stdout as one XML file #
+    # Generate XML- and rST-formatted reports for each binding site#
     ###########################################################################################
     for i, site in enumerate(tmpmol.interaction_sets):
         s = tmpmol.interaction_sets[site]
@@ -85,12 +85,18 @@ def process_pdb(pdbfile, outpath, is_zipped=False, text=False, verbose=False, pi
         bindingsite = TextOutput(s).generate_xml()
         bindingsite.set('id', str(i+1))
         report.insert(i+1, bindingsite)
+        for itype in TextOutput(s).generate_rst():
+            textlines.append(itype)
         visualize_in_pymol(tmpmol, site, show=False, pics=pics)
         sys.stdout = sys.__stdout__  # Change back to original stdout, gets changed when PyMOL has been used before
     tree = et.ElementTree(report)
     create_folder_if_not_exists(tilde_expansion(outpath))
     tree.write('%s/report.xml' % tilde_expansion(outpath), pretty_print=True, xml_declaration=True)
-    #@todo Fully implement textual output as restructured text
+
+    ################################
+    # Write rST to the output file #
+    ################################
+
     if text:
         with open('%s/report.rst' % tilde_expansion(outpath), 'w') as f:
             for textline in textlines:
@@ -119,7 +125,6 @@ def main(args):
             sysexit(3, 'Error: Invalid PDB ID')
 
 if __name__ == '__main__':
-    #@todo Fully implement flat text output for reports
     ##############################
     # Parse command line arguments
     ##############################

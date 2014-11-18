@@ -41,33 +41,33 @@ class TextOutput():
                        '#Created on %s' % time.strftime("%Y/%m/%d")]
 
         ### HYDROPHOBIC
-        self.hydrophobic_features = ('RESNR', 'RESTYPE', 'DIST', 'LIGCARBONIDX', 'PROTCARBONIDX', 'ITYPE', 'LIGCOO',
+        self.hydrophobic_features = ('RESNR', 'RESTYPE', 'DIST', 'LIGCARBONIDX', 'PROTCARBONIDX', 'LIGCOO',
                                      'PROTCOO')
         self.hydrophobic_info = []
         for hydroph in pli_class.hydrophobic_contacts:
             self.hydrophobic_info.append((hydroph.resnr, hydroph.restype, '%.2f' % hydroph.distance,
-                                          lig_to_pdb[hydroph.ligatom.idx], mapping[hydroph.bsatom.idx],
-                                          'HYDROPH', hydroph.ligatom.coords, hydroph.bsatom.coords))
+                                          lig_to_pdb[hydroph.ligatom.idx], mapping[hydroph.bsatom.idx]
+                                          , hydroph.ligatom.coords, hydroph.bsatom.coords))
 
         ### HBONDS
         self.hbond_features = ('RESNR', 'RESTYPE', 'DIST_H-A', 'DIST_D-A', 'DON_ANGLE', 'PROTISDON', 'DONORIDX',
-                               'ACCEPTORIDX', 'ITYPE', 'LIGCOO', 'PROTCOO')
+                               'ACCEPTORIDX', 'LIGCOO', 'PROTCOO')
         self.hbond_info = []
         for hbond in pli_class.hbonds_pdon+pli_class.hbonds_ldon:
             if hbond.protisdon:
                 donidx, accidx = mapping[hbond.d.idx], lig_to_pdb[hbond.a.idx]
                 self.hbond_info.append((hbond.resnr, hbond.restype, '%.2f' % hbond.distance_ah,
                                         '%.2f' % hbond.distance_ad, '%.2f' % hbond.angle, hbond.protisdon, donidx,
-                                        accidx, 'ITYPE', hbond.a.coords, hbond.d.coords))
+                                        accidx, hbond.a.coords, hbond.d.coords))
             else:
                 donidx, accidx = lig_to_pdb[hbond.d.idx], mapping[hbond.a.idx]
                 self.hbond_info.append((hbond.resnr, hbond.restype, '%.2f' % hbond.distance_ah,
                                         '%.2f' % hbond.distance_ad, '%.2f' % hbond.angle, hbond.protisdon, donidx,
-                                        accidx, 'ITYPE', hbond.d.coords, hbond.a.coords))
+                                        accidx, hbond.d.coords, hbond.a.coords))
 
         ### WATER-BRIDGED HYDROGEN BONDS
         self.waterbridge_features = ('RESNR', 'RESTYPE', 'DIST_A-W', 'DIST_D-W', 'DON_ANGLE', 'WATER_ANGLE',
-                                     'PROTISDON', 'DONOR_IDX', 'ACCEPTOR_IDX', 'WATER_IDX', 'ITYPE')
+                                     'PROTISDON', 'DONOR_IDX', 'ACCEPTOR_IDX', 'WATER_IDX')
         self.waterbridge_info = []
         for wbridge in pli_class.water_bridges:
             if wbridge.protisdon:
@@ -77,61 +77,61 @@ class TextOutput():
             self.waterbridge_info.append((wbridge.resnr, wbridge.restype, '%.2f' % wbridge.distance_aw,
                                           '%.2f' % wbridge.distance_dw, '%.2f' % wbridge.d_angle,
                                           '%.2f' % wbridge.w_angle, wbridge.protisdon, donidx, accidx,
-                                          mapping[wbridge.water.idx], 'WATERHB'))
+                                          mapping[wbridge.water.idx]))
 
         ### SALTBRIDGES
-        self.saltbridge_features = ('RESNR', 'RESTYPE', 'DIST', 'PROTISPOS', 'LIG_GROUP', 'LIG_IDX_LIST', 'ITYPE',
+        self.saltbridge_features = ('RESNR', 'RESTYPE', 'DIST', 'PROTISPOS', 'LIG_GROUP', 'LIG_IDX_LIST',
                                     'LIGCOO', 'PROTCOO')
         self.saltbridge_info = []
         for sb in pli_class.saltbridge_lneg+pli_class.saltbridge_pneg:
             if sb.protispos:
                 group, ids = sb.negative.fgroup, [str(lig_to_pdb[x.idx]) for x in sb.negative.atoms]
                 self.saltbridge_info.append((sb.resnr, sb.restype, '%.2f' % sb.distance, sb.protispos,
-                                             group.capitalize(), ",".join(ids), 'SALT',
+                                             group.capitalize(), ",".join(ids),
                                              tuple(sb.negative.center), tuple(sb.positive.center)))
             else:
                 group, ids = sb.positive.fgroup, [str(lig_to_pdb[x.idx]) for x in sb.positive.atoms]
                 self.saltbridge_info.append((sb.resnr, sb.restype, '%.2f' % sb.distance, sb.protispos,
-                                             group.capitalize(), ",".join(ids), 'SALT',
+                                             group.capitalize(), ",".join(ids),
                                              tuple(sb.positive.center), tuple(sb.negative.center)))
 
         ### PISTACKING
-        self.pistacking_features = ('RESNR', 'RESTYPE', 'CENTDIST', 'ANGLE', 'OFFSET', 'TYPE', 'LIG_IDX_LIST', 'ITYPE',
+        self.pistacking_features = ('RESNR', 'RESTYPE', 'CENTDIST', 'ANGLE', 'OFFSET', 'TYPE', 'LIG_IDX_LIST',
                                     'LIGCOO', 'PROTCOO')
         self.pistacking_info = []
         for stack in pli_class.pistacking:
             ids = [str(lig_to_pdb[x.idx]) for x in stack.ligandring.atoms]
             self.pistacking_info.append((stack.resnr, stack.restype, '%.2f' % stack.distance,
-                                         '%.2f' % stack.angle, '%.2f' % stack.offset, stack.type, ",".join(ids),
-                                         'PISTACK', tuple(stack.ligandring.center), tuple(stack.proteinring.center)))
+                                         '%.2f' % stack.angle, '%.2f' % stack.offset, stack.type, ",".join(ids)
+                                         , tuple(stack.ligandring.center), tuple(stack.proteinring.center)))
 
         ### PI-CATION
         self.pication_features = ('RESNR', 'RESTYPE', 'DIST', 'OFFSET', 'PROTCHARGED', 'LIG_GROUP', 'LIG_IDX_LIST',
-                                  'ITYPE', 'LIGCOO', 'PROTCOO')
+                                  'LIGCOO', 'PROTCOO')
         self.pication_info = []
         for picat in pli_class.pication_laro+pli_class.pication_paro:
             if picat.protcharged:
                 ids = [str(lig_to_pdb[x.idx]) for x in picat.ring.atoms]
                 group = 'Aromatic'
                 self.pication_info.append((picat.resnr, picat.restype, '%.2f' % picat.distance,
-                                           '%.2f' % picat.offset, picat.protcharged, group, ",".join(ids), 'PICAT',
+                                           '%.2f' % picat.offset, picat.protcharged, group, ",".join(ids),
                                            tuple(picat.ring.center), tuple(picat.charge.center)))
             else:
                 ids = [str(lig_to_pdb[x.idx]) for x in picat.charge.atoms]
                 group = picat.charge.fgroup
                 self.pication_info.append((picat.resnr, picat.restype, '%.2f' % picat.distance,
-                                           '%.2f' % picat.offset, picat.protcharged, group, ",".join(ids), 'PICAT',
+                                           '%.2f' % picat.offset, picat.protcharged, group, ",".join(ids),
                                            tuple(picat.charge.center), tuple(picat.ring.center)))
 
         ### HALOGEN BONDS
         self.halogen_features = ('RESNR', 'RESTYPE', 'DIST', 'DON_ANGLE', 'ACC_ANGLE', 'DONORTYPE', 'DON_IDX',
-                                 'ACC_IDX', 'ITYPE', 'LIGCOO', 'PROTCOO')
+                                 'ACC_IDX', 'LIGCOO', 'PROTCOO')
         self.halogen_info = []
         for halogen in pli_class.halogen_bonds:
             self.halogen_info.append((halogen.resnr, halogen.restype, '%.2f' % halogen.distance,
                                       '%.2f' % halogen.don_angle, '%.2f' % halogen.acc_angle, halogen.donortype,
                                       lig_to_pdb[halogen.don.x.idx],
-                                      mapping[halogen.acc.o.idx], 'HAL', halogen.acc.o.coords, halogen.don.x.coords))
+                                      mapping[halogen.acc.o.idx], halogen.acc.o.coords, halogen.don.x.coords))
 
     def write_section(self, name, features, info, f):
         """Provides formatting for one section (e.g. hydrogen bonds)"""
@@ -141,28 +141,50 @@ class TextOutput():
             for line in info:
                 f.write('%s\n' % '\t'.join(map(str, line)))
 
-    def to_file(self):
-        """Writes preformatted sections and header to file"""
-        p, n1, n2 = "".join([tilde_expansion(self.output_path), "reports/"]), self.pdbid, self.name
-        create_folder_if_not_exists(p)
-        f = open('%s%s:%s.txt' % (p, n1, n2), 'w')
-        for line in self.header:
-            f.write('%s\n' % line)
-        for section in [['HYDROPHOBIC INTERACTIONS', self.hydrophobic_features, self.hydrophobic_info],
-                        ['HYDROGEN BONDS', self.hbond_features, self.hbond_info],
-                        ['WATER-BRIDGED HYDROGEN BONDS', self.waterbridge_features, self.waterbridge_info],
-                        ['SALT BRIDGES', self.saltbridge_features, self.saltbridge_info],
-                        ['PISTACKING', self.pistacking_features, self.pistacking_info],
-                        ['PI-CATION', self.pication_features, self.pication_info],
-                        ['HALOGEN BONDS', self.halogen_features, self.halogen_info]]:
-            self.write_section(section[0], section[1], section[2], f)
-        f.close()
+    #@todo Write own code for tables
+    def rst_table(self, array):
+        #@todo Make cell_width dependent on maximum value in table column, not row
+        cell_width = 2 + max(reduce(lambda x, y: x+y, [[len(item) for item in row] for row in array], []))
+        num_cols = len(array[0])
+        rst = num_cols*('+' + cell_width*'-') + '+\n'
+        for i, row in enumerate(array):
+            rst = rst + '| ' + '| '.join([(x + ((cell_width-1 - len(x)) * ' ')) for x in row]) + '|\n'
+            if i == 0:
+                rst += num_cols*('+' + cell_width*'=') + '+\n'
+            else:
+                rst += num_cols*('+' + cell_width*'-') + '+\n'
+        return rst
 
-    def generate_txt(self):
-        #@todo Implement function
+    def generate_rst(self):
         """Generates an flat text report for a single binding site"""
-        pass
-        return None
+        txt = []
+        txt.append('%s' % self.name)
+        txt.append("-"*len(self.name))
+        for section in [['Hydrophobic Interactions', self.hydrophobic_features, self.hydrophobic_info],
+                        ['Hydrogen Bonds', self.hbond_features, self.hbond_info],
+                        ['Water-bridged Hydrogend Bonds', self.waterbridge_features, self.waterbridge_info],
+                        ['Salt Bridges', self.saltbridge_features, self.saltbridge_info],
+                        ['pi-Stacking', self.pistacking_features, self.pistacking_info],
+                        ['pi-Cation Interaction', self.pication_features, self.pication_info],
+                        ['Halogen Bonds', self.halogen_features, self.halogen_info]]:
+            iname, features, info = section
+            if not len(info) == 0:
+                txt.append('\n**%s**' % iname)
+                table = [features, ]
+                for interaction in info:
+                    values = []
+                    for x in interaction:
+                        if type(x) == str:
+                            values.append(x)
+                        elif type(x) == tuple and len(x) == 3:  # Coordinates
+                            values.append("%.2f,%.2f,%.2f" % x)
+                        else:
+                            values.append(str(x))
+                    table.append(values)
+                txt.append(self.rst_table(table))
+        txt.append('\n')
+
+        return txt
 
     def generate_xml(self):
         """Generates an XML-formatted report for a single binding site"""
@@ -195,8 +217,6 @@ class TextOutput():
                         ycoo.text = str(yc)
                         zcoo = et.SubElement(feat, 'z')
                         zcoo.text = str(zc)
-                    elif features[i] == 'ITYPE':
-                        pass
                     else:
                         feat = et.SubElement(new_contact, features[i].lower())
                         feat.text = str(feature)
