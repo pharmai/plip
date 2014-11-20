@@ -227,7 +227,7 @@ class TextOutput():
         interactions.append(format_interactions('hydrogen_bonds', self.hbond_features, self.hbond_info))
         interactions.append(format_interactions('water_bridges', self.waterbridge_features, self.waterbridge_info))
         interactions.append(format_interactions('salt_bridges', self.saltbridge_features, self.saltbridge_info))
-        interactions.append(format_interactions('pi_stacks', self.pication_features, self.pication_info))
+        interactions.append(format_interactions('pi_stacks', self.pistacking_features, self.pistacking_info))
         interactions.append(format_interactions('pi_cation_interactions', self.pication_features, self.pication_info))
         interactions.append(format_interactions('halogen_bonds', self.halogen_features, self.halogen_info))
         return report
