@@ -107,9 +107,9 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False):
     cmd.util.cnc('all')
     cmd.deselect()
 
-    ##########################
-    #Create empty selections #
-    ##########################
+    ###########################
+    # Create empty selections #
+    ###########################
 
     for group in ['Hydrophobic-P', 'Hydrophobic-L', 'HBondDonor-P', 'HBondDonor-L', 'HBondAccept-P', 'HBondAccept-L',
                   'HalogenAccept', 'HalogenDonor', 'Water', 'MetalIons', 'StackRings-P', 'PosCharge-P', 'PosCharge-L',

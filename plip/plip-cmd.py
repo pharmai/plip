@@ -157,7 +157,7 @@ if __name__ == '__main__':
     parser.add_argument("-o", "-out", dest="outpath", default="./")
     parser.add_argument("-v", "--verbose", dest="verbose", default=False, help="Set verbose mode", action="store_true")
     parser.add_argument("-p", "--pics", dest="pics", default=False, help="Additional pictures", action="store_true")
-    parser.add_argument("-t", "--text", dest="txt", default=False, help="Additional flat text output for reports",
+    parser.add_argument("-t", "--text", dest="txt", default=False, help="Additional rST output for reports",
                         action="store_true")
     arguments = parser.parse_args()
     main(arguments)
