@@ -71,6 +71,8 @@ def process_pdb(pdbfile, outpath, is_zipped=False, text=False, verbose=False, pi
     tmpmol.output_path = outpath
     tmpmol.load_pdb(pdbfile, is_zipped)
     report = et.Element('report')
+    plipversion = et.SubElement(report, 'plipversion')
+    plipversion.text = __version__
     pdbid = et.SubElement(report, 'pdbid')
     pdbid.text = tmpmol.pymol_name.upper()
     textlines = []

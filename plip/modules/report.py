@@ -162,7 +162,7 @@ class TextOutput():
         txt.append("-"*len(self.name))
         for section in [['Hydrophobic Interactions', self.hydrophobic_features, self.hydrophobic_info],
                         ['Hydrogen Bonds', self.hbond_features, self.hbond_info],
-                        ['Water-bridged Hydrogend Bonds', self.waterbridge_features, self.waterbridge_info],
+                        ['Water Bridges', self.waterbridge_features, self.waterbridge_info],
                         ['Salt Bridges', self.saltbridge_features, self.saltbridge_info],
                         ['pi-Stacking', self.pistacking_features, self.pistacking_info],
                         ['pi-Cation Interaction', self.pication_features, self.pication_info],
