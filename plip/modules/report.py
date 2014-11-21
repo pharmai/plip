@@ -141,19 +141,46 @@ class TextOutput():
             for line in info:
                 f.write('%s\n' % '\t'.join(map(str, line)))
 
-    #@todo Write own code for tables
     def rst_table(self, array):
-        #@todo Make cell_width dependent on maximum value in table column, not row
-        cell_width = 2 + max(reduce(lambda x, y: x+y, [[len(item) for item in row] for row in array], []))
-        num_cols = len(array[0])
-        rst = num_cols*('+' + cell_width*'-') + '+\n'  # First row (top line)
+        """Given an array, the function formats and returns and table in rST format."""
+        # Determine cell width for each column
+        cell_dict = {}
         for i, row in enumerate(array):
-            rst = rst + '| ' + '| '.join([(x + ((cell_width-1 - len(x)) * ' ')) for x in row]) + '|\n'
+            for j, val in enumerate(row):
+                if j not in cell_dict:
+                    cell_dict[j] = []
+                cell_dict[j].append(val)
+        for item in cell_dict:
+            cell_dict[item] = max([len(x) for x in cell_dict[item]])+1  # Contains adapted width for each column
+
+        # Format top line
+        num_cols = len(array[0])
+        form = '+'
+        for col in range(num_cols):
+            form += (cell_dict[col]+1)*'-'
+            form += '+'
+        form += '\n'
+
+        # Format values
+        for i, row in enumerate(array):
+            form += '| '
+            for j, val in enumerate(row):
+                cell_width = cell_dict[j]
+                form += str(val) + (cell_width - len(val)) * ' ' + '| '
+            form.rstrip()
+            form += '\n'
+
+            # Seperation lines
+            form += '+'
             if i == 0:
-                rst += num_cols*('+' + cell_width*'=') + '+\n'
+                sign = '='
             else:
-                rst += num_cols*('+' + cell_width*'-') + '+\n'
-        return rst
+                sign = '-'
+            for col in range(num_cols):
+                form += (cell_dict[col]+1)*sign
+                form += '+'
+            form += '\n'
+        return form
 
     def generate_rst(self):
         """Generates an flat text report for a single binding site"""
