@@ -15,11 +15,12 @@ import sys
 from argparse import ArgumentParser
 import urllib2
 import time
+import multiprocessing
 
 # External libraries
 import lxml.etree as et
 
-__version__ = '0.9.4'
+__version__ = '0.9.5'
 descript = "Protein-Ligand Interaction Profiler (PLIP) v%s " \
            "is a command-line based tool to analyze interactions in a protein-ligand complex." % __version__
 
@@ -80,7 +81,7 @@ def process_pdb(pdbfile, outpath, is_zipped=False, text=False, verbose=False, pi
     textlines.append("="*len(textlines[0]))
     textlines.append('Created on %s using PLIP v%s\n' % (time.strftime("%Y/%m/%d"), __version__))
     if verbose:
-        num_ligs = len(tmpmol.interaction_sets)
+        num_ligs = len([site for site in tmpmol.interaction_sets if not tmpmol.interaction_sets[site].no_interactions])
         if num_ligs == 1:
             sys.stdout.write("Analyzing %s with one ligand.\n" % tmpmol.pymol_name)
         elif num_ligs > 1:
@@ -91,17 +92,31 @@ def process_pdb(pdbfile, outpath, is_zipped=False, text=False, verbose=False, pi
     ###########################################################################################
     # Generate XML- and rST-formatted reports for each binding site#
     ###########################################################################################
+    threads = []
+    #@todo Improve thread handling
     for i, site in enumerate(tmpmol.interaction_sets):
         s = tmpmol.interaction_sets[site]
-        if verbose:
-            sys.stdout.write("  @ %s\n" % site)
         bindingsite = TextOutput(s).generate_xml()
         bindingsite.set('id', str(i+1))
+        if not s.no_interactions:
+            bindingsite.set('has_interactions', 'True')
+        else:
+            bindingsite.set('has_interactions', 'False')
         report.insert(i+1, bindingsite)
         for itype in TextOutput(s).generate_rst():
             textlines.append(itype)
-        visualize_in_pymol(tmpmol, site, show=False, pics=pics)
+        if not s.no_interactions:
+            if verbose:
+                sys.stdout.write("  @ %s\n" % site)
+            p = multiprocessing.Process(target=visualize_in_pymol, args=(tmpmol, site, False, pics))
+            threads.append(p)
+        else:
+            textlines.append('No interactions detected.')
         sys.stdout = sys.__stdout__  # Change back to original stdout, gets changed when PyMOL has been used before
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
     tree = et.ElementTree(report)
     create_folder_if_not_exists(tilde_expansion(outpath))
     tree.write('%s/report.xml' % tilde_expansion(outpath), pretty_print=True, xml_declaration=True)

@@ -37,8 +37,9 @@ from pymol import cmd
 from pymol import finish_launching
 
 
-def is_biolip_excluded(hetid):
-    """Checks for the HET ID in the BioLip exlusion list."""
+def is_biolip_artifact(hetid):
+    """Checks for the HET ID in the BioLip artifact list. Contains non-biological compounds often used appearing
+    as artifacts in PDB structures."""
     # List from http://zhanglab.ccmb.med.umich.edu/BioLiP/ligand_list (2014-07-10)
     excluded = ['ACE', 'HEX', 'TMA', 'SOH', 'P25', 'CCN', 'PR', 'PTN', 'NO3', 'TCN', 'BU1', 'BCN', 'CB3', 'HCS', 'NBN',
                 'SO2', 'MO6', 'MOH', 'CAC', 'MLT', 'KR', '6PH', 'MOS', 'UNL', 'MO3', 'SR', 'CD3', 'PB', 'ACM', 'LUT',
@@ -85,6 +86,12 @@ def is_metalion(hetid):
     return hetid.upper() in metals
 
 
+def is_other_ion(hetid):
+    """Checks if a PDB ligand is an ion"""
+    ions = ['CL', 'IOD', 'BR']
+    return hetid.upper() in ions
+
+
 def is_dna(hetid):
     """Check if a PDB ligand is a DNA base"""
     dna = ['A', 'C', 'T', 'G', 'DA', 'DC', 'DT', 'DG']
@@ -93,7 +100,10 @@ def is_dna(hetid):
 
 def is_artifact(hetid):
     """Returns if the ligand is most likely and artifact or other stuff not meaningful (i.e. common solvents)"""
-    artifacts = ['GOL', 'EDO', 'DOD', 'DMS', 'FMT', 'UNL', 'UPL', '1PE', 'UNX', 'EOH']
+    # NH2 is amidated N-terminus
+    # ACE is acetylated C-terminus
+    #@todo Check validity of other IDs in the list
+    artifacts = ['GOL', 'EDO', 'DOD', 'DMS', 'FMT', 'UNL', 'UPL', '1PE', 'UNX', 'EOH', 'NH2', 'ACE']
     return hetid.upper() in artifacts
 
 
@@ -135,11 +145,10 @@ def is_mod_aa(hetid):
 
 
 def is_lig(hetid):
-    #@todo Exclude atomic ions (like chloride)
     #@todo Check if the set of excluded ligands is sufficient (see e.g. 3WU2)
     """Checks if a PDB compound can be excluded as a small molecule ligand"""
     h = hetid.upper()
-    return not (h == 'HOH' or is_mod_aa(h) or is_dna(h) or is_metalion(h))
+    return not (h == 'HOH' or is_mod_aa(h) or is_dna(h) or is_metalion(h) or is_other_ion(h) or is_artifact(h))
 
 
 def idx_to_pdb_mapping(fil):
@@ -403,15 +412,27 @@ def getligs(mol):
     data = namedtuple('ligand', 'mol mapping water')
     ligands = []
 
-    ###################
-    # Filtering steps #
-    ###################
+    #########################
+    # Filtering using lists #
+    #########################
 
     all_res = [o for o in pybel.ob.OBResidueIter(mol.OBMol)
                if not (o.GetResidueProperty(9) or o.GetResidueProperty(0))]
     water = [o for o in pybel.ob.OBResidueIter(mol.OBMol) if o.GetResidueProperty(9)]
 
     all_res = [a for a in all_res if is_lig(a.GetName())]  # Filter out non-ligands
+
+    ############################################
+    # Filtering by counting and artifacts list #
+    ############################################
+
+    artifacts = []
+    unique_ligs = set(a.GetName() for a in all_res)
+    for ulig in unique_ligs:
+        # Discard if appearing 10 times or more and is possible artifact
+        if is_biolip_artifact(ulig) and [a.GetName() for a in all_res].count(ulig) >= 10:
+            artifacts.append(ulig)
+    all_res = [a for a in all_res if a.GetName() not in artifacts]
 
     ###################
     # Extract ligands #
@@ -457,8 +478,6 @@ def read_pdb(pdbfname, safe=False):
     """Reads a given PDB file and returns a Pybel Molecule. If requested, do it
     safely to except Open Babel crashes. All bonds are read in as single bonds
     if requested, saving a lot of time at OpenBabel import."""
-    #@todo Make OpenBabel errors quiet
-    #workaround for a bug in OpenBabel
     global exitcode
     resource.setrlimit(resource.RLIMIT_STACK, (2**28, -1))  # set stack size to 256MB
     sys.setrecursionlimit(10**5)  # increase Python recoursion limit
@@ -466,7 +485,6 @@ def read_pdb(pdbfname, safe=False):
     if safe:  # read the file safely, since it can happen, that babel crashes on large files
         if os.path.exists(pdbfname):
             def f(fname):
-                #pybel.readfile('pdb', fname).next()
                 readmol('pdb', fname)
             p = Process(target=f, args=(pdbfname,))  # make the file reading a separate process
             p.start()

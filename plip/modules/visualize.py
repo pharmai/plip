@@ -53,7 +53,7 @@ def png_workaround(filepath, width=1200, height=800):
         attempts, ecode = 0, 1
         # Check if file is truncated and wait if that's the case
         while ecode != 0 and attempts <= 10:
-            ecode = subprocess.call(['convert', newfile, 'null'], stdout=open('/dev/null', 'w'),
+            ecode = subprocess.call(['convert', newfile, '/dev/null'], stdout=open('/dev/null', 'w'),
                                     stderr=subprocess.STDOUT)
             sleep(0.1)
             attempts += 1

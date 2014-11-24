@@ -27,7 +27,7 @@ from detection import *
 from supplemental import *
 
 ################
-##MAIN CLASSES##
+# MAIN CLASSES #
 ################
 
 
@@ -57,10 +57,6 @@ class Mol():
         a_set = []
         for atom in itertools.ifilter(lambda at: at.OBAtom.IsHbondAcceptor(), all_atoms):
             in_ring = False
-            #@todo Remove ring exclusion criterion for hydrogen bond donors and acceptors
-            #for r in self.rings:  # Members of aromatic rings can not form hydrogen bonds
-                #if r.obj.IsMember(atom.OBAtom):
-                    #in_ring = True
             if not in_ring:
                 a_set.append(data(a=atom, type='regular'))
         return a_set
@@ -71,9 +67,6 @@ class Mol():
         data = namedtuple('hbonddonor', 'd h type')
         for donor in [a for a in all_atoms if a.OBAtom.IsHbondDonor()]:
             in_ring = False
-            #for r in self.rings:
-                #if r.obj.IsMember(donor.OBAtom):  # Members of aromatic rings can not form hydrogen bonds
-                    #in_ring = True
             if not in_ring:
                 for adj_atom in [a for a in pybel.ob.OBAtomAtomIter(donor.OBAtom) if a.IsHbondDonorH()]:
                     donor_pairs.append(data(d=donor, h=pybel.Atom(adj_atom), type='regular'))
@@ -94,6 +87,7 @@ class Mol():
                 aromatic = True
                 for a in r_atoms:
                     adj = pybel.ob.OBAtomAtomIter(a.OBAtom)
+                    # Check for neighboring atoms in the ring
                     n_coords = [pybel.Atom(neigh).coords for neigh in adj if ring.IsMember(neigh)]
                     vec1, vec2 = vector(a.coords, n_coords[0]), vector(a.coords, n_coords[1])
                     normals.append(np.cross(vec1, vec2))
@@ -186,6 +180,10 @@ class PLInteraction():
         self.water_bridges = water_bridges(self.bindingsite.get_hba(), self.ligand.get_hba(),
                                            self.bindingsite.get_hbd(), self.ligand.get_hbd(),
                                            self.ligand.water)
+        self.no_interactions = all(len(i) == 0 for i in [self.saltbridge_lneg, self.saltbridge_pneg, self.hbonds_ldon,
+                                                         self.hbonds_pdon, self.pistacking, self.pication_paro,
+                                                         self.pication_paro, self.hydrophobic_contacts,
+                                                         self.halogen_bonds, self.water_bridges])
 
     def refine_hydrophobic(self, all_h, pistacks):
         """Apply several rules to reduce the number of hydrophobic interactions."""
@@ -492,7 +490,6 @@ class PDBComplex():
         self.protcomplex.OBMol.AddPolarHydrogens()
         for atm in self.protcomplex:
             self.atoms[atm.idx] = atm
-        #self.idx_to_pdb_mapping = idx_to_pdb_mapping(pdbpath)  # Counting is different from PDB if TER records present
         ligands = getligs(self.protcomplex)
         resis = [obres for obres in pybel.ob.OBResidueIter(self.protcomplex.OBMol) if obres.GetResidueProperty(0)]
         for ligand in ligands:

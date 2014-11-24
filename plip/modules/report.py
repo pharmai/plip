@@ -192,7 +192,7 @@ class TextOutput():
                         ['Water Bridges', self.waterbridge_features, self.waterbridge_info],
                         ['Salt Bridges', self.saltbridge_features, self.saltbridge_info],
                         ['pi-Stacking', self.pistacking_features, self.pistacking_info],
-                        ['pi-Cation Interaction', self.pication_features, self.pication_info],
+                        ['pi-Cation Interactions', self.pication_features, self.pication_info],
                         ['Halogen Bonds', self.halogen_features, self.halogen_info]]:
             iname, features, info = section
             if not len(info) == 0:
