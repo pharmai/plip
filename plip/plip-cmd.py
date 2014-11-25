@@ -66,7 +66,7 @@ def fetch_pdb(pdbid, verbose_mode):
     return [urllib2.urlopen(pdburl).read(), status[1]]
 
 
-def process_pdb(pdbfile, outpath, is_zipped=False, text=False, verbose=False, pics=False):
+def process_pdb(pdbfile, outpath, is_zipped=False, text=False, verbose=False, pics=False, maxthreads=None):
     """Analysis of a single PDB file. Can generate textual reports and PyMOL session files as output."""
     tmpmol = PDBComplex()
     tmpmol.output_path = outpath
@@ -93,7 +93,8 @@ def process_pdb(pdbfile, outpath, is_zipped=False, text=False, verbose=False, pi
     # Generate XML- and rST-formatted reports for each binding site#
     ###########################################################################################
     threads = []
-    #@todo Improve thread handling
+    running_threads = []
+
     for i, site in enumerate(tmpmol.interaction_sets):
         s = tmpmol.interaction_sets[site]
         bindingsite = TextOutput(s).generate_xml()
@@ -108,22 +109,39 @@ def process_pdb(pdbfile, outpath, is_zipped=False, text=False, verbose=False, pi
         if not s.no_interactions:
             if verbose:
                 sys.stdout.write("  @ %s\n" % site)
+
             p = multiprocessing.Process(target=visualize_in_pymol, args=(tmpmol, site, False, pics))
             threads.append(p)
+
         else:
             textlines.append('No interactions detected.')
         sys.stdout = sys.__stdout__  # Change back to original stdout, gets changed when PyMOL has been used before
-    for t in threads:
-        t.start()
-    for t in threads:
-        t.join()
+
+    ##############################################
+    # Use multithreading for PyMOL visualization #
+    ##############################################
+
+    if maxthreads is None:  # Use as many threads as there are processor cores
+        maxthreads = multiprocessing.cpu_count()
+    else:
+        maxthreads = max(2, maxthreads)
+    while len(threads) != 0:
+        for i, t in enumerate(threads):
+            if len(running_threads) <= maxthreads-2:  # One can be still added, one used for the main process
+                t.start()
+                running_threads.append(t)
+                threads.pop(i)
+        for j, t in enumerate(running_threads):
+            if not t.is_alive():
+                running_threads.pop(j)
+
+    #####################################
+    # Write rST and XML to output files #
+    #####################################
+
     tree = et.ElementTree(report)
     create_folder_if_not_exists(tilde_expansion(outpath))
     tree.write('%s/report.xml' % tilde_expansion(outpath), pretty_print=True, xml_declaration=True)
-
-    ################################
-    # Write rST to the output file #
-    ################################
 
     if text:
         with open('%s/report.rst' % tilde_expansion(outpath), 'w') as f:
@@ -144,7 +162,8 @@ def main(args):
     if args.input is not None:  # Process PDB file
         if os.path.getsize(args.input) == 0:
             sysexit(2, 'Error: Empty PDB file')
-        process_pdb(args.input, outp, text=args.txt, verbose=args.verbose, pics=args.pics)
+        process_pdb(args.input, outp, text=args.txt, verbose=args.verbose, pics=args.pics,
+                    maxthreads=int(args.maxthreads))
     else:  # Try to fetch the current PDB structure directly from the RCBS server
         try:
             pdbfile, pdbid = fetch_pdb(args.pdbid.lower(), verbose_mode=args.verbose)
@@ -155,7 +174,7 @@ def main(args):
             with open(tilde_expansion(pdbpath), 'w') as g:
                 g.write(pdbfile)
             process_pdb(tilde_expansion(pdbpath), tilde_expansion(outp), text=args.txt, verbose=args.verbose,
-                        pics=args.pics)
+                        pics=args.pics, maxthreads=int(args.maxthreads))
         except ValueError:
             sysexit(3, 'Error: Invalid PDB ID')
     if pdbid is not None and outp is not None:
@@ -164,6 +183,8 @@ def main(args):
         sys.stdout.write('\nFinished with analysis of %s. Find the result files in %s\n\n' % (pdbid, outp))
 
 if __name__ == '__main__':
+    #@todo Imagemagick functions make additional threads (2 for each binding site)
+    #@todo Refactor code to enable proper counting
     ##############################
     # Parse command line arguments
     ##############################
@@ -176,5 +197,6 @@ if __name__ == '__main__':
     parser.add_argument("-p", "--pics", dest="pics", default=False, help="Additional pictures", action="store_true")
     parser.add_argument("-t", "--text", dest="txt", default=False, help="Additional rST output for reports",
                         action="store_true")
+    parser.add_argument("--maxthreads", dest="maxthreads", default=1, help="Set maximum number of threads", type=int)
     arguments = parser.parse_args()
     main(arguments)

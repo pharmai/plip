@@ -187,13 +187,13 @@ def whichrestype(atom):
         except AttributeError:
             return None
     elif isinstance(atom, OBAtom):
-        return atom.GetResidue().GetName() if not atom.GetResidue is None else None
+        return atom.GetResidue().GetName() if atom.GetResidue is not None else None
     else:
         return None
 
 
 def whichresnumber(atom):
-    """Returns the residue name of an Pybel or OpenBabel atom (numbering as in original PDB file)."""
+    """Returns the residue number of an Pybel or OpenBabel atom (numbering as in original PDB file)."""
     if isinstance(atom, Atom):
         return atom.OBAtom.GetResidue().GetNum()
     elif isinstance(atom, OBAtom):

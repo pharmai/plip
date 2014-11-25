@@ -209,7 +209,7 @@ class PLInteraction():
         bsclust = {}
         #  3. If a protein atom interacts with several neighboring ligand atoms, just keep the one with the closest dist
         for h in hydroph:
-            if not h.bsatom.idx in bsclust:
+            if h.bsatom.idx not in bsclust:
                 bsclust[h.bsatom.idx] = [h, ]
             else:
                 bsclust[h.bsatom.idx].append(h)

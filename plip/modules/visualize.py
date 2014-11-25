@@ -66,7 +66,6 @@ def png_workaround(filepath, width=1200, height=800):
         os.system(getwidth+getheight+newres+quadratic)
     else:
         sys.stderr.write('Imagemagick not available. Images will not be resized or cropped.')
-    cmd.refresh()
 
 
 def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False):
@@ -382,6 +381,7 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False):
     filename = '%s-%s' % (pdbid.upper(), "-".join(ligdata.bs_id).upper())
     cmd.save("".join([save_to, "%s.pse" % filename]))
 
+    #@todo Make seperate function here
     # Create output pictures (experimental)
     if pics:
         png_workaround("".join([save_to, filename]))
