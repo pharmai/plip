@@ -269,8 +269,8 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False):
             cmd.select('NegCharge-P', 'NegCharge-P or id %i' % mapping[patom.idx])
         for latom in saltb.positive.atoms:
             cmd.select('PosCharge-L', 'PosCharge-L or id %i' % lig_to_pdb[latom.idx])
-        for group in [['ps1', 'Chargecenter-P', 'tmp_bs', saltb.positive.center],
-                      ['ps2', 'Chargecenter-L', 'tmp_lig', saltb.negative.center]]:
+        for group in [['ps1', 'Chargecenter-P', 'tmp_bs', saltb.negative.center],
+                      ['ps2', 'Chargecenter-L', 'tmp_lig', saltb.positive.center]]:
             cmd.pseudoatom(group[0], pos=group[3])
             cmd.pseudoatom(group[1], pos=group[3])
             cmd.select(group[2], group[0])

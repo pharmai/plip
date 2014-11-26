@@ -1,0 +1,4 @@
+# Blacklist for PDB files
+
+3WU2    Photosystem II complex, too large to be processed in reasonable time
+3H3G    Strange residue numbering in PDB file (from -344 to 0 instead from 1 to n)
