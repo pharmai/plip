@@ -102,7 +102,6 @@ def is_artifact(hetid):
     """Returns if the ligand is most likely and artifact or other stuff not meaningful (i.e. common solvents)"""
     # NH2 is amidated N-terminus
     # ACE is acetylated C-terminus
-    #@todo Check validity of other IDs in the list
     artifacts = ['GOL', 'EDO', 'DOD', 'DMS', 'FMT', 'UNL', 'UPL', '1PE', 'UNX', 'EOH', 'NH2', 'ACE']
     return hetid.upper() in artifacts
 
@@ -396,9 +395,9 @@ def set_custom_colorset():
     cmd.set_color('mylightgreen', '[229, 245, 224]')
 
 
-#######################################
-# Copied code from Joachim's repository
-#######################################
+#############################################
+# Following code adapted from Joachim Haupt #
+#############################################
 
 
 def getligs(mol):

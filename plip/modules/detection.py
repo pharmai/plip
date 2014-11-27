@@ -17,16 +17,16 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 
-
-# Own modules
+# Python standard library
 import itertools
 
+# Own modules
 from supplemental import *
 
 
-######################
-#THRESHOLD DEFINITIONS
-######################
+#########################
+# THRESHOLD DEFINITIONS #
+#########################
 
 # Some distance thresholds were extended (max. 1.0A) if too restrictive too account for low-quality structures
 HYDROPH_DIST_MAX = 4.0  # Distance cutoff for detection of hydrophobic contacts
@@ -51,7 +51,6 @@ WATER_BRIDGE_THETA_MIN = 100  # Min. angle between water oxygen, donor hydrogen 
 ##################################################
 # FUNCTIONS FOR DETECTION OF SPECIFIC INTERACTIONS
 ##################################################
-#@todo Implement checks to avoid atoms of the ligand or protein being in the path of an interaction. (e.g. 1f0r)
 
 def hydrophobic_interactions(atom_set_a, atom_set_b):
     """Detection of hydrophobic pliprofiler between atom_set_a (binding site) and atom_set_b (ligand).

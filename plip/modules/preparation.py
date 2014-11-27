@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 # Python Standard Library
 from operator import itemgetter
-import gzip
 
 # Own modules
 from detection import *
@@ -39,7 +38,6 @@ class Mol():
         self.charged = None
         self.hbond_don_atom_pairs = None
         self.hbond_acc_atoms = None
-        #@todo Same values defined in Mol and PDBComplex class
         # Max distance from lig to binding site and max. deviation from planarity in aromatic rings
         co = namedtuple("cutoffs", "bs_dist aromatic_planarity")
         self.cutoffs = co(bs_dist=6.0, aromatic_planarity=7.5)
@@ -403,13 +401,13 @@ class Ligand(Mol):
         for a in all_atoms:
             if a.atomicnum == 7:  # It's a nitrogen, so could be a protonated amine or quaternary ammonium
                 n_atoms = [a_neighbor.GetAtomicNum() for a_neighbor in pybel.ob.OBAtomAtomIter(a.OBAtom)]
-                if not '1' in n_atoms and len(n_atoms) == 4:  # It's a quaternary ammonium (N with 4 residues != H)
+                if '1' not in n_atoms and len(n_atoms) == 4:  # It's a quaternary ammonium (N with 4 residues != H)
                     a_set.append(data(atoms=[a, ], type='positive', center=list(a.coords), fgroup='quartamine'))
                 if a.OBAtom.GetHyb() == 3 and len(n_atoms) >= 3:  # It's sp3-hybridized, so it could pick up an hydrogen
                     a_set.append(data(atoms=[a, ], type='positive', center=list(a.coords), fgroup='tertamine'))
             if a.atomicnum == 16:  # It's a sulfur
                 n_atoms = [a_neighbor.GetAtomicNum() for a_neighbor in pybel.ob.OBAtomAtomIter(a.OBAtom)]
-                if not '1' in n_atoms and len(n_atoms) == 3:  # It's a sulfonium (S with 3 residues != H)
+                if '1' not in n_atoms and len(n_atoms) == 3:  # It's a sulfonium (S with 3 residues != H)
                     a_set.append(data(atoms=[a, ], type='positive', center=list(a.coords), fgroup='sulfonium'))
             if a.atomicnum == 15:  # It's a phosphor atom
                 n_atoms = [a_neighbor.GetAtomicNum() for a_neighbor in pybel.ob.OBAtomAtomIter(a.OBAtom)]
@@ -454,8 +452,7 @@ class PDBComplex():
     """
 
     def __init__(self):
-        self.interaction_sets = {}  # Dictionary with site identifiers as keys, e.g. QUE-A-2095 and PLInteraction
-                                    # object as value
+        self.interaction_sets = {}  # Dictionary with site identifiers as keys and object as value
         self.protcomplex = None
         self.atoms = {}  # Dictionary of Pybel atoms, accessible by their idx
         self.sourcefiles = {}
@@ -466,23 +463,12 @@ class PDBComplex():
         co = namedtuple("cutoffs", "bs_dist aromatic_planarity")
         self.cutoffs = co(bs_dist=6.0, aromatic_planarity=7.5)
 
-    def load_pdb(self, pdbpath, is_zipped=False):
+    def load_pdb(self, pdbpath):
         """Loads a pdb file with protein AND ligand(s), separates and prepares them."""
         self.sourcefiles['pdbcomplex'] = pdbpath
-        if not is_zipped:  # It's a PDB file
-            self.protcomplex = read_pdb(pdbpath, safe=False)  # Don't do safe reading
-            # Counting is different from PDB if TER records present
-            self.idx_to_pdb_mapping = idx_to_pdb_mapping(open(tilde_expansion(pdbpath)).readlines())
-        #@todo Also implement functionality for opening gzipped files for normal scripts
-        else:  # It's a gzipped file
-            obc = pybel.ob.OBConversion()
-            obc.SetInFormat('pdb')
-            mol = pybel.ob.OBMol()
-            with gzip.open(pdbpath) as f:
-                obc.ReadString(mol, str(f.read()))
-                self.protcomplex = pybel.Molecule(mol)
-            with gzip.open(pdbpath) as f:
-                self.idx_to_pdb_mapping = idx_to_pdb_mapping(f.readlines())
+        self.protcomplex = read_pdb(pdbpath, safe=False)  # Don't do safe reading
+        # Counting is different from PDB if TER records present
+        self.idx_to_pdb_mapping = idx_to_pdb_mapping(open(tilde_expansion(pdbpath)).readlines())
         try:
             self.pymol_name = self.protcomplex.data['HEADER'][56:60].lower()  # Get name from HEADER data
         except KeyError:  # Extract the PDBID from the filename

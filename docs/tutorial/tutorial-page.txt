@@ -8,6 +8,8 @@ Protein-Ligand Interaction Profiler
 
 ***Output***
 
+Using PyMOL -> PyMOL 1.7.x recommended, otherwise could lead to some interactions not visualized properly
+
 ***Input file requirements***
 PLIP should work for each structure in valid PDB format. As the tool makes use of OpenBabel for processing the files,
 one option to check the validity is to do a simple conversion with OpenBabel using

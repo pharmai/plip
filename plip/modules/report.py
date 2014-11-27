@@ -21,17 +21,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 # Python Standard Library
 import time
 
-# Own modules
-from supplemental import *
-
 # External libraries
 import lxml.etree as et
 
 
 class TextOutput():
-    """Create and save a report for the pliprofiler of a binding site."""
+    """Gather report data and generate reports for one binding site in different formats"""
     def __init__(self, pli_class):
-        ### GENERAL
+
+        ################
+        # GENERAL DATA #
+        ################
+
         self.output_path = pli_class.output_path
         self.name = pli_class.name
         self.pdbid = pli_class.pdbid.upper()
@@ -40,7 +41,10 @@ class TextOutput():
         self.header = ['#PREDICTION OF NONCOVALENT INTERACTIONS FOR %s:%s' % (self.pdbid, self.name),
                        '#Created on %s' % time.strftime("%Y/%m/%d")]
 
-        ### HYDROPHOBIC
+        ############################
+        # HYDROPHOBIC INTERACTIONS #
+        ############################
+
         self.hydrophobic_features = ('RESNR', 'RESTYPE', 'DIST', 'LIGCARBONIDX', 'PROTCARBONIDX', 'LIGCOO',
                                      'PROTCOO')
         self.hydrophobic_info = []
@@ -49,7 +53,10 @@ class TextOutput():
                                           lig_to_pdb[hydroph.ligatom.idx], mapping[hydroph.bsatom.idx]
                                           , hydroph.ligatom.coords, hydroph.bsatom.coords))
 
-        ### HBONDS
+        ##################
+        # HYDROGEN BONDS #
+        ##################
+
         self.hbond_features = ('RESNR', 'RESTYPE', 'DIST_H-A', 'DIST_D-A', 'DON_ANGLE', 'PROTISDON', 'DONORIDX',
                                'ACCEPTORIDX', 'LIGCOO', 'PROTCOO')
         self.hbond_info = []
@@ -65,7 +72,10 @@ class TextOutput():
                                         '%.2f' % hbond.distance_ad, '%.2f' % hbond.angle, hbond.protisdon, donidx,
                                         accidx, hbond.d.coords, hbond.a.coords))
 
-        ### WATER-BRIDGED HYDROGEN BONDS
+        #################
+        # WATER-BRIDGES #
+        #################
+
         self.waterbridge_features = ('RESNR', 'RESTYPE', 'DIST_A-W', 'DIST_D-W', 'DON_ANGLE', 'WATER_ANGLE',
                                      'PROTISDON', 'DONOR_IDX', 'ACCEPTOR_IDX', 'WATER_IDX')
         self.waterbridge_info = []
@@ -79,7 +89,10 @@ class TextOutput():
                                           '%.2f' % wbridge.w_angle, wbridge.protisdon, donidx, accidx,
                                           mapping[wbridge.water.idx]))
 
-        ### SALTBRIDGES
+        ################
+        # SALT BRIDGES #
+        ################
+
         self.saltbridge_features = ('RESNR', 'RESTYPE', 'DIST', 'PROTISPOS', 'LIG_GROUP', 'LIG_IDX_LIST',
                                     'LIGCOO', 'PROTCOO')
         self.saltbridge_info = []
@@ -95,7 +108,10 @@ class TextOutput():
                                              group.capitalize(), ",".join(ids),
                                              tuple(sb.positive.center), tuple(sb.negative.center)))
 
-        ### PISTACKING
+        ###############
+        # PI-STACKING #
+        ###############
+
         self.pistacking_features = ('RESNR', 'RESTYPE', 'CENTDIST', 'ANGLE', 'OFFSET', 'TYPE', 'LIG_IDX_LIST',
                                     'LIGCOO', 'PROTCOO')
         self.pistacking_info = []
@@ -105,7 +121,10 @@ class TextOutput():
                                          '%.2f' % stack.angle, '%.2f' % stack.offset, stack.type, ",".join(ids)
                                          , tuple(stack.ligandring.center), tuple(stack.proteinring.center)))
 
-        ### PI-CATION
+        ##########################
+        # PI-CATION INTERACTIONS #
+        ##########################
+
         self.pication_features = ('RESNR', 'RESTYPE', 'DIST', 'OFFSET', 'PROTCHARGED', 'LIG_GROUP', 'LIG_IDX_LIST',
                                   'LIGCOO', 'PROTCOO')
         self.pication_info = []
@@ -123,7 +142,10 @@ class TextOutput():
                                            '%.2f' % picat.offset, picat.protcharged, group, ",".join(ids),
                                            tuple(picat.charge.center), tuple(picat.ring.center)))
 
-        ### HALOGEN BONDS
+        #################
+        # HALOGEN BONDS #
+        #################
+
         self.halogen_features = ('RESNR', 'RESTYPE', 'DIST', 'DON_ANGLE', 'ACC_ANGLE', 'DONORTYPE', 'DON_IDX',
                                  'ACC_IDX', 'LIGCOO', 'PROTCOO')
         self.halogen_info = []
@@ -204,7 +226,7 @@ class TextOutput():
                         if type(x) == str:
                             values.append(x)
                         elif type(x) == tuple and len(x) == 3:  # Coordinates
-                            values.append("%.2f,%.2f,%.2f" % x)
+                            values.append("%.3f, %.3f, %.3f" % x)
                         else:
                             values.append(str(x))
                     table.append(values)
@@ -239,11 +261,11 @@ class TextOutput():
                         feat = et.SubElement(new_contact, features[i].lower())
                         xc, yc, zc = feature
                         xcoo = et.SubElement(feat, 'x')
-                        xcoo.text = str(xc)
+                        xcoo.text = '%.3f' % xc
                         ycoo = et.SubElement(feat, 'y')
-                        ycoo.text = str(yc)
+                        ycoo.text = '%.3f' % yc
                         zcoo = et.SubElement(feat, 'z')
-                        zcoo.text = str(zc)
+                        zcoo.text = '%.3f' % zc
                     else:
                         feat = et.SubElement(new_contact, features[i].lower())
                         feat.text = str(feature)
