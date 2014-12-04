@@ -344,6 +344,7 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False):
         if object_exists(ligname):
             cmd.zoom(ligname, 3)
     cmd.set('sphere_scale', 0.2, 'resn HOH')  # Needs to be done here because of the copy made
+    cmd.set('sphere_transparency', 0.4, '!resn HOH')
     cmd.origin(ligname)
 
     ##############################
