@@ -78,7 +78,12 @@ def fetch_pdb(pdbid, verbose_mode):
     if verbose_mode:
         sys.stdout.write('Downloading file from PDB ... ')
     pdburl = 'http://www.rcsb.org/pdb/files/%s.pdb' % current_entry  # Get URL for current entry
-    return [urllib2.urlopen(pdburl).read(), current_entry]
+    pdbfile = None
+    try:
+        pdbfile = urllib2.urlopen(pdburl).read()
+    except urllib2.HTTPError:
+        sysexit(5, "Error: No file in PDB format available from wwPDB for the given PDB ID.")
+    return [pdbfile, current_entry]
 
 
 def process_pdb(pdbfile, outpath, text=False, verbose_mode=False, pics=False, maxthreads=None):
