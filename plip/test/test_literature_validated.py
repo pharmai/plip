@@ -18,9 +18,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 
-#@todo Find way to make the PDB files smaller (e.g. by removing ligands)
-#@todo Add more and representative examples
-#@todo What about negative examples?
 
 import unittest
 from plip.modules.preparation import PDBComplex
@@ -99,32 +96,3 @@ class LiteratureValidatedTest(unittest.TestCase):
         # Saltbridge to Asp45
         saltb = {saltbridge.resnr for saltbridge in s.saltbridge_pneg}
         self.assertEqual({45}, saltb)
-
-    def test_1xdn(self):
-        """Binding of ATP to RNA editing ligase 1 (1xdn)
-        Reference: Deng et al. High resolution crystal structure of a key editosome enzyme from Trypanosoma brucei:
-        RNA editing ligase 1. (2004)
-        """
-        tmpmol = PDBComplex()
-        tmpmol.load_pdb('./pdb/1xdn.pdb')
-        s = tmpmol.interaction_sets['ATP-A-501']
-        # Hydrogen bonds to R111, I61 (backbone) and K87
-        hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
-        self.assertTrue({111, 61, 87}.issubset(hbonds))
-        # Water bridges to K307 and R309 from phosphate groups
-        waterbridges = {wb.resnr for wb in s.water_bridges}
-        self.assertTrue({307, 309}.issubset(waterbridges))
-        #@todo Additional water bridges to E159, N92, R111, and I59
-        #@todo (missing in prediction): adenine to carbonyl oxygen of E86
-        #@todo (missing in prediciton): adenine N7 to backbone of V88
-        #@todo pi-stacking to F209
-
-    #@todo Here are some other ideas for structures to test...
-    # 1OSN:BVP-A-500
-    # 2WOS:BVP-B-1207 (BVDU with 5 different interaction types)
-    # 1VSN:NFT-A-283 (CatK)
-    # 3SHY:5FO-A-1 (halogen interaction with fluorine)
-    # 1P5E:TBS-A-301 (halogen bonds)
-    # 1BMA:0QH-A-256 (halogen bonds)
-    # 1ACJ:THA-A-999 (pi-stacking)
-    #2ZOZ:ET-B-184 (Ethidium)
