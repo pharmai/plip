@@ -218,8 +218,10 @@ class TextOutput():
                         ['pi-Cation Interactions', self.pication_features, self.pication_info],
                         ['Halogen Bonds', self.halogen_features, self.halogen_info]]:
             iname, features, interaction_information = section
-            interaction_information = sorted(interaction_information, key=itemgetter(0, 2))  # Sort by resnr and dist
+            # Sort results first by res number, then by distance and finally ligand coordinates to get a unique order
+            interaction_information = sorted(interaction_information, key=itemgetter(0, 2, -2))
             if not len(interaction_information) == 0:
+
                 txt.append('\n**%s**' % iname)
                 table = [features, ]
                 for single_contact in interaction_information:
@@ -250,7 +252,8 @@ class TextOutput():
         def format_interactions(element_name, features, interaction_information):
             """Returns a formatted element with interaction information."""
             interaction = et.Element(element_name)
-            interaction_information = sorted(interaction_information, key=itemgetter(0, 2))  # Sort by resnr and dist
+            # Sort results first by res number, then by distance and finally ligand coordinates to get a unique order
+            interaction_information = sorted(interaction_information, key=itemgetter(0, 2, -2))
             for j, single_contact in enumerate(interaction_information):
                 new_contact = et.SubElement(interaction, element_name[:-1], id=str(j+1))
                 for i, feature in enumerate(single_contact):
