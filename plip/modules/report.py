@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 # Python Standard Library
 import time
+from operator import itemgetter
 
 # External libraries
 import lxml.etree as et
@@ -216,13 +217,14 @@ class TextOutput():
                         ['pi-Stacking', self.pistacking_features, self.pistacking_info],
                         ['pi-Cation Interactions', self.pication_features, self.pication_info],
                         ['Halogen Bonds', self.halogen_features, self.halogen_info]]:
-            iname, features, info = section
-            if not len(info) == 0:
+            iname, features, interaction_information = section
+            interaction_information = sorted(interaction_information, key=itemgetter(0, 2))  # Sort by resnr and dist
+            if not len(interaction_information) == 0:
                 txt.append('\n**%s**' % iname)
                 table = [features, ]
-                for interaction in info:
+                for single_contact in interaction_information:
                     values = []
-                    for x in interaction:
+                    for x in single_contact:
                         if type(x) == str:
                             values.append(x)
                         elif type(x) == tuple and len(x) == 3:  # Coordinates
@@ -248,6 +250,7 @@ class TextOutput():
         def format_interactions(element_name, features, interaction_information):
             """Returns a formatted element with interaction information."""
             interaction = et.Element(element_name)
+            interaction_information = sorted(interaction_information, key=itemgetter(0, 2))  # Sort by resnr and dist
             for j, single_contact in enumerate(interaction_information):
                 new_contact = et.SubElement(interaction, element_name[:-1], id=str(j+1))
                 for i, feature in enumerate(single_contact):
