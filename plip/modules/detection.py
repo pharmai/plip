@@ -72,7 +72,7 @@ def hbonds(acceptors, donor_pairs, protisdon, typ):
     and donor angles above HBOND_DON_ANGLE_MIN
     """
     i_set = []
-    data = namedtuple('hbond', 'a d h distance_ah distance_ad angle type protisdon resnr restype')
+    data = namedtuple('hbond', 'a d h distance_ah distance_ad angle type protisdon resnr restype sidechain')
     for acc, don in itertools.product(acceptors, donor_pairs):
         if typ == 'strong':  # Regular (strong) hydrogen bonds
             dist_ah = euclidean3d(acc.a.coords, don.h.coords)
@@ -82,9 +82,12 @@ def hbonds(acceptors, donor_pairs, protisdon, typ):
                 v = vecangle(vec1, vec2)
                 if v > HBOND_DON_ANGLE_MIN:
                     restype = whichrestype(don.d) if protisdon else whichrestype(acc.a)
+                    protatom = don.d.OBAtom if protisdon else acc.c.OBAtom
+                    is_sidechain_hbond = protatom.GetResidue().GetAtomProperty(protatom, 8)  # Check if sidechain atom
                     resnr = whichresnumber(don.d)if protisdon else whichresnumber(acc.a)
                     i_set.append(data(a=acc.a, d=don.d, h=don.h, distance_ah=dist_ah, distance_ad=dist_ad, angle=v,
-                                      type=typ, protisdon=protisdon, resnr=resnr, restype=restype))
+                                      type=typ, protisdon=protisdon, resnr=resnr, restype=restype,
+                                      sidechain=is_sidechain_hbond))
     return i_set
 
 

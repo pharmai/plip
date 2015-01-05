@@ -131,8 +131,11 @@ Angle between interacting groups
 Determines if the protein is positively charged, provides a donor or a charge.
 Important for interactions with directionality.
 
-<ligcoo>, <protcoo>, <itype>
-Irrelevant for output, should not be displayed
+<sidechain>
+Is true if a hydrogen bond is formed with the sidechain of the protein and false if it is formed with the backbone.
+
+<ligcoo>, <protcoo>
+Coordinates of protein and ligand interacting atoms or interaction centers (e.g. charge centers)
 
 
 Contact Me

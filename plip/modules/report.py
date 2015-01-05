@@ -58,18 +58,18 @@ class TextOutput():
         # HYDROGEN BONDS #
         ##################
 
-        self.hbond_features = ('RESNR', 'RESTYPE', 'DIST_H-A', 'DIST_D-A', 'DON_ANGLE', 'PROTISDON', 'DONORIDX',
-                               'ACCEPTORIDX', 'LIGCOO', 'PROTCOO')
+        self.hbond_features = ('RESNR', 'RESTYPE', 'SIDECHAIN', 'DIST_H-A', 'DIST_D-A', 'DON_ANGLE', 'PROTISDON',
+                               'DONORIDX', 'ACCEPTORIDX', 'LIGCOO', 'PROTCOO')
         self.hbond_info = []
         for hbond in pli_class.hbonds_pdon+pli_class.hbonds_ldon:
             if hbond.protisdon:
                 donidx, accidx = mapping[hbond.d.idx], lig_to_pdb[hbond.a.idx]
-                self.hbond_info.append((hbond.resnr, hbond.restype, '%.2f' % hbond.distance_ah,
+                self.hbond_info.append((hbond.resnr, hbond.restype, hbond.sidechain, '%.2f' % hbond.distance_ah,
                                         '%.2f' % hbond.distance_ad, '%.2f' % hbond.angle, hbond.protisdon, donidx,
                                         accidx, hbond.a.coords, hbond.d.coords))
             else:
                 donidx, accidx = lig_to_pdb[hbond.d.idx], mapping[hbond.a.idx]
-                self.hbond_info.append((hbond.resnr, hbond.restype, '%.2f' % hbond.distance_ah,
+                self.hbond_info.append((hbond.resnr, hbond.restype, hbond.sidechain, '%.2f' % hbond.distance_ah,
                                         '%.2f' % hbond.distance_ad, '%.2f' % hbond.angle, hbond.protisdon, donidx,
                                         accidx, hbond.d.coords, hbond.a.coords))
 
