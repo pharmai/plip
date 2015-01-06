@@ -24,6 +24,7 @@ from __future__ import print_function
 from modules.preparation import *
 from modules.visualize import visualize_in_pymol
 from modules.report import TextOutput
+from modules import config
 
 # Python standard library
 import sys
@@ -235,17 +236,17 @@ if __name__ == '__main__':
                         help="Set maximum number of main threads (number of binding sites processed simultaneously)",
                         type=int)
     # Optional threshold arguments, not shown in help
-    #@todo Pack thresholds only into main script, make them global
-    for threshold in [('bs_dist_max', 6.0), ('aromatic_planarity', 7.5), ('hydroph_dist_max', 4.0),
-                      ('hbond_dist_max', 4.0), ('hbond_don_angle_min', 90.0), ('pistack_dist_max', 7.5),
-                      ('pistack_ang_dev', 30.0), ('pistack_offset_max', 2.0), ('pication_dist_max', 6.0),
-                      ('saltbridge_dist_max', 5.0), ('halogen_dist_max', 4.0), ('halogen_acc_angle', 120.0),
-                      ('halogen_don_angle', 165.0), ('halogen_angle_dev', 30.0), ('water_bridge_mindist', 2.5),
-                      ('water_bridge_maxdist', 4.0), ('water_bridge_omega_min', 80.0),
-                      ('water_bridge_omega_max', 160.0), ('water_bridge_theta_min', 100.0)]:
-        name, defaultval = threshold
-        parser.add_argument('--%s' % name, default=defaultval, dest=name, type=float, help=argparse.SUPPRESS)
+    thresholds = ['bs_dist', 'aromatic_planarity', 'hydroph_dist_max', 'hbond_dist_max', 'hbond_don_angle_min',
+                  'pistack_dist_max', 'pistack_ang_dev', 'pistack_offset_max', 'pication_dist_max',
+                  'saltbridge_dist_max', 'halogen_dist_max', 'halogen_acc_angle', 'halogen_don_angle',
+                  'halogen_angle_dev', 'water_bridge_mindist', 'water_bridge_maxdist', 'water_bridge_omega_min',
+                  'water_bridge_omega_max', 'water_bridge_theta_min']
+    for threshold in thresholds:
+        parser.add_argument('--%s' % threshold, dest=threshold, type=float, help=argparse.SUPPRESS)
 
     arguments = parser.parse_args()
-
+    # Assign values to global thresholds
+    for threshold in thresholds:
+        if getattr(arguments, threshold) is not None:
+            setattr(config, threshold.upper(), getattr(arguments, threshold))
     main(arguments)  # Start main script

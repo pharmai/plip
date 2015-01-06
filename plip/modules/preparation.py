@@ -39,9 +39,6 @@ class Mol():
         self.charged = None
         self.hbond_don_atom_pairs = None
         self.hbond_acc_atoms = None
-        # Max distance from lig to binding site and max. deviation from planarity in aromatic rings
-        co = namedtuple("cutoffs", "bs_dist aromatic_planarity")
-        self.cutoffs = co(bs_dist=config.BS_DIST, aromatic_planarity=config.AROMATIC_PLANARITY)
 
     def hydrophobic_atoms(self, all_atoms):
         """Select all carbon atoms which have only carbons and/or hydrogens as direct neighbors."""
@@ -92,7 +89,7 @@ class Mol():
                     normals.append(np.cross(vec1, vec2))
                 # Given all normals of ring atoms and their neighbors, the angle between any has to be 7.5 deg or less
                 for n1, n2 in itertools.product(normals, repeat=2):
-                    if self.cutoffs.aromatic_planarity < vecangle(n1, n2) < 180.0-self.cutoffs.aromatic_planarity:
+                    if config.AROMATIC_PLANARITY < vecangle(n1, n2) < 180.0-config.AROMATIC_PLANARITY:
                             aromatic = False
                             break
                 # Ring is aromatic either by OpenBabel's criteria or if sufficiently planar
@@ -310,7 +307,6 @@ class BindingSite(Mol):
         self.hbond_don_atom_pairs = self.find_hbd(self.all_atoms, self.hydroph_atoms)
         self.charged = self.find_charged(self.full_mol)
         self.halogenbond_acc = self.find_hal(self.all_atoms)
-        self.cutoffs = cclass.cutoffs
 
     def find_hal(self, atoms):
         """Look for halogen bond acceptors (Y-O, with Y=C,P,S)"""
@@ -366,7 +362,6 @@ class Ligand(Mol):
         self.centroid = centroid([a.coords for a in self.all_atoms])
         self.max_dist_to_center = max((euclidean3d(self.centroid, a.coords) for a in self.all_atoms))
         self.water = []
-        self.cutoffs = cclass.cutoffs
         for hoh in water:
             oxy = None
             for at in pybel.ob.OBResidueAtomIter(hoh):
@@ -374,7 +369,7 @@ class Ligand(Mol):
                     oxy = pybel.Atom(at)
             # There are some cases where there is no oxygen in a water residue
             if not set([at.GetAtomicNum() for at in pybel.ob.OBResidueAtomIter(hoh)]) == {1}:
-                if euclidean3d(self.centroid, oxy.coords) < self.max_dist_to_center + self.cutoffs.bs_dist:
+                if euclidean3d(self.centroid, oxy.coords) < self.max_dist_to_center + config.BS_DIST:
                     self.water.append(oxy)
         s = lig.title.split('-')
         data = namedtuple('pymol_data', 'hetid chain resid maptopdb bs_id')
@@ -460,9 +455,6 @@ class PDBComplex():
         self.output_path = '/tmp'
         self.pymol_name = None
         self.idx_to_pdb_mapping = {}
-        # Max distance from lig to binding site and max. deviation from planarity in aromatic rings
-        co = namedtuple("cutoffs", "bs_dist aromatic_planarity")
-        self.cutoffs = co(bs_dist=6.0, aromatic_planarity=7.5)
 
     def load_pdb(self, pdbpath):
         """Loads a pdb file with protein AND ligand(s), separates and prepares them."""
@@ -481,7 +473,7 @@ class PDBComplex():
         resis = [obres for obres in pybel.ob.OBResidueIter(self.protcomplex.OBMol) if obres.GetResidueProperty(0)]
         for ligand in ligands:
             lig_obj = Ligand(ligand.mol, self, ligand.mapping, ligand.water)
-            cutoff = lig_obj.max_dist_to_center + self.cutoffs.bs_dist
+            cutoff = lig_obj.max_dist_to_center + config.BS_DIST
             bs_res = self.extract_bs(cutoff, lig_obj.centroid, resis)
             # Get a list of all atoms belonging to the binding site, search by idx
             bs_atoms = [self.atoms[idx] for idx in [i for i in self.atoms.keys()

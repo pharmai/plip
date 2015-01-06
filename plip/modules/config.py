@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 # Set thresholds for detection of interactions
 
 # Thresholds for detection (global variables)
-
 BS_DIST = 6.0  # Determines maximum distance to include binding site residues
 AROMATIC_PLANARITY = 7.5  # Determines allowed deviation from planarity in aromatic rings
 

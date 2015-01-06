@@ -25,29 +25,6 @@ from supplemental import *
 import config
 
 
-##########################################
-# THRESHOLD DEFINITIONS FROM CONFIG FILE #
-##########################################
-
-HYDROPH_DIST_MAX = config.HYDROPH_DIST_MAX
-HBOND_DIST_MAX = config.HBOND_DIST_MAX
-HBOND_DON_ANGLE_MIN = config.HBOND_DON_ANGLE_MIN
-PISTACK_DIST_MAX = config.PISTACK_DIST_MAX
-PISTACK_ANG_DEV = config.PISTACK_ANG_DEV
-PISTACK_OFFSET_MAX = config.PISTACK_OFFSET_MAX
-PICATION_DIST_MAX = config.PICATION_DIST_MAX
-SALTBRIDGE_DIST_MAX = config.SALTBRIDGE_DIST_MAX
-HALOGEN_DIST_MAX = config.HALOGEN_DIST_MAX
-HALOGEN_ACC_ANGLE = config.HALOGEN_ACC_ANGLE
-HALOGEN_DON_ANGLE = config.HALOGEN_DON_ANGLE
-HALOGEN_ANGLE_DEV = config.HALOGEN_ANGLE_DEV
-WATER_BRIDGE_MINDIST = config.WATER_BRIDGE_MINDIST
-WATER_BRIDGE_MAXDIST = config.WATER_BRIDGE_MAXDIST
-WATER_BRIDGE_OMEGA_MIN = config.WATER_BRIDGE_OMEGA_MIN
-WATER_BRIDGE_OMEGA_MAX = config.WATER_BRIDGE_OMEGA_MAX
-WATER_BRIDGE_THETA_MIN = config.WATER_BRIDGE_THETA_MIN
-
-
 ##################################################
 # FUNCTIONS FOR DETECTION OF SPECIFIC INTERACTIONS
 ##################################################
@@ -60,7 +37,7 @@ def hydrophobic_interactions(atom_set_a, atom_set_b):
     i_set = []
     for a, b in itertools.product(atom_set_a.atoms, atom_set_b.atoms):
         e = euclidean3d(a.coords, b.coords)
-        if e < HYDROPH_DIST_MAX:
+        if e < config.HYDROPH_DIST_MAX:
             i_set.append(data(bsatom=a, ligatom=b, distance=e, restype=whichrestype(a), resnr=whichresnumber(a)))
     return i_set
 
@@ -77,10 +54,10 @@ def hbonds(acceptors, donor_pairs, protisdon, typ):
         if typ == 'strong':  # Regular (strong) hydrogen bonds
             dist_ah = euclidean3d(acc.a.coords, don.h.coords)
             dist_ad = euclidean3d(acc.a.coords, don.d.coords)
-            if dist_ad < HBOND_DIST_MAX:
+            if dist_ad < config.HBOND_DIST_MAX:
                 vec1, vec2 = vector(don.h.coords, don.d.coords), vector(don.h.coords, acc.a.coords)
                 v = vecangle(vec1, vec2)
-                if v > HBOND_DON_ANGLE_MIN:
+                if v > config.HBOND_DON_ANGLE_MIN:
                     restype = whichrestype(don.d) if protisdon else whichrestype(acc.a)
                     protatom = don.d.OBAtom if protisdon else acc.c.OBAtom
                     is_sidechain_hbond = protatom.GetResidue().GetAtomProperty(protatom, 8)  # Check if sidechain atom
@@ -110,11 +87,11 @@ def pistacking(rings_bs, rings_lig):
         resnr, restype = whichresnumber(r.atoms[0]), whichrestype(r.atoms[0])
 
         # SELECTION BY DISTANCE, ANGLE AND OFFSET
-        if d < PISTACK_DIST_MAX:
-            if 0 < a < PISTACK_ANG_DEV and offset < PISTACK_OFFSET_MAX:
+        if d < config.PISTACK_DIST_MAX:
+            if 0 < a < config.PISTACK_ANG_DEV and offset < config.PISTACK_OFFSET_MAX:
                 i_set.append(data(proteinring=r, ligandring=l, distance=d, angle=a, offset=offset,
                                   type='P', resnr=resnr, restype=restype))
-            if 90-PISTACK_ANG_DEV < a < 90+PISTACK_ANG_DEV and offset < PISTACK_OFFSET_MAX:
+            if 90-config.PISTACK_ANG_DEV < a < 90+config.PISTACK_ANG_DEV and offset < config.PISTACK_OFFSET_MAX:
                 i_set.append(data(proteinring=r, ligandring=l, distance=d, angle=a, offset=offset,
                                   type='T', resnr=resnr, restype=restype))
     return i_set
@@ -134,7 +111,7 @@ def pication(rings, pos_charged, protcharged):
                 # Project the center of charge into the ring and measure distance to ring center
                 proj = projection(ring.normal, ring.center, p.center)
                 offset = euclidean3d(proj, ring.center)
-                if d < PICATION_DIST_MAX and offset < PISTACK_OFFSET_MAX:
+                if d < config.PICATION_DIST_MAX and offset < config.PISTACK_OFFSET_MAX:
                     if type(p).__name__ == 'lcharge' and p.fgroup == 'tertamine':
                         # Special case here if the ligand has a tertiary amine, check an additional angle
                         # Otherwise, we might have have a pi-cation interaction 'through' the ligand
@@ -167,7 +144,7 @@ def saltbridge(poscenter, negcenter, protispos):
         dists = []
         for pa, na in itertools.product(pc.atoms, [n for n in nc.atoms if not nc.atoms == []]):
             dists.append(euclidean3d(pa.coords, na.coords))
-        if min(dists) < SALTBRIDGE_DIST_MAX:
+        if min(dists) < config.SALTBRIDGE_DIST_MAX:
             resnr = pc.resnr if protispos else nc.resnr
             restype = pc.restype if protispos else nc.restype
             i_set.append(data(positive=pc, negative=nc, distance=euclidean3d(pc.center, nc.center),
@@ -181,12 +158,12 @@ def halogen(acceptor, donor):
     i_set = []
     for acc, don in itertools.product(acceptor, donor):
         dist = euclidean3d(acc.o.coords, don.x.coords)
-        if dist < HALOGEN_DIST_MAX:
+        if dist < config.HALOGEN_DIST_MAX:
             vec1, vec2 = vector(acc.o.coords, acc.y.coords), vector(acc.o.coords, don.x.coords)
             vec3, vec4 = vector(don.x.coords, acc.o.coords), vector(don.x.coords, don.c.coords)
             acc_angle, don_angle = vecangle(vec1, vec2), vecangle(vec3, vec4)
-            if HALOGEN_ACC_ANGLE-HALOGEN_ANGLE_DEV < acc_angle < HALOGEN_ACC_ANGLE+HALOGEN_ANGLE_DEV:
-                if HALOGEN_DON_ANGLE-HALOGEN_ANGLE_DEV < don_angle < HALOGEN_DON_ANGLE+HALOGEN_ANGLE_DEV:
+            if config.HALOGEN_ACC_ANGLE-config.HALOGEN_ANGLE_DEV < acc_angle < config.HALOGEN_ACC_ANGLE+config.HALOGEN_ANGLE_DEV:
+                if config.HALOGEN_DON_ANGLE-config.HALOGEN_ANGLE_DEV < don_angle < config.HALOGEN_DON_ANGLE+config.HALOGEN_ANGLE_DEV:
                     i_set.append(data(acc=acc, don=don, distance=dist, don_angle=don_angle, acc_angle=acc_angle,
                                       restype=whichrestype(acc.o), resnr=whichresnumber(acc.o),
                                       donortype=don.x.OBAtom.GetType()))
@@ -203,21 +180,21 @@ def water_bridges(bs_hba, lig_hba, bs_hbd, lig_hbd, water):
     for w in water:
         for acc1 in lig_hba:
             dist = euclidean3d(acc1.a.coords, w.coords)
-            if WATER_BRIDGE_MINDIST <= dist <= WATER_BRIDGE_MAXDIST:
+            if config.WATER_BRIDGE_MINDIST <= dist <= config.WATER_BRIDGE_MAXDIST:
                 lig_aw.append((acc1, w, dist))
         for acc2 in bs_hba:
             dist = euclidean3d(acc2.a.coords, w.coords)
-            if WATER_BRIDGE_MINDIST <= dist <= WATER_BRIDGE_MAXDIST:
+            if config.WATER_BRIDGE_MINDIST <= dist <= config.WATER_BRIDGE_MAXDIST:
                 prot_aw.append((acc2, w, dist))
         for don1 in lig_hbd:
             dist = euclidean3d(don1.d.coords, w.coords)
             d_angle = vecangle(vector(don1.h.coords, don1.d.coords), vector(don1.h.coords, w.coords))
-            if WATER_BRIDGE_MINDIST <= dist <= WATER_BRIDGE_MAXDIST and d_angle > WATER_BRIDGE_THETA_MIN:
+            if config.WATER_BRIDGE_MINDIST <= dist <= config.WATER_BRIDGE_MAXDIST and d_angle > config.WATER_BRIDGE_THETA_MIN:
                 lig_dw.append((don1, w, dist, d_angle))
         for don2 in bs_hbd:
             dist = euclidean3d(don2.d.coords, w.coords)
             d_angle = vecangle(vector(don2.h.coords, don2.d.coords), vector(don2.h.coords, w.coords))
-            if WATER_BRIDGE_MINDIST <= dist <= WATER_BRIDGE_MAXDIST and d_angle > WATER_BRIDGE_THETA_MIN:
+            if config.WATER_BRIDGE_MINDIST <= dist <= config.WATER_BRIDGE_MAXDIST and d_angle > config.WATER_BRIDGE_THETA_MIN:
                 prot_hw.append((don2, w, dist, d_angle))
 
     for l, p in itertools.product(lig_aw, prot_hw):
@@ -225,7 +202,7 @@ def water_bridges(bs_hba, lig_hba, bs_hbd, lig_hbd, water):
         don, wd, distance_dw, d_angle = p
         if wl == wd:  # Same water molecule and angle within omega
             w_angle = vecangle(vector(acc.a.coords, wl.coords), vector(wl.coords, don.h.coords))
-            if WATER_BRIDGE_OMEGA_MIN < w_angle < WATER_BRIDGE_OMEGA_MAX:
+            if config.WATER_BRIDGE_OMEGA_MIN < w_angle < config.WATER_BRIDGE_OMEGA_MAX:
 
                 i_set.append(data(a=acc.a, d=don.d, h=don.h, water=wl, distance_aw=distance_aw, distance_dw=distance_dw,
                                   d_angle=d_angle, w_angle=w_angle, type='first_deg', resnr=whichresnumber(don.d),
@@ -236,7 +213,7 @@ def water_bridges(bs_hba, lig_hba, bs_hbd, lig_hbd, water):
         don, wd, distance_dw, d_angle = l
         if wl == wd:  # Same water molecule and angle within omega
             w_angle = vecangle(vector(acc.a.coords, wl.coords), vector(wl.coords, don.h.coords))
-            if WATER_BRIDGE_OMEGA_MIN < w_angle < WATER_BRIDGE_OMEGA_MAX:
+            if config.WATER_BRIDGE_OMEGA_MIN < w_angle < config.WATER_BRIDGE_OMEGA_MAX:
                 i_set.append(data(a=acc.a, d=don.d, h=don.h, water=wl, distance_aw=distance_aw, distance_dw=distance_dw,
                                   d_angle=d_angle, w_angle=w_angle, type='first_deg', resnr=whichresnumber(acc.a),
                                   restype=whichrestype(acc.a), protisdon=False))
