@@ -24,6 +24,7 @@ from operator import itemgetter
 # Own modules
 from detection import *
 from supplemental import *
+import config
 
 ################
 # MAIN CLASSES #
@@ -40,7 +41,7 @@ class Mol():
         self.hbond_acc_atoms = None
         # Max distance from lig to binding site and max. deviation from planarity in aromatic rings
         co = namedtuple("cutoffs", "bs_dist aromatic_planarity")
-        self.cutoffs = co(bs_dist=6.0, aromatic_planarity=7.5)
+        self.cutoffs = co(bs_dist=config.BS_DIST, aromatic_planarity=config.AROMATIC_PLANARITY)
 
     def hydrophobic_atoms(self, all_atoms):
         """Select all carbon atoms which have only carbons and/or hydrogens as direct neighbors."""

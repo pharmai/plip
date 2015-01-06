@@ -235,6 +235,7 @@ if __name__ == '__main__':
                         help="Set maximum number of main threads (number of binding sites processed simultaneously)",
                         type=int)
     # Optional threshold arguments, not shown in help
+    #@todo Pack thresholds only into main script, make them global
     for threshold in [('bs_dist_max', 6.0), ('aromatic_planarity', 7.5), ('hydroph_dist_max', 4.0),
                       ('hbond_dist_max', 4.0), ('hbond_don_angle_min', 90.0), ('pistack_dist_max', 7.5),
                       ('pistack_ang_dev', 30.0), ('pistack_offset_max', 2.0), ('pication_dist_max', 6.0),
