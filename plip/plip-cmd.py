@@ -42,6 +42,13 @@ descript = "Protein-Ligand Interaction Profiler (PLIP) v%s " \
            "is a command-line based tool to analyze interactions in a protein-ligand complex." % __version__
 
 
+def threshold_limiter(aparser, arg):
+    arg = float(arg)
+    if arg <= 0:
+        aparser.error("All thresholds have to be values larger than zero.")
+    return arg
+
+
 def sysexit(code, msg):
     """Exit using an custom error message and error code."""
     sys.stderr.write(msg)
@@ -236,17 +243,37 @@ if __name__ == '__main__':
                         help="Set maximum number of main threads (number of binding sites processed simultaneously)",
                         type=int)
     # Optional threshold arguments, not shown in help
-    thresholds = ['bs_dist', 'aromatic_planarity', 'hydroph_dist_max', 'hbond_dist_max', 'hbond_don_angle_min',
-                  'pistack_dist_max', 'pistack_ang_dev', 'pistack_offset_max', 'pication_dist_max',
-                  'saltbridge_dist_max', 'halogen_dist_max', 'halogen_acc_angle', 'halogen_don_angle',
-                  'halogen_angle_dev', 'water_bridge_mindist', 'water_bridge_maxdist', 'water_bridge_omega_min',
-                  'water_bridge_omega_max', 'water_bridge_theta_min']
-    for threshold in thresholds:
-        parser.add_argument('--%s' % threshold, dest=threshold, type=float, help=argparse.SUPPRESS)
+    thr = namedtuple('threshold', 'name type')
+    thresholds = [thr(name='bs_dist', type='distance'), thr(name='aromatic_planarity', type='angle'),
+                  thr(name='hydroph_dist_max', type='distance'), thr(name='hbond_dist_max', type='distance'),
+                  thr(name='hbond_don_angle_min', type='angle'), thr(name='pistack_dist_max', type='distance'),
+                  thr(name='pistack_ang_dev', type='other'), thr(name='pistack_offset_max', type='distance'),
+                  thr(name='pication_dist_max', type='distance'), thr(name='saltbridge_dist_max', type='distance'),
+                  thr(name='halogen_dist_max', type='distance'), thr(name='halogen_acc_angle', type='angle'),
+                  thr(name='halogen_don_angle', type='angle'), thr(name='halogen_angle_dev', type='other'),
+                  thr(name='water_bridge_mindist', type='distance'), thr(name='water_bridge_maxdist', type='distance'),
+                  thr(name='water_bridge_omega_min', type='angle'), thr(name='water_bridge_omega_max', type='angle'),
+                  thr(name='water_bridge_theta_min', type='angle')]
+    for t in thresholds:
+        parser.add_argument('--%s' % t.name, dest=t.name, type=lambda x: threshold_limiter(parser, x),
+                            help=argparse.SUPPRESS)
 
     arguments = parser.parse_args()
     # Assign values to global thresholds
-    for threshold in thresholds:
-        if getattr(arguments, threshold) is not None:
-            setattr(config, threshold.upper(), getattr(arguments, threshold))
+    for t in thresholds:
+        tvalue = getattr(arguments, t.name)
+        if tvalue is not None:
+            if t.type == 'angle' and not 0 < tvalue < 180:  # Check value for angle thresholds
+                parser.error("Threshold for angles have values within 0 and 180.")
+            setattr(config, t.name.upper(), tvalue)
+    # Check additional conditions for interdependent thresholds
+    if not config.HALOGEN_ACC_ANGLE > config.HALOGEN_ANGLE_DEV:
+        parser.error("The halogen acceptor angle has to be larger than the halogen angle deviation.")
+    if not config.HALOGEN_DON_ANGLE > config.HALOGEN_ANGLE_DEV:
+        parser.error("The halogen donor angle has to be larger than the halogen angle deviation.")
+    if not config.WATER_BRIDGE_MINDIST < config.WATER_BRIDGE_MAXDIST:
+        parser.error("The water bridge minimum distance has to be smaller than the water bridge maximum distance.")
+    if not config.WATER_BRIDGE_OMEGA_MIN < config.WATER_BRIDGE_OMEGA_MAX:
+        parser.error("The water bridge omega minimum angle has to be smaller than the water bridge omega maximum angle")
+
     main(arguments)  # Start main script
