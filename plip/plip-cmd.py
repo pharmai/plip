@@ -161,14 +161,14 @@ def process_pdb(pdbfile, outpath, xml=False, verbose_mode=False, pics=False, pym
         maxthreads = max(2, maxthreads)
     while len(threads) != 0:
         # Add threads as long as there are free threads available
-        for i, t in enumerate(threads):
+        for i, tr in enumerate(threads):
             if len(running_threads) <= maxthreads-2:  # One can be still added, one used for the main process
-                t.start()
-                running_threads.append(t)
+                tr.start()
+                running_threads.append(tr)
                 threads.pop(i)
         # Check if running threads have finished and delete them
-        for j, t in enumerate(running_threads):
-            if not t.is_alive():
+        for j, tr in enumerate(running_threads):
+            if not tr.is_alive():
                 running_threads.pop(j)
 
     ###########################################
@@ -244,7 +244,7 @@ if __name__ == '__main__':
                         type=int)
     # Optional threshold arguments, not shown in help
     thr = namedtuple('threshold', 'name type')
-    thresholds = [thr(name='bs_dist', type='distance'), thr(name='aromatic_planarity', type='angle'),
+    thresholds = [thr(name='aromatic_planarity', type='angle'),
                   thr(name='hydroph_dist_max', type='distance'), thr(name='hbond_dist_max', type='distance'),
                   thr(name='hbond_don_angle_min', type='angle'), thr(name='pistack_dist_max', type='distance'),
                   thr(name='pistack_ang_dev', type='other'), thr(name='pistack_offset_max', type='distance'),
@@ -255,7 +255,7 @@ if __name__ == '__main__':
                   thr(name='water_bridge_omega_min', type='angle'), thr(name='water_bridge_omega_max', type='angle'),
                   thr(name='water_bridge_theta_min', type='angle')]
     for t in thresholds:
-        parser.add_argument('--%s' % t.name, dest=t.name, type=lambda x: threshold_limiter(parser, x),
+        parser.add_argument('--%s' % t.name, dest=t.name, type=lambda val: threshold_limiter(parser, val),
                             help=argparse.SUPPRESS)
 
     arguments = parser.parse_args()
@@ -264,7 +264,12 @@ if __name__ == '__main__':
         tvalue = getattr(arguments, t.name)
         if tvalue is not None:
             if t.type == 'angle' and not 0 < tvalue < 180:  # Check value for angle thresholds
-                parser.error("Threshold for angles have values within 0 and 180.")
+                parser.error("Threshold for angles need to have values within 0 and 180.")
+            if t.type == 'distance':
+                if tvalue > 10:  # Check value for angle thresholds
+                    parser.error("Threshold for distances must not be larger than 10 Angstrom.")
+                elif tvalue > config.BS_DIST+1:  # Dynamically adapt the search space for binding site residues
+                    config.BS_DIST = tvalue + 1
             setattr(config, t.name.upper(), tvalue)
     # Check additional conditions for interdependent thresholds
     if not config.HALOGEN_ACC_ANGLE > config.HALOGEN_ANGLE_DEV:
@@ -275,5 +280,4 @@ if __name__ == '__main__':
         parser.error("The water bridge minimum distance has to be smaller than the water bridge maximum distance.")
     if not config.WATER_BRIDGE_OMEGA_MIN < config.WATER_BRIDGE_OMEGA_MAX:
         parser.error("The water bridge omega minimum angle has to be smaller than the water bridge omega maximum angle")
-
     main(arguments)  # Start main script
