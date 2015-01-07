@@ -96,3 +96,75 @@ class LiteratureValidatedTest(unittest.TestCase):
         # Saltbridge to Asp45
         saltb = {saltbridge.resnr for saltbridge in s.saltbridge_pneg}
         self.assertEqual({45}, saltb)
+
+    def test_1osn(self):
+        """Binding of VZV-tk to BVDU-MP (2reg)
+        Reference: Bird et al. Crystal structures of Varicella Zoster Virus Thyrimidine Kinase. (2003)
+        """
+        tmpmol = PDBComplex()
+        tmpmol.load_pdb('./pdb/1osn.pdb')
+        s = tmpmol.interaction_sets['BVP-A-500']
+        # Sandwiched pi-stacking involving Phe93 and Phe139
+        pistackres = {pistack.resnr for pistack in s.pistacking}
+        self.assertTrue({93, 139}.issubset(pistackres))
+        # Hydrogen bonding of Gln90
+        hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
+        self.assertTrue({90}.issubset(hbonds))
+
+    def test_2w0s(self):
+        """Binding of Vacc-TK to TDP (2w0s)
+        Reference: Caillat et al. Crystal structure of poxvirus thymidylate kinase: An unexpected dimerization
+        has implications for antiviral therapy (2008)
+        """
+        tmpmol = PDBComplex()
+        tmpmol.load_pdb('./pdb/2w0s.pdb')
+        s = tmpmol.interaction_sets['BVP-B-1207']
+        # Hydrogen bonding of Tyr101 and Arg72
+        hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
+        self.assertTrue({101}.issubset(hbonds))
+        # Halogen Bonding of Asn65
+        halogens = {halogen.resnr for halogen in s.halogen_bonds}
+        self.assertTrue({65}.issubset(halogens))
+        # pi-stacking interaction with Phe68
+        pistackres = {pistack.resnr for pistack in s.pistacking}
+        self.assertTrue({68}.issubset(pistackres))
+        # Saltbridge to Arg41 and Arg93
+        saltb = {saltbridge.resnr for saltbridge in s.saltbridge_lneg}
+        self.assertTrue({41, 93}.issubset(saltb))
+
+    def test_1vsn(self):
+        """Binding of NFT to Cathepsin K (1vsn)
+        Reference: Li et al. Identification of a potent and selective non-basic cathepsin K inhibitor. (2006)
+        """
+        tmpmol = PDBComplex()
+        tmpmol.load_pdb('./pdb/1vsn.pdb')
+        s = tmpmol.interaction_sets['NFT-A-283']
+        # Hydrogen bonding to Gly66
+        hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
+        self.assertTrue({66}.issubset(hbonds))
+
+    def test_3shy(self):
+        """Binding of PDE5 to halogenated 1 (3shy)
+        Reference: Xu et al. Utilization of halogen bond in lead optimization: a case study of rational design
+        of potent phosphodiesterase type 5 (PDE5) inhibitors. (2006)
+        """
+        tmpmol = PDBComplex()
+        tmpmol.load_pdb('./pdb/3shy.pdb')
+        s = tmpmol.interaction_sets['5FO-A-1']
+        # Halogen Bonding of Tyr612
+        halogens = {halogen.resnr for halogen in s.halogen_bonds}
+        self.assertTrue({612}.issubset(halogens))
+        # Hydrogen bonding to Gln817
+        hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
+        self.assertTrue({817}.issubset(hbonds))
+        # pi-stacking interaction with Phe820
+        pistackres = {pistack.resnr for pistack in s.pistacking}
+        self.assertTrue({820}.issubset(pistackres))
+
+    def test_1p5e(self):
+        """Binding of (1p5e)
+        Reference: . (2006)
+        """
+        tmpmol = PDBComplex()
+        tmpmol.load_pdb('./pdb/3shy.pdb')
+        s = tmpmol.interaction_sets['5FO-A-1']
