@@ -27,8 +27,20 @@ Features
 Quickstart
 ==========
 Run the PLIP python script with the option `-h` to list all available command line options.
-To analyze a protein-ligand complex from a Protein Data Bank entry -- e.g. 1vsn --, run `python plip.cmd.py -i 1vsn`.
-To analyze a PDB file from your workstation, run `python plip.cmd.py -f path_to_pdbfile.pdb`.
+To analyze a protein-ligand complex from a Protein Data Bank entry -- e.g. 1vsn --, run
+    `python plip-cmd.py -i 1vsn`.
+To analyze a PDB file from your workstation, run
+    `python plip.cmd.py -f path_to_pdbfile.pdb`.
+
+Threshold settings
+==================
+All geometric thresholds used for detection of interactions in PLIP are stored in the `config.py` module and can be
+changed there permanently if desired. Another possibility is to change single parameters via command line options when
+running plip. The naming of the variables is identical to those in the config file, but all lowercase. Specify the
+threshold you want to change and the new value, e.g. to change HYDROPH_DIST_MAX to 5 Angstrom, run PLIP using
+    `python plip-cmd.py -i 1vsn --hydroph_dist_max 5`
+All distance thresholds can be increased to up to 10 Angstrom. Thresholds for angles can be set between 0 and 180 degree.
+If two interdependent thresholds have conflicting values, PLIP will show an error message.
 
 Web Service
 ===========
