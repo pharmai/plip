@@ -204,7 +204,7 @@ def main(args):
     else:  # Try to fetch the current PDB structure directly from the RCBS server
         try:
             pdbfile, pdbid = fetch_pdb(args.pdbid.lower(), verbose_mode=args.verbose)
-            pdbpath = '%s/%s.pdb' % (args.outpath, pdbid)
+            pdbpath = '%s/%s.pdb' % (args.outpath.rstrip('/'), pdbid)
             create_folder_if_not_exists(args.outpath)
 
             if args.verbose:
