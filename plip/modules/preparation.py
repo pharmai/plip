@@ -399,7 +399,7 @@ class Ligand(Mol):
                 n_atoms = [a_neighbor.GetAtomicNum() for a_neighbor in pybel.ob.OBAtomAtomIter(a.OBAtom)]
                 if '1' not in n_atoms and len(n_atoms) == 4:  # It's a quaternary ammonium (N with 4 residues != H)
                     a_set.append(data(atoms=[a, ], type='positive', center=list(a.coords), fgroup='quartamine'))
-                if a.OBAtom.GetHyb() == 3 and len(n_atoms) >= 3:  # It's sp3-hybridized, so it could pick up an hydrogen
+                elif a.OBAtom.GetHyb() == 3 and len(n_atoms) >= 3:  # It's sp3-hybridized, so could pick up an hydrogen
                     a_set.append(data(atoms=[a, ], type='positive', center=list(a.coords), fgroup='tertamine'))
             if a.atomicnum == 16:  # It's a sulfur
                 n_atoms = [a_neighbor.GetAtomicNum() for a_neighbor in pybel.ob.OBAtomAtomIter(a.OBAtom)]
