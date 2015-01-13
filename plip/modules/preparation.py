@@ -320,7 +320,7 @@ class BindingSite(Mol):
 
     def find_charged(self, mol):
         """Looks for positive charges in arginine, histidine or lysine, for negative in aspartic and glutamic acid."""
-        data = namedtuple('pcharge', 'atoms type center restype resnr')
+        data = namedtuple('pcharge', 'atoms type center restype resnr reschain')
         a_set = []
         for res in pybel.ob.OBResidueIter(mol.OBMol):
             a_contributing = []
@@ -333,7 +333,8 @@ class BindingSite(Mol):
                                       type='positive',
                                       center=centroid([ac.coords for ac in a_contributing]),
                                       restype=res.GetName(),
-                                      resnr=res.GetNum()))
+                                      resnr=res.GetNum(),
+                                      reschain=res.GetChain()))
             if res.GetName() in ('GLU', 'ASP'):  # Aspartic or Glutamic Acid
                 for a in pybel.ob.OBResidueAtomIter(res):
                     if a.GetType().startswith('O') and res.GetAtomProperty(a, 8):
@@ -343,7 +344,8 @@ class BindingSite(Mol):
                                       type='negative',
                                       center=centroid([ac.coords for ac in a_contributing]),
                                       restype=res.GetName(),
-                                      resnr=res.GetNum()))
+                                      resnr=res.GetNum(),
+                                      reschain=res.GetChain()))
         return a_set
 
 

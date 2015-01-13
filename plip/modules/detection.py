@@ -33,12 +33,13 @@ def hydrophobic_interactions(atom_set_a, atom_set_b):
     """Detection of hydrophobic pliprofiler between atom_set_a (binding site) and atom_set_b (ligand).
     Definition: All pairs of qualified carbon atoms within a distance of HYDROPH_DIST_MAX
     """
-    data = namedtuple('hydroph_interaction', 'bsatom ligatom distance restype resnr')
+    data = namedtuple('hydroph_interaction', 'bsatom ligatom distance restype resnr reschain')
     i_set = []
     for a, b in itertools.product(atom_set_a.atoms, atom_set_b.atoms):
         e = euclidean3d(a.coords, b.coords)
         if e < config.HYDROPH_DIST_MAX:
-            i_set.append(data(bsatom=a, ligatom=b, distance=e, restype=whichrestype(a), resnr=whichresnumber(a)))
+            i_set.append(data(bsatom=a, ligatom=b, distance=e, restype=whichrestype(a), resnr=whichresnumber(a),
+                              reschain=whichchain(a)))
     return i_set
 
 
@@ -49,7 +50,7 @@ def hbonds(acceptors, donor_pairs, protisdon, typ):
     and donor angles above HBOND_DON_ANGLE_MIN
     """
     i_set = []
-    data = namedtuple('hbond', 'a d h distance_ah distance_ad angle type protisdon resnr restype sidechain')
+    data = namedtuple('hbond', 'a d h distance_ah distance_ad angle type protisdon resnr restype reschain sidechain')
     for acc, don in itertools.product(acceptors, donor_pairs):
         if typ == 'strong':  # Regular (strong) hydrogen bonds
             dist_ah = euclidean3d(acc.a.coords, don.h.coords)
@@ -59,11 +60,12 @@ def hbonds(acceptors, donor_pairs, protisdon, typ):
                 v = vecangle(vec1, vec2)
                 if v > config.HBOND_DON_ANGLE_MIN:
                     restype = whichrestype(don.d) if protisdon else whichrestype(acc.a)
+                    reschain = whichchain(don.d) if protisdon else whichchain(acc.a)
                     protatom = don.d.OBAtom if protisdon else acc.c.OBAtom
                     is_sidechain_hbond = protatom.GetResidue().GetAtomProperty(protatom, 8)  # Check if sidechain atom
                     resnr = whichresnumber(don.d)if protisdon else whichresnumber(acc.a)
                     i_set.append(data(a=acc.a, d=don.d, h=don.h, distance_ah=dist_ah, distance_ad=dist_ad, angle=v,
-                                      type=typ, protisdon=protisdon, resnr=resnr, restype=restype,
+                                      type=typ, protisdon=protisdon, resnr=resnr, restype=restype, reschain=reschain,
                                       sidechain=is_sidechain_hbond))
     return i_set
 
@@ -71,7 +73,7 @@ def hbonds(acceptors, donor_pairs, protisdon, typ):
 def pistacking(rings_bs, rings_lig):
     """Return all pi-stackings between the given aromatic ring systems in receptor and ligand."""
     i_set = []
-    data = namedtuple('pistack', 'proteinring ligandring distance angle offset type restype resnr')
+    data = namedtuple('pistack', 'proteinring ligandring distance angle offset type restype resnr reschain')
     for r, l in itertools.product(rings_bs, rings_lig):
         # DISTANCE AND RING ANGLE CALCULATION
         d = euclidean3d(r.center, l.center)
@@ -84,16 +86,16 @@ def pistacking(rings_bs, rings_lig):
         offset = min(euclidean3d(proj1, l.center), euclidean3d(proj2, r.center))
 
         # RECEPTOR DATA
-        resnr, restype = whichresnumber(r.atoms[0]), whichrestype(r.atoms[0])
+        resnr, restype, reschain = whichresnumber(r.atoms[0]), whichrestype(r.atoms[0]), whichchain(r.atoms[0])
 
         # SELECTION BY DISTANCE, ANGLE AND OFFSET
         if d < config.PISTACK_DIST_MAX:
             if 0 < a < config.PISTACK_ANG_DEV and offset < config.PISTACK_OFFSET_MAX:
                 i_set.append(data(proteinring=r, ligandring=l, distance=d, angle=a, offset=offset,
-                                  type='P', resnr=resnr, restype=restype))
+                                  type='P', resnr=resnr, restype=restype, reschain=reschain))
             if 90-config.PISTACK_ANG_DEV < a < 90+config.PISTACK_ANG_DEV and offset < config.PISTACK_OFFSET_MAX:
                 i_set.append(data(proteinring=r, ligandring=l, distance=d, angle=a, offset=offset,
-                                  type='T', resnr=resnr, restype=restype))
+                                  type='T', resnr=resnr, restype=restype, reschain=reschain))
     return i_set
 
 
@@ -102,7 +104,7 @@ def pication(rings, pos_charged, protcharged):
     For tertiary and quaternary amines, check also the angle between the ring and the nitrogen.
     """
     i_set = []
-    data = namedtuple('pication', 'ring charge distance offset type restype resnr protcharged')
+    data = namedtuple('pication', 'ring charge distance offset type restype resnr reschain protcharged')
     if not len(rings) == 0 and not len(pos_charged) == 0:
         for ring in rings:
             c = ring.center
@@ -124,21 +126,23 @@ def pication(rings, pos_charged, protcharged):
                         a = min(b, 180-b if not 180-b < 0 else b)
                         if not a > 30.0:
                             resnr, restype = whichresnumber(ring.atoms[0]), whichrestype(ring.atoms[0])
+                            reschain = whichchain(ring.atoms[0])
                             i_set.append(data(ring=ring, charge=p, distance=d,
                                               offset=offset, type='regular', restype=restype,
-                                              resnr=resnr, protcharged=protcharged))
+                                              resnr=resnr, reschain=reschain, protcharged=protcharged))
                         break
                     resnr = whichresnumber(p.atoms[0]) if protcharged else whichresnumber(ring.atoms[0])
                     restype = whichrestype(p.atoms[0]) if protcharged else whichrestype(ring.atoms[0])
+                    reschain = whichchain(p.atoms[0]) if protcharged else whichchain(ring.atoms[0])
                     i_set.append(data(ring=ring, charge=p, distance=d,
                                       offset=offset, type='regular', restype=restype,
-                                      resnr=resnr, protcharged=protcharged))
+                                      resnr=resnr, reschain=reschain, protcharged=protcharged))
     return i_set
 
 
 def saltbridge(poscenter, negcenter, protispos):
     """Detect all salt bridges (pliprofiler between centers of positive and negative charge)"""
-    data = namedtuple('saltbridge', 'positive negative distance protispos resnr restype')
+    data = namedtuple('saltbridge', 'positive negative distance protispos resnr restype reschain')
     i_set = []
     for pc, nc in itertools.product(poscenter, negcenter):
         dists = []
@@ -147,14 +151,15 @@ def saltbridge(poscenter, negcenter, protispos):
         if min(dists) < config.SALTBRIDGE_DIST_MAX:
             resnr = pc.resnr if protispos else nc.resnr
             restype = pc.restype if protispos else nc.restype
+            reschain = pc.reschain if protispos else nc.reschain
             i_set.append(data(positive=pc, negative=nc, distance=euclidean3d(pc.center, nc.center),
-                              protispos=protispos, resnr=resnr, restype=restype))
+                              protispos=protispos, resnr=resnr, restype=restype, reschain=reschain))
     return i_set
 
 
 def halogen(acceptor, donor):
     """Detect all halogen bonds of the type Y-O...X-C"""
-    data = namedtuple('halogenbond', 'acc don distance don_angle acc_angle restype resnr donortype')
+    data = namedtuple('halogenbond', 'acc don distance don_angle acc_angle restype resnr reschain donortype')
     i_set = []
     for acc, don in itertools.product(acceptor, donor):
         dist = euclidean3d(acc.o.coords, don.x.coords)
@@ -166,14 +171,14 @@ def halogen(acceptor, donor):
                 if config.HALOGEN_DON_ANGLE-config.HALOGEN_ANGLE_DEV < don_angle < config.HALOGEN_DON_ANGLE+config.HALOGEN_ANGLE_DEV:
                     i_set.append(data(acc=acc, don=don, distance=dist, don_angle=don_angle, acc_angle=acc_angle,
                                       restype=whichrestype(acc.o), resnr=whichresnumber(acc.o),
-                                      donortype=don.x.OBAtom.GetType()))
+                                      reschain=whichchain(acc.o), donortype=don.x.OBAtom.GetType()))
     return i_set
 
 
 def water_bridges(bs_hba, lig_hba, bs_hbd, lig_hbd, water):
     """Find water-bridged hydrogen bonds between ligand and protein. For now only considers bridged of first degree."""
     i_set = []
-    data = namedtuple('waterbridge', 'a d h water distance_aw distance_dw d_angle w_angle type resnr restype protisdon')
+    data = namedtuple('waterbridge', 'a d h water distance_aw distance_dw d_angle w_angle type resnr restype reschain protisdon')
     # First find all acceptor-water pairs with distance within d
     # and all donor-water pairs with distance within d and angle greater theta
     lig_aw, prot_aw, lig_dw, prot_hw = [], [], [], []
@@ -206,7 +211,7 @@ def water_bridges(bs_hba, lig_hba, bs_hbd, lig_hbd, water):
 
                 i_set.append(data(a=acc.a, d=don.d, h=don.h, water=wl, distance_aw=distance_aw, distance_dw=distance_dw,
                                   d_angle=d_angle, w_angle=w_angle, type='first_deg', resnr=whichresnumber(don.d),
-                                  restype=whichrestype(don.d), protisdon=True))
+                                  restype=whichrestype(don.d), reschain=whichchain(don.d), protisdon=True))
 
     for p, l in itertools.product(prot_aw, lig_dw):
         acc, wl, distance_aw = p
@@ -216,6 +221,6 @@ def water_bridges(bs_hba, lig_hba, bs_hbd, lig_hbd, water):
             if config.WATER_BRIDGE_OMEGA_MIN < w_angle < config.WATER_BRIDGE_OMEGA_MAX:
                 i_set.append(data(a=acc.a, d=don.d, h=don.h, water=wl, distance_aw=distance_aw, distance_dw=distance_dw,
                                   d_angle=d_angle, w_angle=w_angle, type='first_deg', resnr=whichresnumber(acc.a),
-                                  restype=whichrestype(acc.a), protisdon=False))
+                                  restype=whichrestype(acc.a), reschain=whichchain(acc.a), protisdon=False))
 
     return i_set

@@ -46,11 +46,11 @@ class TextOutput():
         # HYDROPHOBIC INTERACTIONS #
         ############################
 
-        self.hydrophobic_features = ('RESNR', 'RESTYPE', 'DIST', 'LIGCARBONIDX', 'PROTCARBONIDX', 'LIGCOO',
+        self.hydrophobic_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'DIST', 'LIGCARBONIDX', 'PROTCARBONIDX', 'LIGCOO',
                                      'PROTCOO')
         self.hydrophobic_info = []
         for hydroph in pli_class.hydrophobic_contacts:
-            self.hydrophobic_info.append((hydroph.resnr, hydroph.restype, '%.2f' % hydroph.distance,
+            self.hydrophobic_info.append((hydroph.resnr, hydroph.restype, hydroph.reschain, '%.2f' % hydroph.distance,
                                           lig_to_pdb[hydroph.ligatom.idx], mapping[hydroph.bsatom.idx]
                                           , hydroph.ligatom.coords, hydroph.bsatom.coords))
 
@@ -58,26 +58,26 @@ class TextOutput():
         # HYDROGEN BONDS #
         ##################
 
-        self.hbond_features = ('RESNR', 'RESTYPE', 'SIDECHAIN', 'DIST_H-A', 'DIST_D-A', 'DON_ANGLE', 'PROTISDON',
-                               'DONORIDX', 'ACCEPTORIDX', 'LIGCOO', 'PROTCOO')
+        self.hbond_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'SIDECHAIN', 'DIST_H-A', 'DIST_D-A', 'DON_ANGLE',
+                               'PROTISDON', 'DONORIDX', 'ACCEPTORIDX', 'LIGCOO', 'PROTCOO')
         self.hbond_info = []
         for hbond in pli_class.hbonds_pdon+pli_class.hbonds_ldon:
             if hbond.protisdon:
                 donidx, accidx = mapping[hbond.d.idx], lig_to_pdb[hbond.a.idx]
-                self.hbond_info.append((hbond.resnr, hbond.restype, hbond.sidechain, '%.2f' % hbond.distance_ah,
-                                        '%.2f' % hbond.distance_ad, '%.2f' % hbond.angle, hbond.protisdon, donidx,
-                                        accidx, hbond.a.coords, hbond.d.coords))
+                self.hbond_info.append((hbond.resnr, hbond.restype, hbond.reschain, hbond.sidechain,
+                                        '%.2f' % hbond.distance_ah, '%.2f' % hbond.distance_ad, '%.2f' % hbond.angle,
+                                        hbond.protisdon, donidx, accidx, hbond.a.coords, hbond.d.coords))
             else:
                 donidx, accidx = lig_to_pdb[hbond.d.idx], mapping[hbond.a.idx]
-                self.hbond_info.append((hbond.resnr, hbond.restype, hbond.sidechain, '%.2f' % hbond.distance_ah,
-                                        '%.2f' % hbond.distance_ad, '%.2f' % hbond.angle, hbond.protisdon, donidx,
-                                        accidx, hbond.d.coords, hbond.a.coords))
+                self.hbond_info.append((hbond.resnr, hbond.restype, hbond.reschain, hbond.sidechain,
+                                        '%.2f' % hbond.distance_ah, '%.2f' % hbond.distance_ad, '%.2f' % hbond.angle,
+                                        hbond.protisdon, donidx, accidx, hbond.d.coords, hbond.a.coords))
 
         #################
         # WATER-BRIDGES #
         #################
 
-        self.waterbridge_features = ('RESNR', 'RESTYPE', 'DIST_A-W', 'DIST_D-W', 'DON_ANGLE', 'WATER_ANGLE',
+        self.waterbridge_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'DIST_A-W', 'DIST_D-W', 'DON_ANGLE', 'WATER_ANGLE',
                                      'PROTISDON', 'DONOR_IDX', 'ACCEPTOR_IDX', 'WATER_IDX')
         self.waterbridge_info = []
         for wbridge in pli_class.water_bridges:
@@ -85,27 +85,27 @@ class TextOutput():
                 donidx, accidx = mapping[wbridge.d.idx], lig_to_pdb[wbridge.a.idx]
             else:
                 donidx, accidx = lig_to_pdb[wbridge.d.idx], mapping[wbridge.a.idx]
-            self.waterbridge_info.append((wbridge.resnr, wbridge.restype, '%.2f' % wbridge.distance_aw,
-                                          '%.2f' % wbridge.distance_dw, '%.2f' % wbridge.d_angle,
-                                          '%.2f' % wbridge.w_angle, wbridge.protisdon, donidx, accidx,
-                                          mapping[wbridge.water.idx]))
+            self.waterbridge_info.append((wbridge.resnr, wbridge.restype, wbridge.reschain,
+                                          '%.2f' % wbridge.distance_aw, '%.2f' % wbridge.distance_dw,
+                                          '%.2f' % wbridge.d_angle, '%.2f' % wbridge.w_angle, wbridge.protisdon,
+                                          donidx, accidx, mapping[wbridge.water.idx]))
 
         ################
         # SALT BRIDGES #
         ################
 
-        self.saltbridge_features = ('RESNR', 'RESTYPE', 'DIST', 'PROTISPOS', 'LIG_GROUP', 'LIG_IDX_LIST',
+        self.saltbridge_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'DIST', 'PROTISPOS', 'LIG_GROUP', 'LIG_IDX_LIST',
                                     'LIGCOO', 'PROTCOO')
         self.saltbridge_info = []
         for sb in pli_class.saltbridge_lneg+pli_class.saltbridge_pneg:
             if sb.protispos:
                 group, ids = sb.negative.fgroup, [str(lig_to_pdb[x.idx]) for x in sb.negative.atoms]
-                self.saltbridge_info.append((sb.resnr, sb.restype, '%.2f' % sb.distance, sb.protispos,
+                self.saltbridge_info.append((sb.resnr, sb.restype, sb.reschain, '%.2f' % sb.distance, sb.protispos,
                                              group.capitalize(), ",".join(ids),
                                              tuple(sb.negative.center), tuple(sb.positive.center)))
             else:
                 group, ids = sb.positive.fgroup, [str(lig_to_pdb[x.idx]) for x in sb.positive.atoms]
-                self.saltbridge_info.append((sb.resnr, sb.restype, '%.2f' % sb.distance, sb.protispos,
+                self.saltbridge_info.append((sb.resnr, sb.restype, sb.reschain, '%.2f' % sb.distance, sb.protispos,
                                              group.capitalize(), ",".join(ids),
                                              tuple(sb.positive.center), tuple(sb.negative.center)))
 
@@ -113,12 +113,12 @@ class TextOutput():
         # PI-STACKING #
         ###############
 
-        self.pistacking_features = ('RESNR', 'RESTYPE', 'CENTDIST', 'ANGLE', 'OFFSET', 'TYPE', 'LIG_IDX_LIST',
-                                    'LIGCOO', 'PROTCOO')
+        self.pistacking_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'CENTDIST', 'ANGLE', 'OFFSET', 'TYPE',
+                                    'LIG_IDX_LIST', 'LIGCOO', 'PROTCOO')
         self.pistacking_info = []
         for stack in pli_class.pistacking:
             ids = [str(lig_to_pdb[x.idx]) for x in stack.ligandring.atoms]
-            self.pistacking_info.append((stack.resnr, stack.restype, '%.2f' % stack.distance,
+            self.pistacking_info.append((stack.resnr, stack.restype, stack.reschain, '%.2f' % stack.distance,
                                          '%.2f' % stack.angle, '%.2f' % stack.offset, stack.type, ",".join(ids)
                                          , tuple(stack.ligandring.center), tuple(stack.proteinring.center)))
 
@@ -126,20 +126,20 @@ class TextOutput():
         # PI-CATION INTERACTIONS #
         ##########################
 
-        self.pication_features = ('RESNR', 'RESTYPE', 'DIST', 'OFFSET', 'PROTCHARGED', 'LIG_GROUP', 'LIG_IDX_LIST',
-                                  'LIGCOO', 'PROTCOO')
+        self.pication_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'DIST', 'OFFSET', 'PROTCHARGED', 'LIG_GROUP',
+                                  'LIG_IDX_LIST', 'LIGCOO', 'PROTCOO')
         self.pication_info = []
         for picat in pli_class.pication_laro+pli_class.pication_paro:
             if picat.protcharged:
                 ids = [str(lig_to_pdb[x.idx]) for x in picat.ring.atoms]
                 group = 'Aromatic'
-                self.pication_info.append((picat.resnr, picat.restype, '%.2f' % picat.distance,
+                self.pication_info.append((picat.resnr, picat.restype, picat.reschain, '%.2f' % picat.distance,
                                            '%.2f' % picat.offset, picat.protcharged, group, ",".join(ids),
                                            tuple(picat.ring.center), tuple(picat.charge.center)))
             else:
                 ids = [str(lig_to_pdb[x.idx]) for x in picat.charge.atoms]
                 group = picat.charge.fgroup
-                self.pication_info.append((picat.resnr, picat.restype, '%.2f' % picat.distance,
+                self.pication_info.append((picat.resnr, picat.restype, picat, reschain, '%.2f' % picat.distance,
                                            '%.2f' % picat.offset, picat.protcharged, group, ",".join(ids),
                                            tuple(picat.charge.center), tuple(picat.ring.center)))
 
@@ -147,11 +147,11 @@ class TextOutput():
         # HALOGEN BONDS #
         #################
 
-        self.halogen_features = ('RESNR', 'RESTYPE', 'DIST', 'DON_ANGLE', 'ACC_ANGLE', 'DONORTYPE', 'DON_IDX',
-                                 'ACC_IDX', 'LIGCOO', 'PROTCOO')
+        self.halogen_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'DIST', 'DON_ANGLE', 'ACC_ANGLE', 'DONORTYPE',
+                                 'DON_IDX', 'ACC_IDX', 'LIGCOO', 'PROTCOO')
         self.halogen_info = []
         for halogen in pli_class.halogen_bonds:
-            self.halogen_info.append((halogen.resnr, halogen.restype, '%.2f' % halogen.distance,
+            self.halogen_info.append((halogen.resnr, halogen.restype, halogen.reschain, '%.2f' % halogen.distance,
                                       '%.2f' % halogen.don_angle, '%.2f' % halogen.acc_angle, halogen.donortype,
                                       lig_to_pdb[halogen.don.x.idx],
                                       mapping[halogen.acc.o.idx], halogen.acc.o.coords, halogen.don.x.coords))
