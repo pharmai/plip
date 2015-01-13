@@ -142,9 +142,9 @@ def process_pdb(pdbfile, outpath, xml=False, verbose_mode=False, pics=False, pym
             if verbose_mode:
                 sys.stdout.write("  @ %s\n" % site)
 
-            if pymol:
+            if pymol or pics:
                 # Initialize thread for PyMOL visualization and add to list of threads to be processed
-                p = multiprocessing.Process(target=visualize_in_pymol, args=(mol, site, False, pics))
+                p = multiprocessing.Process(target=visualize_in_pymol, args=(mol, site, False, pics, pymol))
                 threads.append(p)
 
         else:
