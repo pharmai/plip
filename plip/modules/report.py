@@ -139,7 +139,7 @@ class TextOutput():
             else:
                 ids = [str(lig_to_pdb[x.idx]) for x in picat.charge.atoms]
                 group = picat.charge.fgroup
-                self.pication_info.append((picat.resnr, picat.restype, picat, reschain, '%.2f' % picat.distance,
+                self.pication_info.append((picat.resnr, picat.restype, picat.reschain, '%.2f' % picat.distance,
                                            '%.2f' % picat.offset, picat.protcharged, group, ",".join(ids),
                                            tuple(picat.charge.center), tuple(picat.ring.center)))
 
