@@ -399,6 +399,6 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False, pse=
         cmd.save("".join([save_to, "%s.pse" % filename]))
 
     # Create output pictures (experimental)
-    #set_fancy_ray()
+    set_fancy_ray()
     if pics:
         png_workaround("".join([save_to, filename]))
