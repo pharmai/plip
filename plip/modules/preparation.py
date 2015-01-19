@@ -52,8 +52,7 @@ class Mol():
         data = namedtuple('hbondacceptor', 'a type')
         a_set = []
         for atom in itertools.ifilter(lambda at: at.OBAtom.IsHbondAcceptor(), all_atoms):
-            in_ring = False
-            if not in_ring:
+            if atom.atomicnum not in [9, 17, 35, 53]:  # Exclude halogen atoms
                 a_set.append(data(a=atom, type='regular'))
         return a_set
 
@@ -312,15 +311,16 @@ class BindingSite(Mol):
         """Look for halogen bond acceptors (Y-O, with Y=C,P,S)"""
         data = namedtuple('hal_acceptor', 'o y')
         a_set = []
-        for a in [at for at in atoms if at.atomicnum == 8]:  # All oxygens with neighboring carbon, phosphor or sulfur
-            n_atoms = [na for na in pybel.ob.OBAtomAtomIter(a.OBAtom) if na.GetAtomicNum() in [6, 15, 16]]
-            if len(n_atoms) == 1:  # Proximal oxygen
+        # All oxygens, nitrogen, sulfurs with neighboring carbon, phosphor, nitrogen or sulfur
+        for a in [at for at in atoms if at.atomicnum in [8, 7, 16]]:
+            n_atoms = [na for na in pybel.ob.OBAtomAtomIter(a.OBAtom) if na.GetAtomicNum() in [6, 7, 15, 16]]
+            if len(n_atoms) == 1:  # Proximal atom
                 a_set.append(data(o=a, y=pybel.Atom(n_atoms[0])))
         return a_set
 
     def find_charged(self, mol):
         """Looks for positive charges in arginine, histidine or lysine, for negative in aspartic and glutamic acid."""
-        data = namedtuple('pcharge', 'atoms type center restype resnr')
+        data = namedtuple('pcharge', 'atoms type center restype resnr reschain')
         a_set = []
         for res in pybel.ob.OBResidueIter(mol.OBMol):
             a_contributing = []
@@ -333,7 +333,8 @@ class BindingSite(Mol):
                                       type='positive',
                                       center=centroid([ac.coords for ac in a_contributing]),
                                       restype=res.GetName(),
-                                      resnr=res.GetNum()))
+                                      resnr=res.GetNum(),
+                                      reschain=res.GetChain()))
             if res.GetName() in ('GLU', 'ASP'):  # Aspartic or Glutamic Acid
                 for a in pybel.ob.OBResidueAtomIter(res):
                     if a.GetType().startswith('O') and res.GetAtomProperty(a, 8):
@@ -343,7 +344,8 @@ class BindingSite(Mol):
                                       type='negative',
                                       center=centroid([ac.coords for ac in a_contributing]),
                                       restype=res.GetName(),
-                                      resnr=res.GetNum()))
+                                      resnr=res.GetNum(),
+                                      reschain=res.GetChain()))
         return a_set
 
 
@@ -399,7 +401,7 @@ class Ligand(Mol):
                 n_atoms = [a_neighbor.GetAtomicNum() for a_neighbor in pybel.ob.OBAtomAtomIter(a.OBAtom)]
                 if '1' not in n_atoms and len(n_atoms) == 4:  # It's a quaternary ammonium (N with 4 residues != H)
                     a_set.append(data(atoms=[a, ], type='positive', center=list(a.coords), fgroup='quartamine'))
-                if a.OBAtom.GetHyb() == 3 and len(n_atoms) >= 3:  # It's sp3-hybridized, so it could pick up an hydrogen
+                elif a.OBAtom.GetHyb() == 3 and len(n_atoms) >= 3:  # It's sp3-hybridized, so could pick up an hydrogen
                     a_set.append(data(atoms=[a, ], type='positive', center=list(a.coords), fgroup='tertamine'))
             if a.atomicnum == 16:  # It's a sulfur
                 n_atoms = [a_neighbor.GetAtomicNum() for a_neighbor in pybel.ob.OBAtomAtomIter(a.OBAtom)]

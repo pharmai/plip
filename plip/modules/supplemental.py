@@ -200,6 +200,15 @@ def whichresnumber(atom):
         return None
 
 
+def whichchain(atom):
+    """Returns the residue number of an PyBel or OpenBabel atom."""
+    if isinstance(atom, Atom):
+        return atom.OBAtom.GetResidue().GetChain()
+    elif isinstance(atom, OBAtom):
+        return atom.GetResidue().GetChain()
+    else:
+        return None
+
 #########################
 # Mathematical operations
 #########################

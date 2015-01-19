@@ -142,9 +142,9 @@ def process_pdb(pdbfile, outpath, xml=False, verbose_mode=False, pics=False, pym
             if verbose_mode:
                 sys.stdout.write("  @ %s\n" % site)
 
-            if pymol:
+            if pymol or pics:
                 # Initialize thread for PyMOL visualization and add to list of threads to be processed
-                p = multiprocessing.Process(target=visualize_in_pymol, args=(mol, site, False, pics))
+                p = multiprocessing.Process(target=visualize_in_pymol, args=(mol, site, False, pics, pymol))
                 threads.append(p)
 
         else:
@@ -204,7 +204,7 @@ def main(args):
     else:  # Try to fetch the current PDB structure directly from the RCBS server
         try:
             pdbfile, pdbid = fetch_pdb(args.pdbid.lower(), verbose_mode=args.verbose)
-            pdbpath = '%s/%s.pdb' % (args.outpath, pdbid)
+            pdbpath = '%s/%s.pdb' % (args.outpath.rstrip('/'), pdbid)
             create_folder_if_not_exists(args.outpath)
 
             if args.verbose:

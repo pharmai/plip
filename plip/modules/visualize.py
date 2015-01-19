@@ -23,6 +23,19 @@ from supplemental import *
 from time import sleep
 
 
+def set_fancy_ray():
+    """Give the molecule a flat, modern look."""
+    cmd.set('light_count', 6)
+    cmd.set('spec_count', 1.5)
+    cmd.set('shininess', 4)
+    cmd.set('specular', 0.3)
+    cmd.set('reflect', 1.6)
+    cmd.set('ambient', 0)
+    cmd.set('direct', 0)
+    cmd.set('ray_shadow', 0)  # Gives the molecules a flat, modern look
+    cmd.set('ambient_occlusion_mode', 1)
+
+
 def png_workaround(filepath, width=1200, height=800):
     """Workaround for (a) severe bug(s) in PyMOL preventing ray-traced images to be produced in command-line mode.
     Use this function in case neither cmd.ray() or cmd.png() work.
@@ -68,7 +81,7 @@ def png_workaround(filepath, width=1200, height=800):
         sys.stderr.write('Imagemagick not available. Images will not be resized or cropped.')
 
 
-def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False):
+def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False, pse=False, fancy=False):
     """Visualizes the protein-ligand pliprofiler at one site in PyMOL."""
 
     #####################
@@ -346,6 +359,8 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False):
     cmd.set('sphere_scale', 0.2, 'resn HOH')  # Needs to be done here because of the copy made
     cmd.set('sphere_transparency', 0.4, '!resn HOH')
     cmd.origin(ligname)
+    if 'Centroids*' in cmd.get_names("selections"):
+        cmd.color('grey80', 'Centroids*')
 
     ##############################
     # Organization of selections #
@@ -380,9 +395,10 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False):
     cmd.hide('everything', 'hydrogens')
 
     filename = '%s-%s' % (pdbid.upper(), "-".join(ligdata.bs_id).upper())
-    cmd.save("".join([save_to, "%s.pse" % filename]))
+    if pse:
+        cmd.save("".join([save_to, "%s.pse" % filename]))
 
-    #@todo Make seperate function here
     # Create output pictures (experimental)
+    set_fancy_ray()
     if pics:
         png_workaround("".join([save_to, filename]))
