@@ -120,7 +120,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         s = tmpmol.interaction_sets['BVP-B-1207']
         # Hydrogen bonding of Tyr101 and Arg72
         hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
-        self.assertTrue({101}.issubset(hbonds))
+        self.assertTrue({101, 72}.issubset(hbonds))
         # Halogen Bonding of Asn65
         halogens = {halogen.resnr for halogen in s.halogen_bonds}
         self.assertTrue({65}.issubset(halogens))
@@ -142,26 +142,8 @@ class LiteratureValidatedTest(unittest.TestCase):
         hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
         self.assertTrue({66}.issubset(hbonds))
 
-    def test_3shy(self):
-        """Binding of PDE5 to halogenated 1 (3shy)
-        Reference: Xu et al. Utilization of halogen bond in lead optimization: a case study of rational design
-        of potent phosphodiesterase type 5 (PDE5) inhibitors. (2006)
-        """
-        tmpmol = PDBComplex()
-        tmpmol.load_pdb('./pdb/3shy.pdb')
-        s = tmpmol.interaction_sets['5FO-A-1']
-        # Halogen Bonding of Tyr612
-        halogens = {halogen.resnr for halogen in s.halogen_bonds}
-        self.assertTrue({612}.issubset(halogens))
-        # Hydrogen bonding to Gln817
-        hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
-        self.assertTrue({817}.issubset(hbonds))
-        # pi-stacking interaction with Phe820
-        pistackres = {pistack.resnr for pistack in s.pistacking}
-        self.assertTrue({820}.issubset(pistackres))
-
     def test_1p5e(self):
-        """Binding of TBB to CDK2(1p5e)
+        """Binding of TBS to CDK2(1p5e)
         Reference: De Moliner et al. Alternative binding modes of an inhibitor to two different kinases. (2003)
         """
         tmpmol = PDBComplex()
@@ -172,7 +154,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         self.assertTrue({10, 83}.issubset(halogens))
 
     def test_1acj(self):
-        """Binding of (1acj)
+        """Binding of Tacrine (THA) to active-site gorge of acetylcholinesterase (1acj)
         Reference: Harel et al. Quaternary ligand binding to aromatic residues in the active-site gorge of
         acetylcholinesterase.. (1993)
         """
@@ -194,10 +176,11 @@ class LiteratureValidatedTest(unittest.TestCase):
         # pi-stacking interaction with Trp63 and Phe147
         pistackres = {pistack.resnr for pistack in s.pistacking}
         self.assertTrue({63, 147}.issubset(pistackres))
-        #@todo Check predictions for Leu100 and Val92
-        # hydrophobic interaction of Leu59, Leu88, Trp63, Trp113, Phe147, Leu100 and Val92)
-        # hydrophobics = {hydrophobic.resnr for hydrophobic in s.all_hydrophobic_contacts}
-        # self.assertTrue({59, 88, 63, 113, 147, 100, 92}.issubset(hydrophobics))
+        # hydrophobic interaction of Leu59, Leu88, Trp63, Trp113, Phe147
+        # Publication show the prediction for Val92, Leu100 and Ile152 as hydrophobic interaction but whit
+        # distance bigger than 4Å
+        hydrophobics = {hydrophobic.resnr for hydrophobic in s.all_hydrophobic_contacts}
+        self.assertTrue({59, 88, 63, 92, 100, 113, 147}.issubset(hydrophobics))
 
     def test_1xdn(self):
         """Binding of ATP to RNA editing ligase 1 (1xdn)
@@ -207,14 +190,13 @@ class LiteratureValidatedTest(unittest.TestCase):
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/1xdn.pdb')
         s = tmpmol.interaction_sets['ATP-A-501']
-         #@todo Check predictions for Glu86
-        # Hydrogen bonds to Arg111, Ile61 (backbone), Asn92, Val88, Lys87 and Glu86)
-        #hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
-        #self.assertTrue({111, 61, 92, 88, 87, 86}.issubset(hbonds))
-        #@todo Check predictions for Ile59
-        # Water bridges to Lys307 and Arg309 from phosphate groups, (Glu60, Glu159, Asn92, Arg111 and Ile59 )
-        #waterbridges = {wb.resnr for wb in s.water_bridges}
-        #self.assertTrue({307, 309, 60, 159, 92, 111, 59}.issubset(waterbridges))
+        # Hydrogen bonds to Arg111, Ile61 (backbone), Asn92, Val88, Lys87 and Glu86#
+        hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
+        self.assertTrue({111, 61, 92, 88, 87}.issubset(hbonds))
+        #@todo Publication show waterbridge interacction for Ile59, Glu60, Glu159
+        # Water bridges to Lys307, Arg309 and 111 from phosphate groups
+        waterbridges = {wb.resnr for wb in s.water_bridges}
+        self.assertTrue({307, 309, 111}.issubset(waterbridges))
         # pi-stacking interaction with Phe209
         pistackres = {pistack.resnr for pistack in s.pistacking}
         self.assertTrue({209}.issubset(pistackres))
@@ -267,7 +249,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         self.assertEqual({70}, picat)
 
     def test_4kya(self):
-        """Binding of (4kya)
+        """Binding of non-classical TS inhibitor 3 with Toxoplasma gondii TS-DHFR(4kya)
         Reference:  Zaware et al. Structural basis of HIV-1 capsid recognition by PF74 and CPSF6(2014)
         """
         tmpmol = PDBComplex()
@@ -287,7 +269,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         self.assertTrue({403, 520}.issubset(pistackres))
 
     def test_1n7g(self):
-        """Binding of (1n7g)
+        """Binding of NADPH to MURI from Arabidopsis thaliana (1n7g)
         Reference:  Mulichak et al. Structure of the MUR1 GDP-mannose 4, 6-dehydratase from Arabidopsis thaliana:
         implications for ligand binding and specificity(2002)
         """
@@ -296,9 +278,9 @@ class LiteratureValidatedTest(unittest.TestCase):
         s = tmpmol.interaction_sets['NDP-A-701']
         # Hydrogen bonds to Thr37, Gly38, Gln39, Asp40,  Arg60, Leu92, Asp91, Ser63, Leu92, Ala115, Ser117,
         # Tyr128, Tyr185, Lys189, His215 and Arg220
-        #@todo Check predictions for Asp91
-        #hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
-        #self.assertTrue({37, 38, 39, 40, 91, 92, 63, 92, 115, 117, 128, 185, 189, 215, 220}.issubset(hbonds))
+        # Publication give the Prediction for Asp91 as hydrogen bond, when this contains two acceptor atoms.
+        hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
+        self.assertTrue({37, 38, 39, 40, 92, 63, 92, 115, 117, 128, 185, 189, 215, 220}.issubset(hbonds))
         # Water bridges to Gly35, Thr37, Gly38, Asp40, Arg60, Arg61, Ser63, Asn66, Ser117, Tyr128, Lys189, Arg220
         waterbridges = {wb.resnr for wb in s.water_bridges}
         self.assertTrue({35, 37, 38, 40, 60, 61, 63, 66, 117, 128, 189, 220}.issubset(waterbridges))
@@ -310,7 +292,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         self.assertEqual({60}, picat)
 
     def test_4alw(self):
-        """Binding of (4alw)
+        """Binding of benzofuropyrimidinones compound 3 to PIM-1 (4alw)
         Reference:  Tsuhako et al. The design, synthesis, and biological evaluation of PIM kinase inhibitors.(2012)
         """
         tmpmol = PDBComplex()
@@ -324,8 +306,9 @@ class LiteratureValidatedTest(unittest.TestCase):
         self.assertTrue({186, 171}.issubset(saltb))
 
     def test_3o1h(self):
-        """Binding of (3o1h)
-        Reference:  Tsuhako et al. The design, synthesis, and biological evaluation of PIM kinase inhibitors.(2012)
+        """Binding of TMAO to TorT-TorS system(3o1h)
+        Reference:  Hendrickson et al. An Asymmetry-to-Symmetry Switch in Signal Transmission by the Histidine Kinase Receptor
+        for TMAO.(2013)
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/3o1h.pdb')
@@ -339,24 +322,6 @@ class LiteratureValidatedTest(unittest.TestCase):
         # Cation-pi interactions with Tyr44
         picat = {pication.resnr for pication in s.pication_paro}
         self.assertEqual({44}, picat)
-
-    def test_3t5y(self):
-        """Binding of (3t5y)
-        Reference:  Bretschneider et al. TA ketosynthase homolog uses malonyl units to form esters in cervimycin
-        biosynthesis.(2012)
-        """
-        tmpmol = PDBComplex()
-        tmpmol.load_pdb('./pdb/3t5y.pdb')
-        s = tmpmol.interaction_sets['MCS-B-116']
-        # Hydrogen bonds to Ala327
-        hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
-        self.assertTrue({327}.issubset(hbonds))
-        # Saltbridge to His295 and Arg115
-        saltb = {saltbridge.resnr for saltbridge in s.saltbridge_lneg}
-        self.assertTrue({295, 115}.issubset(saltb))
-        # hydrophobic interaction of Arg115
-        hydrophobics = {hydrophobic.resnr for hydrophobic in s.all_hydrophobic_contacts}
-        self.assertTrue({115}.issubset(hydrophobics))
 
     def test_3thy(self):
         """Binding of (3thy)
@@ -391,7 +356,8 @@ class LiteratureValidatedTest(unittest.TestCase):
 
     def test_3r0t(self):
         """Binding of (3r0t)
-        Reference:  Ash et al. The structure of an N11A mutant of the G-protein domain of FeoB.(2011)
+        Reference:  Battistutta et al. Unprecedented selectivity and structural determinants of a new class of protein
+        kinase CK2 inhibitors in clinical trials for the treatment of cancer..(2011)
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/3r0t.pdb')
@@ -411,22 +377,6 @@ class LiteratureValidatedTest(unittest.TestCase):
         # pi-stacking interaction with His160
         pistackres = {pistack.resnr for pistack in s.pistacking}
         self.assertTrue({160}.issubset(pistackres))
-
-    def test_3so7(self):
-        """Binding of (3so7)
-        Reference:  Ely et al. Phosphate-bound structure of an organophosphate-degrading enzyme from Agrobacterium
-        radiobacter.(2012)
-        """
-        tmpmol = PDBComplex()
-        tmpmol.load_pdb('./pdb/3so7.pdb')
-        s = tmpmol.interaction_sets['PO4-A-362']
-        # Hydrogen bonds to Trp131
-        hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
-        self.assertTrue({131}.issubset(hbonds))
-        #@todo Check predictions for Lys169 and Asp301
-        # Saltbridge to His55, His57, His201, His230, Lys169, Asp301
-        #saltb = {saltbridge.resnr for saltbridge in s.saltbridge_lneg}
-        #self.assertTrue({55, 57, 201, 230,  169, 301}.issubset(saltb))
 
     def test_1aku(self):
         """Binding of (1aku)
@@ -449,21 +399,36 @@ class LiteratureValidatedTest(unittest.TestCase):
         pistackres = {pistack.resnr for pistack in s.pistacking}
         self.assertTrue({98}.issubset(pistackres))
 
+    def test_4pjt(self):
+        """Binding of BMN 673 to catPARP1(4pj7)
+        Reference:  Aoyagi-Scharber et al. Structural basis for the inhibition of poly(ADP-ribose) polymerases 1 and 2 by BMN
+        673, a potent inhibitor derived from dihydropyridophthalazinone.(2014)
+        """
+        tmpmol = PDBComplex()
+        tmpmol.load_pdb('./pdb/4pjt.pdb')
+        s = tmpmol.interaction_sets['2YQ-D-1104']
+        # Hydrogen bonds to Gly863
+        hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
+        self.assertTrue({863}.issubset(hbonds))
+        # pi-stacking interaction with Tyr889 and Tyr907
+        pistackres = {pistack.resnr for pistack in s.pistacking}
+        self.assertTrue({889, 907}.issubset(pistackres))
+
     def test_1bju(self):
-        """Binding of (1bju)
+        """Binding of ACPU(1bju)
         Reference:  Presnell et al. Oxyanion-Mediated Inhibition of Serine Proteases.(1998)
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/1bju.pdb')
         s = tmpmol.interaction_sets['GP6-A-910']
-        #@todo Check predictions for Gly219 and Asp189
+        #@todo Publication show hydrogen bond interacctions for Gly219 and Asp189
         # Hydrogen bonds to Ser190, Ser195, Gly219 and Asp189
-        #hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
-        #self.assertTrue({190, 195, 219, 189}.issubset(hbonds))
+        hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
+        self.assertTrue({190, 195}.issubset(hbonds))
         # Water bridges to Ser190 and Val227
         waterbridges = {wb.resnr for wb in s.water_bridges}
         self.assertTrue({190, 227}.issubset(waterbridges))
-        # hydrophobic interaction of Leu
+        # hydrophobic interaction of Leu99
         hydrophobics = {hydrophobic.resnr for hydrophobic in s.all_hydrophobic_contacts}
         self.assertTrue({99}.issubset(hydrophobics))
         # pi-stacking interaction with His57
@@ -495,10 +460,9 @@ class LiteratureValidatedTest(unittest.TestCase):
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/2efj.pdb')
         s = tmpmol.interaction_sets['37T-A-502']
-        #@todo Check predictions for His60
-        # Hydrogen bonds to Trp161, Ser237 and His60
-        #hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
-        #self.assertTrue({161, 237, 60}.issubset(hbonds))
+        # Hydrogen bonds to Trp161, Ser237
+        hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
+        self.assertTrue({161, 237}.issubset(hbonds))
         # pi-stacking interaction with Tyr157
         pistackres = {pistack.resnr for pistack in s.pistacking}
         self.assertTrue({157}.issubset(pistackres))
@@ -547,7 +511,8 @@ class LiteratureValidatedTest(unittest.TestCase):
 
     def test_1ay8(self):
         """Binding of (1ay8)
-        Reference:  Xu et al. Structural basis for the enhanced stability of highly fluorinated proteins.(2012)
+        Reference:  Okamoto et al. Crystal structures of Paracoccus denitrificans aromatic amino acid aminotransferase: a
+        substrate recognition site constructed by rearrangement of hydrogen bond network..(1998)
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/1ay8.pdb')
@@ -555,15 +520,30 @@ class LiteratureValidatedTest(unittest.TestCase):
         # Hydrogen bonds to Gly108, Thr109, Asn194 and Ser257
         hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
         self.assertTrue({108, 109, 194, 257}.issubset(hbonds))
-        # Water bridges to Ser
-        waterbridges = {wb.resnr for wb in s.water_bridges}
-        self.assertTrue({296}.issubset(waterbridges))
         # Saltbridge to Ly258 and Arg266
         saltb = {saltbridge.resnr for saltbridge in s.saltbridge_lneg}
         self.assertTrue({258, 266}.issubset(saltb))
         # pi-stacking interaction with Trp140
         pistackres = {pistack.resnr for pistack in s.pistacking}
         self.assertTrue({140}.issubset(pistackres))
+
+    def test_4rdl(self):
+        """Binding of (4rdl)
+        Reference:  Hao et al. Crystal structures of GI.8 Boxer virus P dimers in complex with HBGAs, a novel
+        evolutionary path selected by the Lewis epitope..(2014)
+        """
+        tmpmol = PDBComplex()
+        tmpmol.load_pdb('./pdb/4rdl.pdb')
+        s = tmpmol.interaction_sets['FUC-A-604']
+        # Water bridges to Asn395
+        waterbridges = {wb.resnr for wb in s.water_bridges}
+        self.assertTrue({395}.issubset(waterbridges))
+        # Hydrogen bonds to Thr347, Gly348 and Asn395
+        hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
+        self.assertTrue({347, 348, 395}.issubset(hbonds))
+        # hydrophobic interaction of Trp392
+        hydrophobics = {hydrophobic.resnr for hydrophobic in s.all_hydrophobic_contacts}
+        self.assertTrue({392}.issubset(hydrophobics))
 
 
 
