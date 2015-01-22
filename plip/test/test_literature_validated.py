@@ -415,7 +415,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         self.assertTrue({889, 907}.issubset(pistackres))
 
     def test_1bju(self):
-        """Binding of ACPU(1bju)
+        """Binding of ACPU (1bju)
         Reference:  Presnell et al. Oxyanion-Mediated Inhibition of Serine Proteases.(1998)
         """
         tmpmol = PDBComplex()
