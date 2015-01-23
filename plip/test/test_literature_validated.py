@@ -180,7 +180,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         # Publication show the prediction for Val92, Leu100 and Ile152 as hydrophobic interaction but whit
         # distance bigger than 4Å
         hydrophobics = {hydrophobic.resnr for hydrophobic in s.all_hydrophobic_contacts}
-        self.assertTrue({59, 88, 63, 92, 100, 113, 147}.issubset(hydrophobics))
+        self.assertTrue({59, 88, 63, 113, 147}.issubset(hydrophobics))
 
     def test_1xdn(self):
         """Binding of ATP to RNA editing ligase 1 (1xdn)
@@ -208,12 +208,15 @@ class LiteratureValidatedTest(unittest.TestCase):
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/1bma.pdb')
         s = tmpmol.interaction_sets['0QH-A-256']
-        # Hydrogen bonds to Ser203, val224 and Gln200
+        # Hydrogen bonds to val224 and Gln200
         hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
-        self.assertTrue({203, 224, 200}.issubset(hbonds))
+        self.assertTrue({224, 200}.issubset(hbonds))
         # hydrophobic interaction of Phe223 and val103
         hydrophobics = {hydrophobic.resnr for hydrophobic in s.all_hydrophobic_contacts}
         self.assertTrue({223, 103}.issubset(hydrophobics))
+        # Water bridges to Ser203
+        waterbridges = {wb.resnr for wb in s.water_bridges}
+        self.assertTrue({203}.issubset(waterbridges))
 
     def test_4rao(self):
         """Binding of (4rao)
@@ -324,7 +327,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         self.assertEqual({44}, picat)
 
     def test_3thy(self):
-        """Binding of (3thy)
+        """Binding of ADP tp MutS(3thy)
         Reference:  Shikha et al. Mechanism of mismatch recognition revealed by human MutSβ bound to unpaired DNA loops.(2012)
         """
         tmpmol = PDBComplex()
@@ -338,7 +341,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         self.assertTrue({815}.issubset(pistackres))
 
     def test_3tah(self):
-        """Binding of (3tah)
+        """Binding of BGO to an an N11A mutant of the G-protein domain of FeoB.(3tah)
         Reference:  Ash et al. The structure of an N11A mutant of the G-protein domain of FeoB.(2011)
         """
         tmpmol = PDBComplex()
@@ -355,7 +358,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         self.assertTrue({116}.issubset(saltb))
 
     def test_3r0t(self):
-        """Binding of (3r0t)
+        """Binding of protein kinase CK2 alpha subunit in with the inhibitor CX-5279 (3r0t)
         Reference:  Battistutta et al. Unprecedented selectivity and structural determinants of a new class of protein
         kinase CK2 inhibitors in clinical trials for the treatment of cancer..(2011)
         """
@@ -379,7 +382,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         self.assertTrue({160}.issubset(pistackres))
 
     def test_1aku(self):
-        """Binding of (1aku)
+        """Binding of Flavin mononucleotido with D.Vulgaris(1aku)
         Reference:  McCarthy et al. Crystallographic Investigation of the Role of Aspartate 95 in the Modulation of the
         Redox Potentials of DesulfoVibrio Vulgaris Flavodoxin.(2002)
         """
@@ -415,7 +418,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         self.assertTrue({889, 907}.issubset(pistackres))
 
     def test_1bju(self):
-        """Binding of ACPU (1bju)
+        """Binding of ACPU to bovine tripsin(1bju)
         Reference:  Presnell et al. Oxyanion-Mediated Inhibition of Serine Proteases.(1998)
         """
         tmpmol = PDBComplex()
@@ -436,7 +439,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         self.assertTrue({57}.issubset(pistackres))
 
     def test_4agl(self):
-        """Binding of (4agl)
+        """Binding of P53 to PhiKan784(4agl)
         Reference:  Wilcken et al. Halogen-Enriched Fragment Libraries as Leads for Drug Rescue of Mutant p53.(2012)
         """
         tmpmol = PDBComplex()
@@ -453,7 +456,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         self.assertTrue({145}.issubset(halogens))
 
     def test_2efj(self):
-        """Binding of (2efj)
+        """Binding of teobromine to 1,7 dimethylxanthine methyltransferase(2efj)
         Reference:  McCarthy et al. The Structure of Two N-Methyltransferases from the Caffeine Biosynthetic
         Pathway.(2007)
         """
@@ -468,7 +471,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         self.assertTrue({157}.issubset(pistackres))
 
     def test_2iuz(self):
-        """Binding of (2iuz)
+        """Binding of C2-dicaffeine to Aspergilius fumigates(2iuz)
         Reference:  Schüttelkopf et al. Screening-based discovery and structural dissection of a novel family 18 chitinase
         inhibitor.(2006)
         """
@@ -489,7 +492,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         self.assertTrue({384, 52}.issubset(pistackres))
 
     def test_3shy(self):
-        """Binding of (3shy)
+        """Binding of 5FO to PDE5A1 catalytic domain(3shy)
         Reference:  Xu et al. Utilization of halogen bond in lead optimization: A case study of rational design of potent
         phosphodiesterase type 5 (PDE5) inhibitors.(2011)
         """
@@ -510,7 +513,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         self.assertTrue({612}.issubset(halogens))
 
     def test_1ay8(self):
-        """Binding of (1ay8)
+        """Binding of PLP to aromatic amino acid aminotransferase(1ay8)
         Reference:  Okamoto et al. Crystal structures of Paracoccus denitrificans aromatic amino acid aminotransferase: a
         substrate recognition site constructed by rearrangement of hydrogen bond network..(1998)
         """
@@ -528,7 +531,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         self.assertTrue({140}.issubset(pistackres))
 
     def test_4rdl(self):
-        """Binding of (4rdl)
+        """Binding of Norovirus Boxer P domain with Lewis y tetrasaccharide(4rdl)
         Reference:  Hao et al. Crystal structures of GI.8 Boxer virus P dimers in complex with HBGAs, a novel
         evolutionary path selected by the Lewis epitope..(2014)
         """
@@ -544,8 +547,3 @@ class LiteratureValidatedTest(unittest.TestCase):
         # hydrophobic interaction of Trp392
         hydrophobics = {hydrophobic.resnr for hydrophobic in s.all_hydrophobic_contacts}
         self.assertTrue({392}.issubset(hydrophobics))
-
-
-
-
-
