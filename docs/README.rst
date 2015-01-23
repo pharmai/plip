@@ -1,5 +1,5 @@
 ==================
-PLIProfiler v1.0.0
+PLIProfiler v1.0.1
 ==================
 
 The Protein-Ligand Interaction Profiler (PLIP) is a tool to analyze and visualize protein-ligand interactions in PDB files.
@@ -10,7 +10,7 @@ lxml
 openbabel
 pybel
 numpy
-pymol
+pymol >= 1.7
 imagemagick (optional)
 
 Features
@@ -30,7 +30,7 @@ Run the PLIP python script with the option `-h` to list all available command li
 To analyze a protein-ligand complex from a Protein Data Bank entry -- e.g. 1vsn --, run
     `python plip-cmd.py -i 1vsn`.
 To analyze a PDB file from your workstation, run
-    `python plip.cmd.py -f path_to_pdbfile.pdb`.
+    `python plip-cmd.py -f path_to_pdbfile.pdb`.
 
 Threshold settings
 ==================
@@ -48,10 +48,6 @@ A web service for analysis of protein-ligand complexes using PLIP is available a
 http://projects.biotec.tu-dresden.de/plip-web
 The web site offers advanced functions to search for specific entries from PDB and lists the interaction results in the browser.
 
-
-Publication
-===========
-A proposal has been submitted to Nucleic Acids Research Web Server Issue 2015.
 
 Documentation
 =============
@@ -97,13 +93,14 @@ Code Contributions
 ------------------
 Sebastian Salentin sebastian.salentin (at) biotec.tu-dresden.de
 Joachim Haupt joachim.haupt (at) biotec.tu-dresden.de
+Melissa F. Adasme Mora melissa.adasme (at) biotec.tu-dresden.de (Testing and Validation)
 
 Output Files
 ------------
 All output files contain information on non-covalent interactions between the protein and all relevant ligands in the PDB structure.
 
-XML Result Files
-""""""""""""""""
+XML/RST Result Files
+""""""""""""""""""""
 
 <pdbid>
 Unique identifier for the corresponding entry of the protein structure in Protein Data Bank.
@@ -153,4 +150,4 @@ Coordinates of protein and ligand interacting atoms or interaction centers (e.g.
 Contact Me
 ----------
 
-Questions or comments about `PLIProfiler`? Write me an email to sebastian.salentin (at) biotec.tu-dresden.de
+Questions or comments about `PLIP`? Write me an email to sebastian.salentin (at) biotec.tu-dresden.de

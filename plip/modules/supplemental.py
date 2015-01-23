@@ -108,7 +108,7 @@ def is_artifact(hetid):
 
 def is_mod_aa(hetid):
     """Returns if the 'ligand' is just a modified amino acid"""
-    # Adapted from ASTRAL RAF (Rapid Access Format) Sequence Maps (Biopython).
+    # Adapted from ASTRAL RAF (Rapid Access Format) Sequence Maps (Biopython), added other cases.
     mod_aa_dict = {
         '2AS': 'D', '3AH': 'H', '5HP': 'E', 'ACL': 'R', 'AIB': 'A',
         'ALM': 'A', 'ALO': 'T', 'ALY': 'K', 'ARM': 'R', 'ASA': 'D',
@@ -138,7 +138,7 @@ def is_mod_aa(hetid):
         'TPO': 'T', 'TPQ': 'A', 'TRG': 'K', 'TRO': 'W', 'TYB': 'Y',
         'TYQ': 'Y', 'TYS': 'Y', 'TYY': 'Y', 'AGM': 'R', 'GL3': 'G',
         'SMC': 'C', 'ASX': 'B', 'CGU': 'E', 'CSX': 'C', 'GLX': 'Z',
-        'UNK': None
+        'MCS': 'C', 'UNK': None
     }
     return hetid.upper() in mod_aa_dict
 
