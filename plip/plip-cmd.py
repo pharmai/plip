@@ -232,7 +232,7 @@ if __name__ == '__main__':
     pdbstructure = parser.add_mutually_exclusive_group(required=True)  # Needs either PDB ID or file
     pdbstructure.add_argument("-f", "--file", dest="input")
     pdbstructure.add_argument("-i", "--input", dest="pdbid")
-    parser.add_argument("-o", "-out", dest="outpath", default="./")
+    parser.add_argument("-o", "--out", dest="outpath", default="./")
     parser.add_argument("-v", "--verbose", dest="verbose", default=False, help="Set verbose mode", action="store_true")
     parser.add_argument("-p", "--pics", dest="pics", default=False, help="Additional pictures", action="store_true")
     parser.add_argument("-x", "--xml", dest="xml", default=False, help="Additional XML output for reports",
