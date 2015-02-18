@@ -308,7 +308,7 @@ class BindingSite(Mol):
         self.halogenbond_acc = self.find_hal(self.all_atoms)
 
     def find_hal(self, atoms):
-        """Look for halogen bond acceptors (Y-O, with Y=C,P,S)"""
+        """Look for halogen bond acceptors (Y-{O|P|N|S}, with Y=C,P,S)"""
         data = namedtuple('hal_acceptor', 'o y')
         a_set = []
         # All oxygens, nitrogen, sulfurs with neighboring carbon, phosphor, nitrogen or sulfur
