@@ -137,7 +137,8 @@ def is_mod_aa(hetid):
         'TPO': 'T', 'TPQ': 'A', 'TRG': 'K', 'TRO': 'W', 'TYB': 'Y',
         'TYQ': 'Y', 'TYS': 'Y', 'TYY': 'Y', 'AGM': 'R', 'GL3': 'G',
         'SMC': 'C', 'ASX': 'B', 'CGU': 'E', 'CSX': 'C', 'GLX': 'Z',
-        'MCS': 'C', 'UNK': None
+        'MCS': 'C', 'UNK': None, 'MLY': None, 'B3M': None, 'BIL': None,
+        'B3L': None, 'D3P': None, 'D4P': None
     }
     return hetid.upper() in mod_aa_dict
 
@@ -155,15 +156,32 @@ def idx_to_pdb_mapping(fil):
     """
     i, j = 0, 0  # idx and PDB numbering
     d = {}
+    previous_ter = False
     for line in fil:
         if line.startswith(("ATOM", "HETATM")):
-            i += 1
-            j += 1
+            if not previous_ter:
+                i += 1
+                j += 1
+            else:
+                i += 1
+                j += 2
             d[i] = j
-        elif line.startswith("TER"):
-            j += 1
-            d[i] = j
+            previous_ter = False
+        if line.startswith("TER"):
+            previous_ter = True
     return d
+
+
+def get_altconf_atoms(f):
+    """Return a list of PDB atom ids belonging to atoms with alternate conformations."""
+    alt = []
+    for line in f:
+        if line.startswith(("ATOM", "HETATM")):
+            atomid, location = int(line[7:11]), line[16]
+            location = 'A' if location == ' ' else location
+            if location != 'A':
+                alt.append(atomid)
+    return alt
 
 
 def extract_pdbid(string):
@@ -408,9 +426,8 @@ def set_custom_colorset():
 #############################################
 
 
-def getligs(mol):
+def getligs(mol, altconf, idx_to_pdb):
     """Get all ligands from a PDB file. Adapted from Joachim's structTools"""
-
     #############################
     # Read in file and get name #
     #############################
@@ -447,6 +464,8 @@ def getligs(mol):
     for obresidue in all_res:  # iterate over all ligands
         hetatoms = set([(obatom.GetIdx(), obatom) for obatom in pybel.ob.OBResidueAtomIter(obresidue)
                         if not obatom.IsHydrogen()])
+
+        hetatoms = set([atm for atm in hetatoms if not idx_to_pdb[atm[0]] in altconf])  # Remove alt. conformations
         if len(hetatoms) == 0:
             continue
         hetatoms = dict(hetatoms)  # make it a dict with idx as key and OBAtom as value
@@ -510,7 +529,6 @@ def read_pdb(pdbfname, safe=False):
     else:
         mol = pybel.Molecule(pybel.ob.OBMol())
         print("  Error: Failed to read '%s' with OpenBabel (exit code %d)!" % (pdbfname, exitcode))
-#    gc.collect()
     return mol
 
 
