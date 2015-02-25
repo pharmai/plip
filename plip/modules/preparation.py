@@ -32,18 +32,20 @@ import config
 
 class Mol():
 
-    def __init__(self):
+    def __init__(self, altconf):
         self.rings = None
         self.hydroph_atoms = None
         self.charged = None
         self.hbond_don_atom_pairs = None
         self.hbond_acc_atoms = None
+        self.altconf = altconf
 
     def hydrophobic_atoms(self, all_atoms):
         """Select all carbon atoms which have only carbons and/or hydrogens as direct neighbors."""
         data = namedtuple('hydrophobic', 'atoms')
         atm = [a for a in all_atoms if a.atomicnum == 6 and set([natom.GetAtomicNum() for natom
                                                                 in pybel.ob.OBAtomAtomIter(a.OBAtom)]).issubset({1, 6})]
+        atm = [a for a in atm if a.idx not in self.altconf]
         return data(atoms=atm)
 
     def find_hba(self, all_atoms):
@@ -51,7 +53,7 @@ class Mol():
         data = namedtuple('hbondacceptor', 'a type')
         a_set = []
         for atom in itertools.ifilter(lambda at: at.OBAtom.IsHbondAcceptor(), all_atoms):
-            if atom.atomicnum not in [9, 17, 35, 53]:  # Exclude halogen atoms
+            if atom.atomicnum not in [9, 17, 35, 53] and atom.idx not in self.altconf:  # Exclude halogen atoms
                 a_set.append(data(a=atom, type='regular'))
         return a_set
 
@@ -59,7 +61,7 @@ class Mol():
         """Find all possible strong and weak hydrogen bonds donors (all hydrophobic C-H pairings)"""
         donor_pairs = []
         data = namedtuple('hbonddonor', 'd h type')
-        for donor in [a for a in all_atoms if a.OBAtom.IsHbondDonor()]:
+        for donor in [a for a in all_atoms if a.OBAtom.IsHbondDonor() and a.idx not in self.altconf]:
             in_ring = False
             if not in_ring:
                 for adj_atom in [a for a in pybel.ob.OBAtomAtomIter(donor.OBAtom) if a.IsHbondDonorH()]:
@@ -146,6 +148,7 @@ class PLInteraction():
         self.idx_to_pdb = protcomplex.idx_to_pdb_mapping
         self.lig_to_pdb = lig_obj.pymol_data.maptopdb
         self.output_path = protcomplex.output_path
+        self.altconf = protcomplex.altconf
 
         self.saltbridge_lneg = saltbridge(self.bindingsite.get_pos_charged(), self.ligand.get_neg_charged(), True)
         self.saltbridge_pneg = saltbridge(self.ligand.get_pos_charged(), self.bindingsite.get_neg_charged(), False)
@@ -293,9 +296,9 @@ class PLInteraction():
 
 
 class BindingSite(Mol):
-    def __init__(self, atoms, protcomplex, cclass):
+    def __init__(self, atoms, protcomplex, cclass, altconf):
         """Find all relevant parts which could take part in interactions"""
-        Mol.__init__(self)
+        Mol.__init__(self, altconf)
         self.complex = cclass
         self.full_mol = protcomplex
         self.all_atoms = atoms
@@ -325,7 +328,8 @@ class BindingSite(Mol):
             a_contributing = []
             if res.GetName() in ('ARG', 'HIS', 'LYS'):  # Arginine, Histidine or Lysine have charged sidechains
                 for a in pybel.ob.OBResidueAtomIter(res):
-                    if a.GetType().startswith('N') and res.GetAtomProperty(a, 8):
+                    if a.GetType().startswith('N') and res.GetAtomProperty(a, 8) \
+                            and not self.complex.idx_to_pdb_mapping[a.GetIdx()] in self.altconf:
                         a_contributing.append(pybel.Atom(a))
                 if not len(a_contributing) == 0:
                     a_set.append(data(atoms=a_contributing,
@@ -336,7 +340,8 @@ class BindingSite(Mol):
                                       reschain=res.GetChain()))
             if res.GetName() in ('GLU', 'ASP'):  # Aspartic or Glutamic Acid
                 for a in pybel.ob.OBResidueAtomIter(res):
-                    if a.GetType().startswith('O') and res.GetAtomProperty(a, 8):
+                    if a.GetType().startswith('O') and res.GetAtomProperty(a, 8) \
+                            and not self.complex.idx_to_pdb_mapping[a.GetIdx()] in self.altconf:
                         a_contributing.append(pybel.Atom(a))
                 if not len(a_contributing) == 0:
                     a_set.append(data(atoms=a_contributing,
@@ -349,8 +354,8 @@ class BindingSite(Mol):
 
 
 class Ligand(Mol):
-    def __init__(self, lig, cclass, mapping, water):
-        Mol.__init__(self)
+    def __init__(self, lig, cclass, mapping, water, altconf):
+        Mol.__init__(self, altconf)
         self.complex = cclass
         self.molecule = lig
         self.name = lig.title
@@ -366,10 +371,10 @@ class Ligand(Mol):
         for hoh in water:
             oxy = None
             for at in pybel.ob.OBResidueAtomIter(hoh):
-                if at.GetAtomicNum() == 8:
+                if at.GetAtomicNum() == 8 and at.GetIdx() not in self.altconf:
                     oxy = pybel.Atom(at)
-            # There are some cases where there is no oxygen in a water residue
-            if not set([at.GetAtomicNum() for at in pybel.ob.OBResidueAtomIter(hoh)]) == {1}:
+            # There are some cases where there is no oxygen in a water residue, ignore those
+            if not set([at.GetAtomicNum() for at in pybel.ob.OBResidueAtomIter(hoh)]) == {1} and oxy is not None:
                 if euclidean3d(self.centroid, oxy.coords) < self.max_dist_to_center + config.BS_DIST:
                     self.water.append(oxy)
         s = lig.title.split('-')
@@ -456,6 +461,7 @@ class PDBComplex():
         self.output_path = '/tmp'
         self.pymol_name = None
         self.idx_to_pdb_mapping = {}
+        self.altconf = []  # Atom idx of atoms with alternate conformations
 
     def load_pdb(self, pdbpath):
         """Loads a pdb file with protein AND ligand(s), separates and prepares them."""
@@ -463,6 +469,7 @@ class PDBComplex():
         self.protcomplex = read_pdb(pdbpath, safe=False)  # Don't do safe reading
         # Counting is different from PDB if TER records present
         self.idx_to_pdb_mapping = idx_to_pdb_mapping(open(tilde_expansion(pdbpath)).readlines())
+        self.altconf = get_altconf_atoms(open(tilde_expansion(pdbpath)).readlines())
         try:
             self.pymol_name = self.protcomplex.data['HEADER'][56:60].lower()  # Get name from HEADER data
         except KeyError:  # Extract the PDBID from the filename
@@ -470,16 +477,17 @@ class PDBComplex():
         self.protcomplex.OBMol.AddPolarHydrogens()
         for atm in self.protcomplex:
             self.atoms[atm.idx] = atm
-        ligands = getligs(self.protcomplex)
+        ligands = getligs(self.protcomplex, self.altconf, self.idx_to_pdb_mapping)
         resis = [obres for obres in pybel.ob.OBResidueIter(self.protcomplex.OBMol) if obres.GetResidueProperty(0)]
         for ligand in ligands:
-            lig_obj = Ligand(ligand.mol, self, ligand.mapping, ligand.water)
+            lig_obj = Ligand(ligand.mol, self, ligand.mapping, ligand.water, self.altconf)
             cutoff = lig_obj.max_dist_to_center + config.BS_DIST
             bs_res = self.extract_bs(cutoff, lig_obj.centroid, resis)
             # Get a list of all atoms belonging to the binding site, search by idx
             bs_atoms = [self.atoms[idx] for idx in [i for i in self.atoms.keys()
-                                                    if self.atoms[i].OBAtom.GetResidue().GetIdx() in bs_res]]
-            bs_obj = BindingSite(bs_atoms, self.protcomplex, self)
+                                                    if self.atoms[i].OBAtom.GetResidue().GetIdx() in bs_res]
+                        if idx in self.idx_to_pdb_mapping and self.idx_to_pdb_mapping[idx] not in self.altconf]
+            bs_obj = BindingSite(bs_atoms, self.protcomplex, self, self.altconf)
             pli_obj = PLInteraction(lig_obj, bs_obj, self)
             self.interaction_sets[ligand.mol.title] = pli_obj
 

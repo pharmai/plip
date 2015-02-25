@@ -385,6 +385,12 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False, pse=
     cmd.group('Atoms.Other', 'Water')
     cmd.order('*', 'y')
 
+    ###############################################
+    # Remove atoms with alternative conformations #
+    ###############################################
+
+    cmd.remove('not alt ""+A')
+
     ########################################
     # Clean up and save PyMOL session file #
     ########################################
