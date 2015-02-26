@@ -461,6 +461,7 @@ class PDBComplex():
         self.output_path = '/tmp'
         self.pymol_name = None
         self.idx_to_pdb_mapping = {}
+        self.modres = set()
         self.altconf = []  # Atom idx of atoms with alternate conformations
 
     def load_pdb(self, pdbpath):
@@ -468,7 +469,7 @@ class PDBComplex():
         self.sourcefiles['pdbcomplex'] = pdbpath
         self.protcomplex = read_pdb(pdbpath, safe=False)  # Don't do safe reading
         # Counting is different from PDB if TER records present
-        self.idx_to_pdb_mapping = idx_to_pdb_mapping(open(tilde_expansion(pdbpath)).readlines())
+        self.idx_to_pdb_mapping, self.modres = parse_pdb(open(tilde_expansion(pdbpath)).readlines())
         self.altconf = get_altconf_atoms(open(tilde_expansion(pdbpath)).readlines())
         try:
             self.pymol_name = self.protcomplex.data['HEADER'][56:60].lower()  # Get name from HEADER data
@@ -477,7 +478,7 @@ class PDBComplex():
         self.protcomplex.OBMol.AddPolarHydrogens()
         for atm in self.protcomplex:
             self.atoms[atm.idx] = atm
-        ligands = getligs(self.protcomplex, self.altconf, self.idx_to_pdb_mapping)
+        ligands = getligs(self.protcomplex, self.altconf, self.idx_to_pdb_mapping, self.modres)
         resis = [obres for obres in pybel.ob.OBResidueIter(self.protcomplex.OBMol) if obres.GetResidueProperty(0)]
         for ligand in ligands:
             lig_obj = Ligand(ligand.mol, self, ligand.mapping, ligand.water, self.altconf)

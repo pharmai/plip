@@ -101,7 +101,7 @@ def is_artifact(hetid):
     """Returns if the ligand is most likely and artifact or other stuff not meaningful (i.e. common solvents)"""
     # NH2 is amidated N-terminus
     # ACE is acetylated C-terminus
-    artifacts = ['GOL', 'EDO', 'DOD', 'DMS', 'FMT', 'UNL', 'UPL', '1PE', 'UNX', 'EOH', 'NH2', 'ACE']
+    artifacts = ['GOL', 'EDO', 'DOD', 'DMS', 'FMT', 'UNL', 'UPL', '1PE', 'UNX', 'EOH']
     return hetid.upper() in artifacts
 
 
@@ -138,7 +138,10 @@ def is_mod_aa(hetid):
         'TYQ': 'Y', 'TYS': 'Y', 'TYY': 'Y', 'AGM': 'R', 'GL3': 'G',
         'SMC': 'C', 'ASX': 'B', 'CGU': 'E', 'CSX': 'C', 'GLX': 'Z',
         'MCS': 'C', 'UNK': None, 'MLY': None, 'B3M': None, 'BIL': None,
-        'B3L': None, 'D3P': None, 'D4P': None
+        'B3L': None, 'D3P': None, 'D4P': None, 'ACE': None, 'NH2': None,
+        'B3T': None, 'XCP': None, 'XPC': None, 'B3E': 'E', 'GHP': None,
+        '3MY': 'Y', '3FG': None, 'OMY': 'Y', 'MP8': 'P', 'FP9': 'P',
+        'ORN': 'A', '4BF': 'Y', 'HAO': None
     }
     return hetid.upper() in mod_aa_dict
 
@@ -149,13 +152,15 @@ def is_lig(hetid):
     return not (h == 'HOH' or is_mod_aa(h) or is_dna(h) or is_metalion(h) or is_other_ion(h) or is_artifact(h))
 
 
-def idx_to_pdb_mapping(fil):
+def parse_pdb(fil):
     """When reading in a PDB file, OpenBabel numbers ATOMS and HETATOMS continously.
     In PDB files, TER records are also counted, leading to a different numbering system.
     This functions reads in a PDB file and provides a mapping as a dictionary.
+    Additionally, it returns a list of modified residues.
     """
     i, j = 0, 0  # idx and PDB numbering
     d = {}
+    modres = set()
     previous_ter = False
     for line in fil:
         if line.startswith(("ATOM", "HETATM")):
@@ -169,7 +174,9 @@ def idx_to_pdb_mapping(fil):
             previous_ter = False
         if line.startswith("TER"):
             previous_ter = True
-    return d
+        if line.startswith("MODRES"):
+            modres.add(line[12:15].strip())
+    return d, modres
 
 
 def get_altconf_atoms(f):
@@ -426,7 +433,7 @@ def set_custom_colorset():
 #############################################
 
 
-def getligs(mol, altconf, idx_to_pdb):
+def getligs(mol, altconf, idx_to_pdb, modres):
     """Get all ligands from a PDB file. Adapted from Joachim's structTools"""
     #############################
     # Read in file and get name #
@@ -443,7 +450,7 @@ def getligs(mol, altconf, idx_to_pdb):
                if not (o.GetResidueProperty(9) or o.GetResidueProperty(0))]
     water = [o for o in pybel.ob.OBResidueIter(mol.OBMol) if o.GetResidueProperty(9)]
 
-    all_res = [a for a in all_res if is_lig(a.GetName())]  # Filter out non-ligands
+    all_res = [a for a in all_res if is_lig(a.GetName()) and a.GetName() not in modres]  # Filter out non-ligands
 
     ############################################
     # Filtering by counting and artifacts list #

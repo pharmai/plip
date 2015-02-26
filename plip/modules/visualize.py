@@ -102,7 +102,7 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False, pse=
     ########################
 
     opts = '-p' if show else '-pcq'
-    start_pymol(run=True, options=opts, quiet=True)
+    start_pymol(run=True, options=opts, quiet=False)
     standard_settings()
     cmd.set('dash_gap', 0)  # Show not dashes, but lines for the pliprofiler
     cmd.set('ray_shadow', 0)  # Turn on ray shadows for clearer ray-traced images
@@ -199,21 +199,20 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False, pse=
     for stack in stacks:
         pires_ids = '+'.join(map(str, [mapping[i.idx] for i in stack.proteinring.atoms]))
         pilig_ids = '+'.join(map(str, [lig_to_pdb[i.idx] for i in stack.ligandring.atoms]))
-        cmd.select('StackRings-P', 'id %s' % pires_ids)
-        cmd.select('StackRings-L', 'id %s' % pilig_ids)
+        cmd.select('StackRings-P', 'StackRings-P or id %s' % pires_ids)
+        cmd.select('StackRings-L', 'StackRings-L or id %s' % pilig_ids)
         cmd.select('StackRings-P', 'byres StackRings-P')
         cmd.show('sticks', 'StackRings-P')
-        for group in [['ps1', 'Centroids-P', 'tmp_bs', stack.proteinring.center],
-                      ['ps2', 'Centroids-L', 'tmp_lig', stack.ligandring.center]]:
-            cmd.pseudoatom(group[0], pos=group[3])
-            cmd.pseudoatom(group[1], pos=group[3])
-            cmd.select(group[2], group[0])
+
+        cmd.pseudoatom('ps1_%s' % pires_ids, pos=stack.proteinring.center)
+        cmd.pseudoatom('ps2_%s' % pilig_ids, pos=stack.ligandring.center)
+        cmd.pseudoatom('Centroids-P', pos=stack.proteinring.center)
+        cmd.pseudoatom('Centroids-L', pos=stack.ligandring.center)
+
         if stack.type == 'P':
-            cmd.distance('PiStackingP', 'tmp_bs', 'tmp_lig')
-        elif stack.type == 'T':
-            cmd.distance('PiStackingT', 'tmp_bs', 'tmp_lig')
-        cmd.delete('ps1 or ps2')
-        cmd.delete('tmp_bs or tmp_lig')
+            cmd.distance('PiStackingP', 'ps1_%s' % pires_ids, 'ps2_%s' % pilig_ids)
+        if stack.type == 'T':
+            cmd.distance('PiStackingT', 'ps1_%s' % pires_ids, 'ps2_%s' % pilig_ids)
     if object_exists('PiStackingP'):
         cmd.set('dash_color', 'green', 'PiStackingP')
         cmd.set('dash_gap', 0.3, 'PiStackingP')
@@ -222,6 +221,7 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False, pse=
         cmd.set('dash_color', 'smudge', 'PiStackingT')
         cmd.set('dash_gap', 0.3, 'PiStackingT')
         cmd.set('dash_length', 0.6, 'PiStackingT')
+    cmd.delete('ps1* or ps2*')
 
     ####################################
     # Visualize Cation-pi interactions #
