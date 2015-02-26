@@ -102,7 +102,7 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False, pse=
     ########################
 
     opts = '-p' if show else '-pcq'
-    start_pymol(run=True, options=opts, quiet=False)
+    start_pymol(run=True, options=opts, quiet=True)
     standard_settings()
     cmd.set('dash_gap', 0)  # Show not dashes, but lines for the pliprofiler
     cmd.set('ray_shadow', 0)  # Turn on ray shadows for clearer ray-traced images
@@ -228,13 +228,11 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False, pse=
     ####################################
 
     for p in pli.pication_paro+pli.pication_laro:
-        cmd.pseudoatom('ps1', pos=p.ring.center)
-        cmd.pseudoatom('ps2', pos=p.charge.center)
+        cmd.pseudoatom('ps1_cat', pos=p.ring.center)
+        cmd.pseudoatom('ps2_cat', pos=p.charge.center)
         if p.protcharged:
             cmd.pseudoatom('Chargecenter-P', pos=p.charge.center)
             cmd.pseudoatom('Centroids-L', pos=p.ring.center)
-            cmd.select('tmp_lig', 'ps1')
-            cmd.select('tmp_bs', 'ps2')
             pilig_ids = '+'.join(map(str, [lig_to_pdb[i.idx] for i in p.ring.atoms]))
             cmd.select('PiCatRing-L', 'PiCatRing-L or id %s' % pilig_ids)
             for a in p.charge.atoms:
@@ -242,13 +240,11 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False, pse=
         else:
             cmd.pseudoatom('Chargecenter-L', pos=p.charge.center)
             cmd.pseudoatom('Centroids-P', pos=p.ring.center)
-            cmd.select('tmp_bs', 'ps1')
-            cmd.select('tmp_lig', 'ps2')
             pires_ids = '+'.join(map(str, [mapping[i.idx] for i in p.ring.atoms]))
             cmd.select('PiCatRing-P', 'PiCatRing-P or id %s' % pires_ids)
             cmd.select('PosCharge-L', 'PosCharge-L or id %i' % lig_to_pdb[p.charge.atoms[0].idx])
-        cmd.distance('PiCation', 'tmp_bs', 'tmp_lig')
-        cmd.delete('ps1 or ps2')
+        cmd.distance('PiCation', 'ps1_cat', 'ps2_cat')
+        cmd.delete('ps1* or ps2*')
     if object_exists('PiCation'):
         cmd.set('dash_color', 'orange', 'PiCation')
         cmd.set('dash_gap', 0.3, 'PiCation')
@@ -265,33 +261,27 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False, pse=
             cmd.select('PosCharge-P', 'PosCharge-P or id %i' % mapping[patom.idx])
         for latom in saltb.negative.atoms:
             cmd.select('NegCharge-L', 'NegCharge-L or id %i' % lig_to_pdb[latom.idx])
-        for group in [['ps1', 'Chargecenter-P', 'tmp_bs', saltb.positive.center],
-                      ['ps2', 'Chargecenter-L', 'tmp_lig', saltb.negative.center]]:
-            cmd.pseudoatom(group[0], pos=group[3])
-            cmd.pseudoatom(group[1], pos=group[3])
-            cmd.select(group[2], group[0])
-        cmd.distance('Saltbridges', 'tmp_bs', 'tmp_lig')
-        cmd.delete('ps1 or ps2')
-    if object_exists('Saltbridges'):
-        cmd.set('dash_color', 'yellow', 'Saltbridges')
-        cmd.set('dash_gap', 0.5, 'Saltbridges')
-        cmd.delete('ps1 or ps2')
+        for group in [['ps1_sb', 'Chargecenter-P', saltb.positive.center],
+                      ['ps2_sb', 'Chargecenter-L', saltb.negative.center]]:
+            cmd.pseudoatom(group[0], pos=group[2])
+            cmd.pseudoatom(group[1], pos=group[2])
+        cmd.distance('Saltbridges', 'ps1_sb', 'ps2_sb')
+        cmd.delete('ps1* or ps2*')
     for saltb in saltbridge_pneg:
         for patom in saltb.negative.atoms:
             cmd.select('NegCharge-P', 'NegCharge-P or id %i' % mapping[patom.idx])
         for latom in saltb.positive.atoms:
             cmd.select('PosCharge-L', 'PosCharge-L or id %i' % lig_to_pdb[latom.idx])
-        for group in [['ps1', 'Chargecenter-P', 'tmp_bs', saltb.negative.center],
-                      ['ps2', 'Chargecenter-L', 'tmp_lig', saltb.positive.center]]:
-            cmd.pseudoatom(group[0], pos=group[3])
-            cmd.pseudoatom(group[1], pos=group[3])
-            cmd.select(group[2], group[0])
-        cmd.distance('Saltbridges', 'tmp_bs', 'tmp_lig')
-        cmd.delete('ps1 or ps2')
+        for group in [['ps1_sb', 'Chargecenter-P', saltb.negative.center],
+                      ['ps2_sb', 'Chargecenter-L', saltb.positive.center]]:
+            cmd.pseudoatom(group[0], pos=group[2])
+            cmd.pseudoatom(group[1], pos=group[2])
+        cmd.distance('Saltbridges', 'ps1_sb', 'ps2_sb')
+        cmd.delete('ps1* or ps2*')
     if object_exists('Saltbridges'):
         cmd.set('dash_color', 'yellow', 'Saltbridges')
         cmd.set('dash_gap', 0.5, 'Saltbridges')
-        cmd.delete('ps1 or ps2')
+        cmd.delete('ps1* or ps2*')
 
     ########################################
     # Water-bridged H-Bonds (first degree) #
