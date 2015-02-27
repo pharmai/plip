@@ -102,7 +102,7 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False, pse=
     ########################
 
     opts = '-p' if show else '-pcq'
-    start_pymol(run=True, options=opts, quiet=False)
+    start_pymol(run=True, options=opts, quiet=True)
     standard_settings()
     cmd.set('dash_gap', 0)  # Show not dashes, but lines for the pliprofiler
     cmd.set('ray_shadow', 0)  # Turn on ray shadows for clearer ray-traced images
@@ -232,14 +232,14 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False, pse=
         if p.protcharged:
             cmd.pseudoatom('Chargecenter-P', pos=p.charge.center)
             cmd.pseudoatom('Centroids-L', pos=p.ring.center)
-            pilig_ids = '+'.join(map(str, [lig_to_pdb[i.idx] for i in p.ring.atoms]))
+            pilig_ids = '+'.join(map(str, [lig_to_pdb[atm.idx] for atm in p.ring.atoms]))
             cmd.select('PiCatRing-L', 'PiCatRing-L or id %s' % pilig_ids)
             for a in p.charge.atoms:
                 cmd.select('PosCharge-P', 'PosCharge-P or id %i' % mapping[a.idx])
         else:
             cmd.pseudoatom('Chargecenter-L', pos=p.charge.center)
             cmd.pseudoatom('Centroids-P', pos=p.ring.center)
-            pires_ids = '+'.join(map(str, [mapping[i.idx] for i in p.ring.atoms]))
+            pires_ids = '+'.join(map(str, [mapping[atm.idx] for atm in p.ring.atoms]))
             cmd.select('PiCatRing-P', 'PiCatRing-P or id %s' % pires_ids)
             cmd.select('PosCharge-L', 'PosCharge-L or id %i' % lig_to_pdb[p.charge.atoms[0].idx])
         cmd.distance('PiCation', 'ps-picat-1-%i' % i, 'ps-picat-2-%i' % i)

@@ -184,7 +184,7 @@ def get_altconf_atoms(f):
     alt = []
     for line in f:
         if line.startswith(("ATOM", "HETATM")):
-            atomid, location = int(line[7:11]), line[16]
+            atomid, location = int(line[6:11]), line[16]
             location = 'A' if location == ' ' else location
             if location != 'A':
                 alt.append(atomid)
