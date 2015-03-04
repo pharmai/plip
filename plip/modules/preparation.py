@@ -439,11 +439,10 @@ class Ligand(Mol):
                     nitro_partners = []
                     for nitro in pybel.ob.OBAtomAtomIter(a.OBAtom):
                         nitro_partners.append(len([b_neighbor for b_neighbor in pybel.ob.OBAtomAtomIter(nitro)]))
-                        if min(nitro_partners) == 1:  # One nitrogen is only connected to the carbon, can pick up a H
-                            a_contributing = [pybel.Atom(neighbor) for neighbor in pybel.ob.OBAtomAtomIter(a.OBAtom)
-                                              if neighbor.GetAtomicNum() == 7]
-                            a_set.append(data(atoms=a_contributing, type='positive',
-                                              center=a.coords, fgroup='guanidine'))
+                    if min(nitro_partners) == 1:  # One nitrogen is only connected to the carbon, can pick up a H
+                        a_contributing = [pybel.Atom(neighbor) for neighbor in pybel.ob.OBAtomAtomIter(a.OBAtom)
+                                          if neighbor.GetAtomicNum() == 7]
+                        a_set.append(data(atoms=a_contributing, type='positive', center=a.coords, fgroup='guanidine'))
         return a_set
 
 
