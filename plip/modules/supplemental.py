@@ -185,8 +185,8 @@ def parse_pdb(fil):
             modres.add(line[12:15].strip())
         # Get covalent linkages between ligands
         if line.startswith("LINK"):
-            conf1, id1, chain1, pos1 = line[16].strip(), line[17:20].strip(), line[21].strip(), int(line[23:26])
-            conf2, id2, chain2, pos2 = line[46].strip(), line[47:50].strip(), line[51].strip(), int(line[53:56])
+            conf1, id1, chain1, pos1 = line[16].strip(), line[17:20].strip(), line[21].strip(), int(line[22:26])
+            conf2, id2, chain2, pos2 = line[46].strip(), line[47:50].strip(), line[51].strip(), int(line[52:56])
             covalent.append(covlinkage(id1=id1, chain1=chain1, pos1=pos1, conf1=conf1,
                                        id2=id2, chain2=chain2, pos2=pos2, conf2=conf2))
     return d, modres, covalent
@@ -484,11 +484,13 @@ def getligs(mol, altconf, idx_to_pdb, modres, covalent):
 
     lignames = list(set([a.GetName() for a in all_res]))
     # Remove all those not considered by ligands and pairings including alternate conformations
+
     ligdoubles = [[(link.id1, link.chain1, link.pos1),
                    (link.id2, link.chain2, link.pos2)] for link in
                   [c for c in covalent if c.id1 in lignames and c.id2 in lignames and
                    c.conf1 in ['A', ''] and c.conf2 in ['A', '']
                   and (c.id1, c.chain1, c.pos1) in all_res_dict and (c.id2, c.chain2, c.pos2) in all_res_dict]]
+
     kmers = cluster_doubles(ligdoubles)
     if not kmers:  # No ligand kmers, just normal independent ligands
         res_kmers = [[all_res_dict[res]] for res in all_res_dict]
