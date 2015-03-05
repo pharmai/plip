@@ -153,14 +153,19 @@ def is_lig(hetid):
 
 
 def parse_pdb(fil):
-    """When reading in a PDB file, OpenBabel numbers ATOMS and HETATOMS continously.
+    """Extracts additional information from PDB files.
+    I. When reading in a PDB file, OpenBabel numbers ATOMS and HETATOMS continously.
     In PDB files, TER records are also counted, leading to a different numbering system.
     This functions reads in a PDB file and provides a mapping as a dictionary.
-    Additionally, it returns a list of modified residues.
+    II. Additionally, it returns a list of modified residues.
+    III. Furthermore, covalent linkages between ligands and protein residues/other ligands are identified
     """
+    # #@todo Also consider SSBOND entries here
     i, j = 0, 0  # idx and PDB numbering
     d = {}
     modres = set()
+    covlinkage = namedtuple("covlinkage", "id1 chain1 pos1 conf1 id2 chain2 pos2 conf2")
+    covalent = []
     previous_ter = False
     for line in fil:
         if line.startswith(("ATOM", "HETATM")):
@@ -172,11 +177,19 @@ def parse_pdb(fil):
                 j += 2
             d[i] = j
             previous_ter = False
+        # Numbering Changes at TER records
         if line.startswith("TER"):
             previous_ter = True
+        # Get modified residues
         if line.startswith("MODRES"):
             modres.add(line[12:15].strip())
-    return d, modres
+        # Get covalent linkages between ligands
+        if line.startswith("LINK"):
+            conf1, id1, chain1, pos1 = line[16].strip(), line[17:20].strip(), line[21].strip(), int(line[23:26])
+            conf2, id2, chain2, pos2 = line[46].strip(), line[47:50].strip(), line[51].strip(), int(line[53:56])
+            covalent.append(covlinkage(id1=id1, chain1=chain1, pos1=pos1, conf1=conf1,
+                                       id2=id2, chain2=chain2, pos2=pos2, conf2=conf2))
+    return d, modres, covalent
 
 
 def get_altconf_atoms(f):
@@ -433,13 +446,13 @@ def set_custom_colorset():
 #############################################
 
 
-def getligs(mol, altconf, idx_to_pdb, modres):
+def getligs(mol, altconf, idx_to_pdb, modres, covalent):
     """Get all ligands from a PDB file. Adapted from Joachim's structTools"""
     #############################
     # Read in file and get name #
     #############################
 
-    data = namedtuple('ligand', 'mol mapping water')
+    data = namedtuple('ligand', 'mol mapping water members')
     ligands = []
 
     #########################
@@ -455,7 +468,7 @@ def getligs(mol, altconf, idx_to_pdb, modres):
     ############################################
     # Filtering by counting and artifacts list #
     ############################################
-
+    # #@todo Reduce the use of BioLiP lists
     artifacts = []
     unique_ligs = set(a.GetName() for a in all_res)
     for ulig in unique_ligs:
@@ -463,16 +476,40 @@ def getligs(mol, altconf, idx_to_pdb, modres):
         if is_biolip_artifact(ulig) and [a.GetName() for a in all_res].count(ulig) >= 10:
             artifacts.append(ulig)
     all_res = [a for a in all_res if a.GetName() not in artifacts]
+    all_res_dict = {(a.GetName(), a.GetChain(), a.GetNum()): a for a in all_res}
+
+    #########################
+    # Identify kmer ligands #
+    #########################
+
+    lignames = list(set([a.GetName() for a in all_res]))
+    # Remove all those not considered by ligands and pairings including alternate conformations
+    ligdoubles = [[(link.id1, link.chain1, link.pos1),
+                   (link.id2, link.chain2, link.pos2)] for link in
+                  [c for c in covalent if c.id1 in lignames and c.id2 in lignames and
+                   c.conf1 in ['A', ''] and c.conf2 in ['A', '']
+                  and (c.id1, c.chain1, c.pos1) in all_res_dict and (c.id2, c.chain2, c.pos2) in all_res_dict]]
+    kmers = cluster_doubles(ligdoubles)
+    if not kmers:  # No ligand kmers, just normal independent ligands
+        res_kmers = [[all_res_dict[res]] for res in all_res_dict]
+    else:
+        # res_kmers contains clusters of covalently bound ligand residues (kmer ligands)
+        res_kmers = [[all_res_dict[res] for res in kmer] for kmer in kmers]
 
     ###################
     # Extract ligands #
     ###################
 
-    for obresidue in all_res:  # iterate over all ligands
-        hetatoms = set([(obatom.GetIdx(), obatom) for obatom in pybel.ob.OBResidueAtomIter(obresidue)
+    for kmer in res_kmers:  # iterate over all ligands
+        members = [(res.GetName(), res.GetChain(), res.GetNum()) for res in kmer]
+        rname, rchain, rnum = sorted(members)[0]  # representative name, chain, and number
+        hetatoms = set()
+        for obresidue in kmer:
+            hetatoms_res = set([(obatom.GetIdx(), obatom) for obatom in pybel.ob.OBResidueAtomIter(obresidue)
                         if not obatom.IsHydrogen()])
 
-        hetatoms = set([atm for atm in hetatoms if not idx_to_pdb[atm[0]] in altconf])  # Remove alt. conformations
+            hetatoms_res = set([atm for atm in hetatoms_res if not idx_to_pdb[atm[0]] in altconf])  # Remove alt. conformations
+            hetatoms.update(hetatoms_res)
         if len(hetatoms) == 0:
             continue
         hetatoms = dict(hetatoms)  # make it a dict with idx as key and OBAtom as value
@@ -497,12 +534,12 @@ def getligs(mol, altconf, idx_to_pdb, modres):
                 bond = hetatoms[obatom].GetBond(hetatoms[neighbour_atom])
                 lig.AddBond(newidx[obatom], newidx[neighbour_atom], bond.GetBondOrder())
         lig = pybel.Molecule(lig)
-        ch = obresidue.GetChain() if not obresidue.GetChain() in [" ", ""] else "0"
-        lig.data.update({'Name': obresidue.GetName(),
-                         'Chain': ch,
-                         'ResNr': obresidue.GetNum()})
-        lig.title = '-'.join((obresidue.GetName(), ch, str(obresidue.GetNum())))
-        ligands.append(data(mol=lig, mapping=mapold, water=water))
+        # For kmers, the representative ids are chosen (first residue of kmer)
+        lig.data.update({'Name': rname,
+                         'Chain': rchain,
+                         'ResNr': rnum})
+        lig.title = '-'.join((rname, rchain, str(rnum)))
+        ligands.append(data(mol=lig, mapping=mapold, water=water, members=members))
     return ligands
 
 

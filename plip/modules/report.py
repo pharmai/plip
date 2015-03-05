@@ -36,6 +36,7 @@ class TextOutput():
         self.output_path = pli_class.output_path
         self.name = pli_class.name
         self.pdbid = pli_class.pdbid.upper()
+        self.lig_members = pli_class.lig_members
         mapping = pli_class.idx_to_pdb
         lig_to_pdb = {key: mapping[pli_class.lig_to_pdb[key]] for key in pli_class.lig_to_pdb}  # Atom mapping ligand
         self.header = ['#PREDICTION OF NONCOVALENT INTERACTIONS FOR %s:%s' % (self.pdbid, self.name),
@@ -208,6 +209,8 @@ class TextOutput():
         """Generates an flat text report for a single binding site"""
         txt = []
         txt.append('%s' % self.name)
+        for i, member in enumerate(sorted(self.lig_members)[1:]):
+            txt.append('  + %s' % "-".join(str(element) for element in member))
         txt.append("-"*len(self.name))
         for section in [['Hydrophobic Interactions', self.hydrophobic_features, self.hydrophobic_info],
                         ['Hydrogen Bonds', self.hbond_features, self.hbond_info],
@@ -245,7 +248,14 @@ class TextOutput():
         hetid = et.SubElement(identifiers, 'hetid')
         chain = et.SubElement(identifiers, 'chain')
         position = et.SubElement(identifiers, 'position')
+        composite = et.SubElement(identifiers, 'composite')
+        members = et.SubElement(identifiers, 'members')
         hetid.text, chain.text, position.text = self.name.split('-')
+        composite.text = 'True' if len(self.lig_members) > 1 else 'False'
+        for i, member in enumerate(sorted(self.lig_members)):
+            bsid = "-".join(str(element) for element in member)
+            m = et.SubElement(members, 'member', id=str(i+1))
+            m.text = bsid
         interactions = et.SubElement(report, 'interactions')
 
         def format_interactions(element_name, features, interaction_information):

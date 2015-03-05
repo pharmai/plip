@@ -143,6 +143,7 @@ class PLInteraction():
         """Detect all interactions when initializing"""
         self.ligand = lig_obj
         self.name = lig_obj.name
+        self.lig_members = lig_obj.members
         self.pdbid = protcomplex.pymol_name
         self.bindingsite = bs_obj
         self.idx_to_pdb = protcomplex.idx_to_pdb_mapping
@@ -354,7 +355,7 @@ class BindingSite(Mol):
 
 
 class Ligand(Mol):
-    def __init__(self, lig, cclass, mapping, water, altconf):
+    def __init__(self, lig, cclass, mapping, water, altconf, members):
         Mol.__init__(self, altconf)
         self.complex = cclass
         self.molecule = lig
@@ -368,6 +369,7 @@ class Ligand(Mol):
         self.centroid = centroid([a.coords for a in self.all_atoms])
         self.max_dist_to_center = max((euclidean3d(self.centroid, a.coords) for a in self.all_atoms))
         self.water = []
+        self.members = members
         for hoh in water:
             oxy = None
             for at in pybel.ob.OBResidueAtomIter(hoh):
@@ -462,13 +464,15 @@ class PDBComplex():
         self.idx_to_pdb_mapping = {}
         self.modres = set()
         self.altconf = []  # Atom idx of atoms with alternate conformations
+        self.covalent = []  # Covalent linkages between ligands and protein residues/other ligands
 
     def load_pdb(self, pdbpath):
         """Loads a pdb file with protein AND ligand(s), separates and prepares them."""
         self.sourcefiles['pdbcomplex'] = pdbpath
         self.protcomplex = read_pdb(pdbpath, safe=False)  # Don't do safe reading
         # Counting is different from PDB if TER records present
-        self.idx_to_pdb_mapping, self.modres = parse_pdb(open(tilde_expansion(pdbpath)).readlines())
+        self.idx_to_pdb_mapping, self.modres, self.covalent = parse_pdb(open(tilde_expansion(pdbpath)).readlines())
+        # #@todo Include this in the parse_pdb function, return named tuple?
         self.altconf = get_altconf_atoms(open(tilde_expansion(pdbpath)).readlines())
         try:
             self.pymol_name = self.protcomplex.data['HEADER'][56:60].lower()  # Get name from HEADER data
@@ -477,10 +481,10 @@ class PDBComplex():
         self.protcomplex.OBMol.AddPolarHydrogens()
         for atm in self.protcomplex:
             self.atoms[atm.idx] = atm
-        ligands = getligs(self.protcomplex, self.altconf, self.idx_to_pdb_mapping, self.modres)
+        ligands = getligs(self.protcomplex, self.altconf, self.idx_to_pdb_mapping, self.modres, self.covalent)
         resis = [obres for obres in pybel.ob.OBResidueIter(self.protcomplex.OBMol) if obres.GetResidueProperty(0)]
         for ligand in ligands:
-            lig_obj = Ligand(ligand.mol, self, ligand.mapping, ligand.water, self.altconf)
+            lig_obj = Ligand(ligand.mol, self, ligand.mapping, ligand.water, self.altconf, ligand.members)
             cutoff = lig_obj.max_dist_to_center + config.BS_DIST
             bs_res = self.extract_bs(cutoff, lig_obj.centroid, resis)
             # Get a list of all atoms belonging to the binding site, search by idx

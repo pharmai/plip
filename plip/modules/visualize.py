@@ -91,6 +91,7 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False, pse=
     pdbid = pcomp.pymol_name
     pli = pcomp.interaction_sets[pli_site]  # Select the interaction class corresponding to the selection
     ligdata = pli.ligand.pymol_data
+    lig_members = sorted(pli.ligand.members)
     mapping = pcomp.idx_to_pdb_mapping  # Mapping internal -> external for protein atoms
     lig_to_pdb = {key: mapping[ligdata.maptopdb[key]] for key in ligdata.maptopdb}  # Atom mapping for ligand
     save_to = protcomplex_class.output_path
@@ -112,6 +113,11 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False, pse=
     cmd.set_name(current_name, pdbid)
     cmd.hide('everything', 'all')
     cmd.select(ligname, 'resn %s and chain %s and resi %s' % (ligdata.hetid, chain, ligdata.resid))
+
+    # Additionally, select all members of composite ligands
+    for member in lig_members:
+        resid, chain, resnr = member[0], member[1], str(member[2])
+        cmd.select(ligname, '%s or (resn %s and chain %s and resi %s)' % (ligname, resid, chain, resnr))
     cmd.show('sticks', ligname)
     cmd.color('myblue')
     cmd.color('myorange', ligname)
