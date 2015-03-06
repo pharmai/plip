@@ -75,6 +75,7 @@ def is_biolip_artifact(hetid):
 
 
 def is_metalion(hetid):
+    # #@todo Use OpenBabel instead
     """Checks if a PDB ligand is a metal ion"""
     # Based on het IDs of metal ions in PDB files (from http://metalweb.cerm.unifi.it/search/metal/), Apr 2014
     metals = ['LI', 'BE', 'NA', 'MG', 'K', 'CA', 'RB', 'SR', 'CS', 'BA', 'V', 'CR', 'MN', 'CO', 'NI', 'FE',
@@ -92,8 +93,8 @@ def is_other_ion(hetid):
 
 
 def is_dna(hetid):
-    """Check if a PDB ligand is a DNA base"""
-    dna = ['A', 'C', 'T', 'G', 'DA', 'DC', 'DT', 'DG']
+    """Check if a PDB ligand is a DNA/RNA base"""
+    dna = ['A', 'C', 'T', 'G', 'U', 'DA', 'DC', 'DT', 'DG', 'DU']
     return hetid.upper() in dna
 
 
@@ -106,6 +107,7 @@ def is_artifact(hetid):
 
 
 def is_mod_aa(hetid):
+    # #@todo Get rid of that list
     """Returns if the 'ligand' is just a modified amino acid"""
     # Adapted from ASTRAL RAF (Rapid Access Format) Sequence Maps (Biopython), added other cases.
     mod_aa_dict = {
@@ -462,7 +464,6 @@ def getligs(mol, altconf, idx_to_pdb, modres, covalent):
     all_res = [o for o in pybel.ob.OBResidueIter(mol.OBMol)
                if not (o.GetResidueProperty(9) or o.GetResidueProperty(0))]
     water = [o for o in pybel.ob.OBResidueIter(mol.OBMol) if o.GetResidueProperty(9)]
-
     all_res = [a for a in all_res if is_lig(a.GetName()) and a.GetName() not in modres]  # Filter out non-ligands
 
     ############################################
@@ -490,13 +491,22 @@ def getligs(mol, altconf, idx_to_pdb, modres, covalent):
                   [c for c in covalent if c.id1 in lignames and c.id2 in lignames and
                    c.conf1 in ['A', ''] and c.conf2 in ['A', '']
                   and (c.id1, c.chain1, c.pos1) in all_res_dict and (c.id2, c.chain2, c.pos2) in all_res_dict]]
-
     kmers = cluster_doubles(ligdoubles)
     if not kmers:  # No ligand kmers, just normal independent ligands
         res_kmers = [[all_res_dict[res]] for res in all_res_dict]
     else:
         # res_kmers contains clusters of covalently bound ligand residues (kmer ligands)
         res_kmers = [[all_res_dict[res] for res in kmer] for kmer in kmers]
+
+        # In this case, add other ligands which are not part of a kmer
+        in_kmer = []
+        for res_kmer in res_kmers:
+            for res in res_kmer:
+                in_kmer.append((res.GetName(), res.GetChain(), res.GetNum()))
+        for res in all_res_dict:
+            if res not in in_kmer:
+                newres = [all_res_dict[res], ]
+                res_kmers.append(newres)
 
     ###################
     # Extract ligands #
@@ -550,6 +560,7 @@ def read_pdb(pdbfname, safe=False):
     safely to except Open Babel crashes. All bonds are read in as single bonds
     if requested, saving a lot of time at OpenBabel import."""
     global exitcode
+    pybel.ob.obErrorLog.StopLogging()  # Suppress all OpenBabel warnings
     resource.setrlimit(resource.RLIMIT_STACK, (2**28, -1))  # set stack size to 256MB
     sys.setrecursionlimit(10**5)  # increase Python recoursion limit
     success = True

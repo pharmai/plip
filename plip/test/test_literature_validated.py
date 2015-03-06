@@ -535,7 +535,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/4rdl.pdb')
-        s = tmpmol.interaction_sets['FUC-A-604']
+        s = tmpmol.interaction_sets['FUC-A-601']  # Instead of FUC-A-604 (sugar representative)
         # Water bridges to Asn395
         waterbridges = {wb.resnr for wb in s.water_bridges}
         self.assertTrue({395}.issubset(waterbridges))
