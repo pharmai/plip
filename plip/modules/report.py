@@ -59,26 +59,28 @@ class TextOutput():
         ##################
 
         self.hbond_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'SIDECHAIN', 'DIST_H-A', 'DIST_D-A', 'DON_ANGLE',
-                               'PROTISDON', 'DONORIDX', 'ACCEPTORIDX', 'LIGCOO', 'PROTCOO')
+                               'PROTISDON', 'DONORIDX', 'DONORTYPE', 'ACCEPTORIDX', 'ACCEPTORTYPE', 'LIGCOO', 'PROTCOO')
         self.hbond_info = []
         for hbond in pli_class.hbonds_pdon+pli_class.hbonds_ldon:
             if hbond.protisdon:
                 donidx, accidx = mapping[hbond.d.idx], lig_to_pdb[hbond.a.idx]
                 self.hbond_info.append((hbond.resnr, hbond.restype, hbond.reschain, hbond.sidechain,
                                         '%.2f' % hbond.distance_ah, '%.2f' % hbond.distance_ad, '%.2f' % hbond.angle,
-                                        hbond.protisdon, donidx, accidx, hbond.a.coords, hbond.d.coords))
+                                        hbond.protisdon, donidx, hbond.dtype, accidx, hbond.atype, hbond.a.coords,
+                                        hbond.d.coords))
             else:
                 donidx, accidx = lig_to_pdb[hbond.d.idx], mapping[hbond.a.idx]
                 self.hbond_info.append((hbond.resnr, hbond.restype, hbond.reschain, hbond.sidechain,
                                         '%.2f' % hbond.distance_ah, '%.2f' % hbond.distance_ad, '%.2f' % hbond.angle,
-                                        hbond.protisdon, donidx, accidx, hbond.d.coords, hbond.a.coords))
+                                        hbond.protisdon, donidx, hbond.dtype, accidx, hbond.atype, hbond.d.coords,
+                                        hbond.a.coords))
 
         #################
         # WATER-BRIDGES #
         #################
 
         self.waterbridge_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'DIST_A-W', 'DIST_D-W', 'DON_ANGLE', 'WATER_ANGLE',
-                                     'PROTISDON', 'DONOR_IDX', 'ACCEPTOR_IDX', 'WATER_IDX')
+                                     'PROTISDON', 'DONOR_IDX', 'DONORTYPE', 'ACCEPTOR_IDX', 'ACCEPTORTYPE', 'WATER_IDX')
         self.waterbridge_info = []
         for wbridge in pli_class.water_bridges:
             if wbridge.protisdon:
@@ -88,7 +90,7 @@ class TextOutput():
             self.waterbridge_info.append((wbridge.resnr, wbridge.restype, wbridge.reschain,
                                           '%.2f' % wbridge.distance_aw, '%.2f' % wbridge.distance_dw,
                                           '%.2f' % wbridge.d_angle, '%.2f' % wbridge.w_angle, wbridge.protisdon,
-                                          donidx, accidx, mapping[wbridge.water.idx]))
+                                          donidx, wbridge.dtype, accidx, wbridge.atype, mapping[wbridge.water.idx]))
 
         ################
         # SALT BRIDGES #
@@ -147,14 +149,15 @@ class TextOutput():
         # HALOGEN BONDS #
         #################
 
-        self.halogen_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'DIST', 'DON_ANGLE', 'ACC_ANGLE', 'DONORTYPE',
-                                 'DON_IDX', 'ACC_IDX', 'LIGCOO', 'PROTCOO')
+        self.halogen_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'DIST', 'DON_ANGLE', 'ACC_ANGLE', 'DON_IDX',
+                                 'DONORTYPE', 'ACC_IDX', 'ACCEPTORTYPE', 'LIGCOO', 'PROTCOO')
         self.halogen_info = []
         for halogen in pli_class.halogen_bonds:
             self.halogen_info.append((halogen.resnr, halogen.restype, halogen.reschain, '%.2f' % halogen.distance,
-                                      '%.2f' % halogen.don_angle, '%.2f' % halogen.acc_angle, halogen.donortype,
-                                      lig_to_pdb[halogen.don.x.idx],
-                                      mapping[halogen.acc.o.idx], halogen.acc.o.coords, halogen.don.x.coords))
+                                      '%.2f' % halogen.don_angle, '%.2f' % halogen.acc_angle,
+                                      lig_to_pdb[halogen.don.x.idx], halogen.donortype,
+                                      mapping[halogen.acc.o.idx], halogen.acctype,
+                                      halogen.acc.o.coords, halogen.don.x.coords))
 
     def write_section(self, name, features, info, f):
         """Provides formatting for one section (e.g. hydrogen bonds)"""

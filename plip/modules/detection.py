@@ -49,7 +49,7 @@ def hbonds(acceptors, donor_pairs, protisdon, typ):
     donor hydrogens and acceptor showing a distance within HBOND DIST MIN and HBOND DIST MAX
     and donor angles above HBOND_DON_ANGLE_MIN
     """
-    data = namedtuple('hbond', 'a d h distance_ah distance_ad angle type protisdon resnr restype reschain sidechain')
+    data = namedtuple('hbond', 'a d h distance_ah distance_ad angle type protisdon resnr restype reschain sidechain atype dtype')
     pairings = []
     for acc, don in itertools.product(acceptors, donor_pairs):
         if typ == 'strong':  # Regular (strong) hydrogen bonds
@@ -66,7 +66,7 @@ def hbonds(acceptors, donor_pairs, protisdon, typ):
                     resnr = whichresnumber(don.d)if protisdon else whichresnumber(acc.a)
                     contact = data(a=acc.a, d=don.d, h=don.h, distance_ah=dist_ah, distance_ad=dist_ad, angle=v,
                                    type=typ, protisdon=protisdon, resnr=resnr, restype=restype, reschain=reschain,
-                                   sidechain=is_sidechain_hbond)
+                                   sidechain=is_sidechain_hbond, atype=acc.a.type, dtype=don.d.type)
                     pairings.append(contact)
     return pairings
 
@@ -164,7 +164,7 @@ def saltbridge(poscenter, negcenter, protispos):
 
 def halogen(acceptor, donor):
     """Detect all halogen bonds of the type Y-O...X-C"""
-    data = namedtuple('halogenbond', 'acc don distance don_angle acc_angle restype resnr reschain donortype')
+    data = namedtuple('halogenbond', 'acc don distance don_angle acc_angle restype resnr reschain donortype acctype')
     pairings = []
     for acc, don in itertools.product(acceptor, donor):
         dist = euclidean3d(acc.o.coords, don.x.coords)
@@ -176,14 +176,14 @@ def halogen(acceptor, donor):
                 if config.HALOGEN_DON_ANGLE-config.HALOGEN_ANGLE_DEV < don_angle < config.HALOGEN_DON_ANGLE+config.HALOGEN_ANGLE_DEV:
                     contact = data(acc=acc, don=don, distance=dist, don_angle=don_angle, acc_angle=acc_angle,
                                    restype=whichrestype(acc.o), resnr=whichresnumber(acc.o),
-                                   reschain=whichchain(acc.o), donortype=don.x.OBAtom.GetType())
+                                   reschain=whichchain(acc.o), donortype=don.x.OBAtom.GetType(), acctype=acc.o.type)
                     pairings.append(contact)
     return pairings
 
 
 def water_bridges(bs_hba, lig_hba, bs_hbd, lig_hbd, water):
     """Find water-bridged hydrogen bonds between ligand and protein. For now only considers bridged of first degree."""
-    data = namedtuple('waterbridge', 'a d h water distance_aw distance_dw d_angle w_angle type resnr restype reschain protisdon')
+    data = namedtuple('waterbridge', 'a atype d dtype h water distance_aw distance_dw d_angle w_angle type resnr restype reschain protisdon')
     pairings = []
     # First find all acceptor-water pairs with distance within d
     # and all donor-water pairs with distance within d and angle greater theta
@@ -214,7 +214,8 @@ def water_bridges(bs_hba, lig_hba, bs_hbd, lig_hbd, water):
         if wl == wd:  # Same water molecule and angle within omega
             w_angle = vecangle(vector(acc.a.coords, wl.coords), vector(wl.coords, don.h.coords))
             if config.WATER_BRIDGE_OMEGA_MIN < w_angle < config.WATER_BRIDGE_OMEGA_MAX:
-                contact = data(a=acc.a, d=don.d, h=don.h, water=wl, distance_aw=distance_aw, distance_dw=distance_dw,
+                contact = data(a=acc.a, atype=acc.a.type, d=don.d, dtype=don.d.type, h=don.h, water=wl,
+                               distance_aw=distance_aw, distance_dw=distance_dw,
                                d_angle=d_angle, w_angle=w_angle, type='first_deg', resnr=whichresnumber(don.d),
                                restype=whichrestype(don.d), reschain=whichchain(don.d), protisdon=True)
                 pairings.append(contact)
