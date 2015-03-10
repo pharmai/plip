@@ -142,10 +142,15 @@ def process_pdb(pdbfile, outpath, xml=False, verbose_mode=False, pics=False, pym
                 sys.stdout.write("  @ %s\n" % site)
 
             if pymol or pics:
-                # Initialize thread for PyMOL visualization and add to list of threads to be processed
-                p = multiprocessing.Process(target=visualize_in_pymol, args=(mol, site, False, pics, pymol))
-                threads.append(p)
-
+                if os.name != 'nt':
+                    if maxthreads != 0:
+                        # Initialize thread for PyMOL visualization and add to list of threads to be processed
+                        p = multiprocessing.Process(target=visualize_in_pymol, args=(mol, site, False, pics, pymol))
+                        threads.append(p)
+                    else:
+                        visualize_in_pymol(mol, site, False, pics, pymol)
+                else:
+                    visualize_in_pymol(mol, site, False, pics, pymol)
         else:
             textlines.append('No interactions detected.')
         sys.stdout = sys.__stdout__  # Change back to original stdout, gets changed when PyMOL has been used before

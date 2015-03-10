@@ -24,8 +24,10 @@ import re
 from collections import namedtuple
 import os
 from multiprocessing import Process
-import resource
+if os.name != 'nt':  # Resource module not available for Windows
+    import resource
 import subprocess
+import math  # Reimport for Windows
 
 # External libraries
 import pybel
@@ -561,7 +563,8 @@ def read_pdb(pdbfname, safe=False):
     if requested, saving a lot of time at OpenBabel import."""
     global exitcode
     pybel.ob.obErrorLog.StopLogging()  # Suppress all OpenBabel warnings
-    resource.setrlimit(resource.RLIMIT_STACK, (2**28, -1))  # set stack size to 256MB
+    if os.name != 'nt':  # Resource module not available for Windows
+        resource.setrlimit(resource.RLIMIT_STACK, (2**28, -1))  # set stack size to 256MB
     sys.setrecursionlimit(10**5)  # increase Python recoursion limit
     success = True
     if safe:  # read the file safely, since it can happen, that babel crashes on large files

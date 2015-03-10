@@ -58,6 +58,9 @@ def png_workaround(filepath, width=1200, height=800):
     while not os.path.isfile(originalfile) and attempts <= 10:
         sleep(0.1)
         attempts += 1
+    if os.name == 'nt':  # In Windows, make sure there is no file of the same name, cannot be overwritten as in Unix
+        if os.path.isfile(newfile):
+            os.remove(newfile)
     os.rename(originalfile, newfile)  # Remove frame number in filename
 
     #  Check if imagemagick is available and crop + resize the images
