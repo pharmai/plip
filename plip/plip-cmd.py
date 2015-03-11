@@ -36,7 +36,7 @@ import multiprocessing
 # External libraries
 import lxml.etree as et
 
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 descript = "Protein-Ligand Interaction Profiler (PLIP) v%s " \
            "is a command-line based tool to analyze interactions in a protein-ligand complex." % __version__
 
