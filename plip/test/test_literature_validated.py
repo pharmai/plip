@@ -25,6 +25,10 @@ from plip.modules.preparation import PDBComplex
 class LiteratureValidatedTest(unittest.TestCase):
     """Checks predictions against literature-validated interactions"""
 
+    ###############################################
+    # Literature-validated cases from publication #
+    ###############################################
+
     def test_1eve(self):
         """Binding of anti-Alzheimer drug E2020 to acetylcholinesterase from Torpedo californica (1eve)
         Reference: Chakrabarti et al. Geometry of nonbonded interactions involving planar groups in proteins. (2007)
@@ -193,10 +197,10 @@ class LiteratureValidatedTest(unittest.TestCase):
         # Hydrogen bonds to Arg111, Ile61 (backbone), Asn92, Val88, Lys87 and Glu86#
         hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
         self.assertTrue({111, 61, 92, 88, 87}.issubset(hbonds))
-        #@todo Publication show waterbridge interacction for Ile59, Glu60, Glu159
+        #@todo Publication shows additional waterbridge interacction for Ile59, Glu159
         # Water bridges to Lys307, Arg309 and 111 from phosphate groups
         waterbridges = {wb.resnr for wb in s.water_bridges}
-        self.assertTrue({307, 309, 111}.issubset(waterbridges))
+        self.assertTrue({60, 307, 309, 111}.issubset(waterbridges))
         # pi-stacking interaction with Phe209
         pistackres = {pistack.resnr for pistack in s.pistacking}
         self.assertTrue({209}.issubset(pistackres))
@@ -425,10 +429,10 @@ class LiteratureValidatedTest(unittest.TestCase):
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/1bju.pdb')
         s = tmpmol.interaction_sets['GP6-A-910']
-        #@todo Publication show hydrogen bond interacctions for Gly219 and Asp189
+        #@todo Publication show hydrogen bond interactions for Gly219
         # Hydrogen bonds to Ser190, Ser195, Gly219 and Asp189
-        hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
-        self.assertTrue({190, 195}.issubset(hbonds))
+        hbonds = {hbond.resnr for hbond in s.hbonds_pdon+s.hbonds_ldon}
+        self.assertTrue({189, 190, 195}.issubset(hbonds))
         # Water bridges to Ser190 and Val227
         waterbridges = {wb.resnr for wb in s.water_bridges}
         self.assertTrue({190, 227}.issubset(waterbridges))
@@ -480,10 +484,10 @@ class LiteratureValidatedTest(unittest.TestCase):
         tmpmol.load_pdb('./pdb/2iuz.pdb')
         s = tmpmol.interaction_sets['D1H-A-1440']
         # Hydrogen bonds to Trp137, Trp184
-        hbonds = {hbond.resnr for hbond in s.hbonds_pdon}  # res nr 52 mencioned in alternative conformation, not considered
+        hbonds = {hbond.resnr for hbond in s.hbonds_pdon}  # res nr 52 mentioned in alternative conformation, not considered
         self.assertTrue({137, 384}.issubset(hbonds))
         # Water bridges to Trp137
-        waterbridges = {wb.resnr for wb in s.water_bridges}  # res nr 52 menioned in alternative conformation not considered
+        waterbridges = {wb.resnr for wb in s.water_bridges}  # res nr 52 mentioned in alternative conformation not considered
         self.assertTrue({137}.issubset(waterbridges))
         # pi-stacking interaction with Trp384, Trp137 and Trp52
         pistackres = {pistack.resnr for pistack in s.pistacking}
@@ -545,3 +549,57 @@ class LiteratureValidatedTest(unittest.TestCase):
         # hydrophobic interaction of Trp392
         hydrophobics = {hydrophobic.resnr for hydrophobic in s.all_hydrophobic_contacts}
         self.assertTrue({392}.issubset(hydrophobics))
+
+    #########################################
+    # Additional literature-validated cases #
+    #########################################
+
+    def test_1hii(self):
+        """HIV-2 protease in complex with novel inhibitor CGP 53820 (1hii)
+        Reference:  Comparative analysis of the X-ray structures of HIV-1 and HIV-2 proteases in complex
+        with CGP 53820, a novel pseudosymmetric inhibitor (1995)
+        """
+        tmpmol = PDBComplex()
+        tmpmol.load_pdb('./pdb/1hii.pdb')
+        s = tmpmol.interaction_sets['C20-B-101']
+        # Water bridges
+        waterbridges = {str(wb.resnr)+wb.reschain for wb in s.water_bridges}
+        self.assertTrue({'50A', '50B'}.issubset(waterbridges))  # Bridging Ile-B50 and Ile-A50 with ligand
+        # Hydrogen bonds
+        hbonds = {str(hbond.resnr)+hbond.reschain for hbond in s.hbonds_pdon+s.hbonds_ldon}
+        self.assertTrue({'27A', '27B', '29A', '48A', '48B'}.issubset(hbonds))
+        # #@todo Publication mentions additional possible hydrogen bond with Asp28B
+        # Hydrogen bonds with Asp-A25 are reported as a salt bridge as both partners have (potential) charges
+
+    def test_1hvi(self):
+        """HIV-1 protease in complex with Diol inhibitor (1hvi)
+        Reference: Influence of Stereochemistry on Activity and Binding Modes for C2 Symmetry-Based
+         Diol Inhibitors of HIV-1 Protease (1994)
+        """
+        tmpmol = PDBComplex()
+        tmpmol.load_pdb('./pdb/1hvi.pdb')
+        s = tmpmol.interaction_sets['A77-A-800']
+        # Water bridges
+        waterbridges = {str(wb.resnr)+wb.reschain for wb in s.water_bridges}
+        self.assertTrue({'50A', '50B'}.issubset(waterbridges))  # Bridging Ile-B50 and Ile-A50 with ligand
+        # pi-cation Interactions
+        picat = {pication.resnr for pication in s.pication_laro}
+        self.assertEqual({8}, picat)  # Described as weakly polar contact/stacking in paper
+        # Hydrogen bonds
+        hbonds = {str(hbond.resnr)+hbond.reschain for hbond in s.hbonds_pdon+s.hbonds_ldon}
+        self.assertTrue({'25B', '27A', '27B', '48A', '48B'}.issubset(hbonds))
+        # #@todo Paper describes additional hydrogen bond with Asp25A
+
+    def test_3OG7(self):
+        """Inhibitor PLX4032 binding to B-RAF(V600E) (3og7)
+        Reference: Clinical efficacy of a RAF inhibitor needs broad target blockade in BRAF-mutant
+        melanoma (2010)
+        """
+        tmpmol = PDBComplex()
+        tmpmol.load_pdb('./pdb/3og7.pdb')
+        s = tmpmol.interaction_sets['032-A-1']
+        # Hydrogen bonds
+        hbonds = {str(hbond.resnr)+hbond.reschain for hbond in s.hbonds_pdon+s.hbonds_ldon}
+        self.assertTrue({'594A', '530A'}.issubset(hbonds))
+
+

@@ -361,10 +361,31 @@ class Ligand(Mol):
         self.molecule = lig
         self.name = lig.title
         self.all_atoms = lig.atoms
+        self.atmdict = {l.idx: l for l in self.all_atoms}
         self.rings = self.find_rings(self.molecule, self.all_atoms)
         self.hydroph_atoms = self.hydrophobic_atoms(self.all_atoms)
         self.hbond_acc_atoms = self.find_hba(self.all_atoms)
+
+        ##########################################################
+        # Special Case for hydrogen bond acceptor identification #
+        ##########################################################
+
+        self.inverse_mapping = {v: k for k, v in mapping.items()}
+        self.pdb_to_idx_mapping = {v: k for k, v in cclass.idx_to_pdb_mapping.items()}
         self.hbond_don_atom_pairs = self.find_hbd(self.all_atoms, self.hydroph_atoms)
+
+        ######
+        donor_pairs = []
+        data = namedtuple('hbonddonor', 'd h type')
+        for donor in self.all_atoms:
+            pdbidx = cclass.idx_to_pdb_mapping[mapping[donor.idx]]  # Work with protonated atoms for HBD search
+            d = cclass.atoms[self.pdb_to_idx_mapping[pdbidx]]
+            if d.OBAtom.IsHbondDonor():
+                for adj_atom in [a for a in pybel.ob.OBAtomAtomIter(d.OBAtom) if a.IsHbondDonorH()]:
+                    donor_pairs.append(data(d=donor, h=pybel.Atom(adj_atom), type='regular'))
+        self.hbond_don_atom_pairs = donor_pairs
+        #######
+
         self.charged = self.find_charged(self.all_atoms)
         self.centroid = centroid([a.coords for a in self.all_atoms])
         self.max_dist_to_center = max((euclidean3d(self.centroid, a.coords) for a in self.all_atoms))

@@ -426,7 +426,7 @@ def get_bs_coordinates(fil, dist, lig):
 
 def standard_settings():
     """Sets up standard settings for a nice visualization."""
-    cmd.set('bg_rgb', [1, 1, 1])  # White background
+    cmd.set('bg_rgb', [1.0, 1.0, 1.0])  # White background
     cmd.set('depth_cue', 0)  # Turn off depth cueing (no fog)
     cmd.set('cartoon_side_chain_helper', 1)  # Improve combined visualization of sticks and cartoon
     cmd.set('cartoon_fancy_helices', 1)  # Nicer visualization of helices (using tapered ends)

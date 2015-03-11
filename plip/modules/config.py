@@ -25,7 +25,7 @@ AROMATIC_PLANARITY = 7.5  # Determines allowed deviation from planarity in aroma
 
 # Some distance thresholds were extended (max. 1.0A) if too restrictive too account for low-quality structures
 HYDROPH_DIST_MAX = 4.0  # Distance cutoff for detection of hydrophobic contacts
-HBOND_DIST_MAX = 4.0  # Max. distance between hydrogen bond donor and acceptor (Hubbard & Haider, 2001) + 0.5 A
+HBOND_DIST_MAX = 4.1  # Max. distance between hydrogen bond donor and acceptor (Hubbard & Haider, 2001) + 0.5 A
 HBOND_DON_ANGLE_MIN = 90  # Min. angle at the hydrogen bond donor (Hubbard & Haider, 2001)
 PISTACK_DIST_MAX = 7.5  # Max. distance for parallel or offset pistacking (McGaughey, 1998)
 PISTACK_ANG_DEV = 30  # Max. Deviation from parallel or perpendicular orientation (in degrees)
@@ -38,6 +38,6 @@ HALOGEN_DON_ANGLE = 165  # Optimal donor angle (Halogen bonds in biological mole
 HALOGEN_ANGLE_DEV = 30  # Max. deviation from optimal angle
 WATER_BRIDGE_MINDIST = 2.5  # Min. distance between water oxygen and polar atom (Jiang et al., 2005) -0.1
 WATER_BRIDGE_MAXDIST = 4.0  # Max. distance between water oxygen and polar atom (Jiang et al., 2005) +0.4
-WATER_BRIDGE_OMEGA_MIN = 80  # Min. angle between acceptor, water oxygen and donor hydrogen (Jiang et al., 2005)
+WATER_BRIDGE_OMEGA_MIN = 70  # Min. angle between acceptor, water oxygen and donor hydrogen (Jiang et al., 2005)
 WATER_BRIDGE_OMEGA_MAX = 160  # Max. angle between acceptor, water oxygen and donor hydrogen (Jiang et al., 2005)
 WATER_BRIDGE_THETA_MIN = 100  # Min. angle between water oxygen, donor hydrogen and donor atom (Jiang et al., 2005)

@@ -61,7 +61,7 @@ def hbonds(acceptors, donor_pairs, protisdon, typ):
                 if v > config.HBOND_DON_ANGLE_MIN:
                     restype = whichrestype(don.d) if protisdon else whichrestype(acc.a)
                     reschain = whichchain(don.d) if protisdon else whichchain(acc.a)
-                    protatom = don.d.OBAtom if protisdon else acc.c.OBAtom
+                    protatom = don.d.OBAtom if protisdon else acc.a.OBAtom
                     is_sidechain_hbond = protatom.GetResidue().GetAtomProperty(protatom, 8)  # Check if sidechain atom
                     resnr = whichresnumber(don.d)if protisdon else whichresnumber(acc.a)
                     contact = data(a=acc.a, d=don.d, h=don.h, distance_ah=dist_ah, distance_ad=dist_ad, angle=v,
@@ -219,15 +219,15 @@ def water_bridges(bs_hba, lig_hba, bs_hbd, lig_hbd, water):
                                d_angle=d_angle, w_angle=w_angle, type='first_deg', resnr=whichresnumber(don.d),
                                restype=whichrestype(don.d), reschain=whichchain(don.d), protisdon=True)
                 pairings.append(contact)
-
     for p, l in itertools.product(prot_aw, lig_dw):
         acc, wl, distance_aw = p
         don, wd, distance_dw, d_angle = l
         if wl == wd:  # Same water molecule and angle within omega
             w_angle = vecangle(vector(acc.a.coords, wl.coords), vector(wl.coords, don.h.coords))
             if config.WATER_BRIDGE_OMEGA_MIN < w_angle < config.WATER_BRIDGE_OMEGA_MAX:
-                contact = data(a=acc.a, d=don.d, h=don.h, water=wl, distance_aw=distance_aw, distance_dw=distance_dw,
-                               d_angle=d_angle, w_angle=w_angle, type='first_deg', resnr=whichresnumber(acc.a),
+                contact = data(a=acc.a, atype=acc.a.type, d=don.d, dtype=don.d.type, h=don.h, water=wl,
+                               distance_aw=distance_aw, distance_dw=distance_dw, d_angle=d_angle, w_angle=w_angle,
+                               type='first_deg', resnr=whichresnumber(acc.a),
                                restype=whichrestype(acc.a), reschain=whichchain(acc.a), protisdon=False)
                 pairings.append(contact)
     return pairings
