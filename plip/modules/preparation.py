@@ -255,11 +255,11 @@ class PLInteraction():
             i_set[hbond] = False
             for salt in salt_pneg:
                 protidx, ligidx = [at.idx for at in salt.negative.atoms], [at.idx for at in salt.positive.atoms]
-                if hbond.a.idx in ligidx and hbond.d.idx in protidx:
+                if hbond.d.idx in ligidx and hbond.a.idx in protidx:
                     i_set[hbond] = True
             for salt in salt_lneg:
                 protidx, ligidx = [at.idx for at in salt.positive.atoms], [at.idx for at in salt.negative.atoms]
-                if hbond.a.idx in ligidx and hbond.d.idx in protidx:
+                if hbond.d.idx in ligidx and hbond.a.idx in protidx:
                     i_set[hbond] = True
         return [k for k in i_set.keys() if not i_set[k]]
 
