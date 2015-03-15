@@ -128,7 +128,7 @@ def process_pdb(pdbfile, outpath, xml=False, verbose_mode=False, pics=False, pym
     threads = []
     running_threads = []
 
-    for i, site in enumerate(mol.interaction_sets):
+    for i, site in enumerate(sorted(mol.interaction_sets)):
         s = mol.interaction_sets[site]
         bindingsite = TextOutput(s).generate_xml()
         bindingsite.set('id', str(i+1))
