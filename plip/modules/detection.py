@@ -149,10 +149,7 @@ def saltbridge(poscenter, negcenter, protispos):
     data = namedtuple('saltbridge', 'positive negative distance protispos resnr restype reschain')
     pairings = []
     for pc, nc in itertools.product(poscenter, negcenter):
-        dists = []
-        for pa, na in itertools.product(pc.atoms, [n for n in nc.atoms if not nc.atoms == []]):
-            dists.append(euclidean3d(pa.coords, na.coords))
-        if min(dists) < config.SALTBRIDGE_DIST_MAX:
+        if euclidean3d(pc.center, nc.center) < config.SALTBRIDGE_DIST_MAX:
             resnr = pc.resnr if protispos else nc.resnr
             restype = pc.restype if protispos else nc.restype
             reschain = pc.reschain if protispos else nc.reschain

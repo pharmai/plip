@@ -178,6 +178,8 @@ class PLInteraction():
         self.water_bridges = water_bridges(self.bindingsite.get_hba(), self.ligand.get_hba(),
                                            self.bindingsite.get_hbd(), self.ligand.get_hbd(),
                                            self.ligand.water)
+
+        self.water_bridges = self.refine_water_bridges(self.water_bridges, self.hbonds_ldon, self.hbonds_pdon)
         self.no_interactions = all(len(i) == 0 for i in [self.saltbridge_lneg, self.saltbridge_pneg, self.hbonds_ldon,
                                                          self.hbonds_pdon, self.pistacking, self.pication_paro,
                                                          self.pication_paro, self.hydrophobic_contacts,
@@ -261,7 +263,17 @@ class PLInteraction():
                 protidx, ligidx = [at.idx for at in salt.positive.atoms], [at.idx for at in salt.negative.atoms]
                 if hbond.d.idx in ligidx and hbond.a.idx in protidx:
                     i_set[hbond] = True
-        return [k for k in i_set.keys() if not i_set[k]]
+
+        # Allow only one hydrogen bond per donor, select interaction with larger donor angle
+        second_set = {}
+        hbls = [k for k in i_set.keys() if not i_set[k]]
+        for hbl in hbls:
+            if hbl.d.idx not in second_set:
+                second_set[hbl.d.idx] = (hbl.angle, hbl)
+            else:
+                if second_set[hbl.d.idx][0] < hbl.angle:
+                    second_set[hbl.d.idx] = (hbl.angle, hbl)
+        return [hb[1] for hb in second_set.values()]
 
     def refine_hbonds_pdon(self, all_hbonds, salt_lneg, salt_pneg):
         """Refine selection of hydrogen bonds. Do not allow groups which already form salt bridges to form H-Bonds with
@@ -278,7 +290,17 @@ class PLInteraction():
                 protidx, ligidx = [at.idx for at in salt.negative.atoms], [at.idx for at in salt.positive.atoms]
                 if hbond.a.idx in ligidx and hbond.d.idx in protidx:
                     i_set[hbond] = True
-        return [k for k in i_set.keys() if not i_set[k]]
+
+        # Allow only one hydrogen bond per donor, select interaction with larger donor angle
+        second_set = {}
+        hbps = [k for k in i_set.keys() if not i_set[k]]
+        for hbp in hbps:
+            if hbp.d.idx not in second_set:
+                second_set[hbp.d.idx] = (hbp.angle, hbp)
+            else:
+                if second_set[hbp.d.idx][0] < hbp.angle:
+                    second_set[hbp.d.idx] = (hbp.angle, hbp)
+        return [hb[1] for hb in second_set.values()]
 
     def refine_pi_cation_laro(self, all_picat, stacks):
         """Just important for constellations with histidine involved. If the histidine ring is positioned in stacking
@@ -294,6 +316,36 @@ class PLInteraction():
             if not exclude:
                 i_set.append(picat)
         return i_set
+
+    def refine_water_bridges(self, wbridges, hbonds_ldon, hbonds_pdon):
+        """A donor atom already forming a hydrogen bond is not allowed to form a water bridge. Each water molecule
+        can only be donor for one water bridge, selecting the constellation with the omega angle closest to 110 deg."""
+        donor_atoms_hbonds = [hb.d.idx for hb in hbonds_ldon+hbonds_pdon]
+        wb_dict = {}
+        wb_dict2 = {}
+
+        # Just one hydrogen bond per donor atom
+        for wbridge in [wb for wb in wbridges if wb.d.idx not in donor_atoms_hbonds]:
+            if (wbridge.water.idx, wbridge.a.idx) not in wb_dict:
+                wb_dict[(wbridge.water.idx, wbridge.a.idx)] = wbridge
+            else:
+                if abs(110.0-wb_dict[(wbridge.water.idx, wbridge.a.idx)].w_angle) < abs(110.0-wbridge.w_angle):
+                    wb_dict[(wbridge.water.idx, wbridge.a.idx)] = wbridge
+        for wb_tuple in wb_dict:
+            water, acceptor = wb_tuple
+            if water not in wb_dict2:
+                wb_dict2[water] = [(abs(110.0-wb_dict[wb_tuple].w_angle), wb_dict[wb_tuple]), ]
+            elif len(wb_dict2[water]) == 1:
+                wb_dict2[water].append((abs(110.0-wb_dict[wb_tuple].w_angle), wb_dict[wb_tuple]))
+                wb_dict2[water] = sorted(wb_dict2[water])
+            else:
+                if wb_dict2[water][1][0] < abs(110.0-wb_dict[wb_tuple].w_angle):
+                    wb_dict2[water] = [wb_dict2[water][0], (wb_dict[wb_tuple].w_angle, wb_dict[wb_tuple])]
+
+        filtered_wb = []
+        for fwbridges in wb_dict2.values():
+            [filtered_wb.append(fwb[1]) for fwb in fwbridges]
+        return filtered_wb
 
 
 class BindingSite(Mol):
