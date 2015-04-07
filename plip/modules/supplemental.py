@@ -19,6 +19,9 @@ limitations under the License.
 # Compatibility
 from __future__ import print_function
 
+# PLIP Modules
+import config
+
 # Python standard library
 import re
 from collections import namedtuple
@@ -38,122 +41,10 @@ from pymol import cmd
 from pymol import finish_launching
 
 
-def is_biolip_artifact(hetid):
-    """Checks for the HET ID in the BioLip artifact list. Contains non-biological compounds often used appearing
-    as artifacts in PDB structures."""
-    # List from http://zhanglab.ccmb.med.umich.edu/BioLiP/ligand_list (2014-07-10)
-    excluded = ['ACE', 'HEX', 'TMA', 'SOH', 'P25', 'CCN', 'PR', 'PTN', 'NO3', 'TCN', 'BU1', 'BCN', 'CB3', 'HCS', 'NBN',
-                'SO2', 'MO6', 'MOH', 'CAC', 'MLT', 'KR', '6PH', 'MOS', 'UNL', 'MO3', 'SR', 'CD3', 'PB', 'ACM', 'LUT',
-                'PMS', 'OF3', 'SCN', 'DHB', 'E4N', '13P', '3PG', 'CYC', 'NC', 'BEN', 'NAO', 'PHQ', 'EPE', 'BME', 'TB',
-                'ETE', 'EU', 'OES', 'EAP', 'ETX', 'BEZ', '5AD', 'OC2', 'OLA', 'GD3', 'CIT', 'DVT', 'OC6', 'MW1', 'OC3',
-                'SRT', 'LCO', 'BNZ', 'PPV', 'STE', 'PEG', 'RU', 'PGE', 'MPO', 'B3P', 'OGA', 'IPA', 'LU', 'EDO', 'MAC',
-                '9PE', 'IPH', 'MBN', 'C1O', '1PE', 'YF3', 'PEF', 'GD', '8PE', 'DKA', 'RB', 'YB', 'GGD', 'SE4', 'LHG',
-                'SMO', 'DGD', 'CMO', 'MLI', 'MW2', 'DTT', 'DOD', '7PH', 'PBM', 'AU', 'FOR', 'PSC', 'TG1', 'KAI', '1PG',
-                'DGA', 'IR', 'PE4', 'VO4', 'ACN', 'AG', 'MO4', 'OCL', '6UL', 'CHT', 'RHD', 'CPS', 'IR3', 'OC4', 'MTE',
-                'HGC', 'CR', 'PC1', 'HC4', 'TEA', 'BOG', 'PEO', 'PE5', '144', 'IUM', 'LMG', 'SQU', 'MMC', 'GOL', 'NVP',
-                'AU3', '3PH', 'PT4', 'PGO', 'ICT', 'OCM', 'BCR', 'PG4', 'L4P', 'OPC', 'OXM', 'SQD', 'PQ9', 'BAM', 'PI',
-                'PL9', 'P6G', 'IRI', '15P', 'MAE', 'MBO', 'FMT', 'L1P', 'DUD', 'PGV', 'CD1', 'P33', 'DTU', 'XAT', 'CD',
-                'THE', 'U1', 'NA', 'MW3', 'BHG', 'Y1', 'OCT', 'BET', 'MPD', 'HTO', 'IBM', 'D01', 'HAI', 'HED', 'CAD',
-                'CUZ', 'TLA', 'SO4', 'OC5', 'ETF', 'MRD', 'PT', 'PHB', 'URE', 'MLA', 'TGL', 'PLM', 'NET', 'LAC', 'AUC',
-                'UNX', 'GA', 'DMS', 'MO2', 'LA', 'NI', 'TE', 'THJ', 'NHE', 'HAE', 'MO1', 'DAO', '3PE', 'LMU', 'DHJ',
-                'FLC', 'SAL', 'GAI', 'ORO', 'HEZ', 'TAM', 'TRA', 'NEX', 'CXS', 'LCP', 'HOH', 'OCN', 'PER', 'ACY', 'MH2',
-                'ARS', '12P', 'L3P', 'PUT', 'IN', 'CS', 'NAW', 'SB', 'GUN', 'SX', 'CON', 'C2O', 'EMC', 'BO4', 'BNG',
-                'MN5', '__O', 'K', 'CYN', 'H2S', 'MH3', 'YT3', 'P22', 'KO4', '1AG', 'CE', 'IPL', 'PG6', 'MO5', 'F09',
-                'HO', 'AL', 'TRS', 'EOH', 'GCP', 'MSE', 'AKR', 'NCO', 'PO4', 'L2P', 'LDA', 'SIN', 'DMI', 'SM', 'DTD',
-                'SGM', 'DIO', 'PPI', 'DDQ', 'DPO', 'HCA', 'CO5', 'PD', 'OS', 'OH', 'NA6', 'NAG', 'W', 'ENC', 'NA5',
-                'LI1', 'P4C', 'GLV', 'DMF', 'ACT', 'BTB', '6PL', 'BGL', 'OF1', 'N8E', 'LMT', 'THM', 'EU3', 'PGR', 'NA2',
-                'FOL', '543', '_CP', 'PEK', 'NSP', 'PEE', 'OCO', 'CHD', 'CO2', 'TBU', 'UMQ', 'MES', 'NH4', 'CD5', 'HTG',
-                'DEP', 'OC1', 'KDO', '2PE', 'PE3', 'IOD', 'NDG', 'CL', 'HG', 'F', 'XE', 'TL', 'BA', 'LI', 'BR', 'TAU',
-                'TCA', 'SPD', 'SPM', 'SAR', 'SUC', 'PAM', 'SPH', 'BE7', 'P4G', 'OLC', 'OLB', 'LFA', 'D10', 'D12', 'DD9',
-                'HP6', 'R16', 'PX4', 'TRD', 'UND', 'FTT', 'MYR', 'RG1', 'IMD', 'DMN', 'KEN', 'C14', 'UPL', 'CMJ', 'ULI',
-                'MYS', 'TWT', 'M2M', 'P15', 'PG0', 'PEU', 'AE3', 'TOE', 'ME2', 'PE8', '6JZ', '7PE', 'P3G', '7PG', 'PG5',
-                '16P', 'XPE', 'PGF', 'AE4', '7E8', '7E9', 'MVC', 'TAR', 'DMR', 'LMR', 'NER', '02U', 'NGZ', 'LXB', 'A2G',
-                'BM3', 'NAA', 'NGA', 'LXZ', 'PX6', 'PA8', 'LPP', 'PX2', 'MYY', 'PX8', 'PD7', 'XP4', 'XPA', 'PEV', '6PE',
-                'PEX', 'PEH', 'PTY', 'YB2', 'PGT', 'CN3', 'AGA', 'DGG', 'CD4', 'CN6', 'CDL', 'PG8', 'MGE', 'DTV', 'L44',
-                'L2C', '4AG', 'B3H', '1EM', 'DDR', 'I42', 'CNS', 'PC7', 'HGP', 'PC8', 'HGX', 'LIO', 'PLD', 'PC2', 'PCF',
-                'MC3', 'P1O', 'PLC', 'PC6', 'HSH', 'BXC', 'HSG', 'DPG', '2DP', 'POV', 'PCW', 'GVT', 'CE9', 'CXE', 'C10',
-                'CE1', 'SPJ', 'SPZ', 'SPK', 'SPW', 'HT3', 'HTH', '2OP', '3NI', 'BO3', 'DET', 'D1D', 'SWE', 'SOG']
-    return hetid.upper() in excluded
-
-
-def is_metalion(hetid):
-    # #@todo Use OpenBabel instead
-    """Checks if a PDB ligand is a metal ion"""
-    # Based on het IDs of metal ions in PDB files (from http://metalweb.cerm.unifi.it/search/metal/), Apr 2014
-    metals = ['LI', 'BE', 'NA', 'MG', 'K', 'CA', 'RB', 'SR', 'CS', 'BA', 'V', 'CR', 'MN', 'CO', 'NI', 'FE',
-              'FE1', 'FE2', 'FE3', 'FE4', 'CO', 'NI', 'CU', 'ZN', 'Y', 'ZR1', 'ZR2', 'ZR3', 'MO', 'RU', 'RU1', 'RH',
-              'RH1', 'PD', 'AG', 'CD', 'LA', 'HFA', 'HFB', 'HFC', 'HFD', 'HFE', 'TA1', 'TA2', 'TA3', 'TA4', 'TA5',
-              'TA6', 'W', 'W1', 'RE', 'OS', 'IR', 'PT', 'PT1', 'AU', 'HG', 'CE', 'PR', 'SM', 'EU', 'GD', 'TB', 'HO',
-              'ER', 'YB', 'LU', 'PA', 'U', 'AL', 'GA', 'GE', 'IN', 'SN1', 'SB', 'TL', 'PB']
-    return hetid.upper() in metals
-
-
-def is_other_ion(hetid):
-    """Checks if a PDB ligand is an ion"""
-    ions = ['CL', 'IOD', 'BR']
-    return hetid.upper() in ions
-
-
-def is_dna(hetid):
-    """Check if a PDB ligand is a DNA/RNA base"""
-    dna = ['A', 'C', 'T', 'G', 'U', 'DA', 'DC', 'DT', 'DG', 'DU']
-    return hetid.upper() in dna
-
-
-def is_artifact(hetid):
-    """Returns if the ligand is most likely and artifact or other stuff not meaningful (i.e. common solvents)"""
-    # NH2 is amidated N-terminus
-    # ACE is acetylated C-terminus
-    artifacts = ['GOL', 'EDO', 'DOD', 'DMS', 'FMT', 'UNL', 'UPL', '1PE', 'UNX', 'EOH']
-    return hetid.upper() in artifacts
-
-
-def is_mod_aa(hetid):
-    # #@todo Get rid of that list
-    """Returns if the 'ligand' is just a modified amino acid"""
-    # Adapted from ASTRAL RAF (Rapid Access Format) Sequence Maps (Biopython), added other cases.
-    mod_aa_dict = {
-        '2AS': 'D', '3AH': 'H', '5HP': 'E', 'ACL': 'R', 'AIB': 'A',
-        'ALM': 'A', 'ALO': 'T', 'ALY': 'K', 'ARM': 'R', 'ASA': 'D',
-        'ASB': 'D', 'ASK': 'D', 'ASL': 'D', 'ASQ': 'D', 'AYA': 'A',
-        'BCS': 'C', 'BHD': 'D', 'BMT': 'T', 'BNN': 'A', 'BUC': 'C',
-        'BUG': 'L', 'C5C': 'C', 'C6C': 'C', 'CCS': 'C', 'CEA': 'C',
-        'CHG': 'A', 'CLE': 'L', 'CME': 'C', 'CSD': 'A', 'CSO': 'C',
-        'CSP': 'C', 'CSS': 'C', 'CSW': 'C', 'CXM': 'M', 'CY1': 'C',
-        'CY3': 'C', 'CYG': 'C', 'CYM': 'C', 'CYQ': 'C', 'DAH': 'F',
-        'DAL': 'A', 'DAR': 'R', 'DAS': 'D', 'DCY': 'C', 'DGL': 'E',
-        'DGN': 'Q', 'DHA': 'A', 'DHI': 'H', 'DIL': 'I', 'DIV': 'V',
-        'DLE': 'L', 'DLY': 'K', 'DNP': 'A', 'DPN': 'F', 'DPR': 'P',
-        'DSN': 'S', 'DSP': 'D', 'DTH': 'T', 'DTR': 'W', 'DTY': 'Y',
-        'DVA': 'V', 'EFC': 'C', 'FLA': 'A', 'FME': 'M', 'GGL': 'E',
-        'GLZ': 'G', 'GMA': 'E', 'GSC': 'G', 'HAC': 'A', 'HAR': 'R',
-        'HIC': 'H', 'HIP': 'H', 'HMR': 'R', 'HPQ': 'F', 'HTR': 'W',
-        'HYP': 'P', 'IIL': 'I', 'IYR': 'Y', 'KCX': 'K', 'LLP': 'K',
-        'LLY': 'K', 'LTR': 'W', 'LYM': 'K', 'LYZ': 'K', 'MAA': 'A',
-        'MEN': 'N', 'MHS': 'H', 'MIS': 'S', 'MLE': 'L', 'MPQ': 'G',
-        'MSA': 'G', 'MSE': 'M', 'MVA': 'V', 'NEM': 'H', 'NEP': 'H',
-        'NLE': 'L', 'NLN': 'L', 'NLP': 'L', 'NMC': 'G', 'OAS': 'S',
-        'OCS': 'C', 'OMT': 'M', 'PAQ': 'Y', 'PCA': 'E', 'PEC': 'C',
-        'PHI': 'F', 'PHL': 'F', 'PR3': 'C', 'PRR': 'A', 'PTR': 'Y',
-        'SAC': 'S', 'SAR': 'G', 'SCH': 'C', 'SCS': 'C', 'SCY': 'C',
-        'SEL': 'S', 'SEP': 'S', 'SET': 'S', 'SHC': 'C', 'SHR': 'K',
-        'SOC': 'C', 'STY': 'Y', 'SVA': 'S', 'TIH': 'A', 'TPL': 'W',
-        'TPO': 'T', 'TPQ': 'A', 'TRG': 'K', 'TRO': 'W', 'TYB': 'Y',
-        'TYQ': 'Y', 'TYS': 'Y', 'TYY': 'Y', 'AGM': 'R', 'GL3': 'G',
-        'SMC': 'C', 'ASX': 'B', 'CGU': 'E', 'CSX': 'C', 'GLX': 'Z',
-        'MCS': 'C', 'UNK': None, 'MLY': None, 'B3M': None, 'BIL': None,
-        'B3L': None, 'D3P': None, 'D4P': None, 'ACE': None, 'NH2': None,
-        'B3T': None, 'XCP': None, 'XPC': None, 'B3E': 'E', 'GHP': None,
-        '3MY': 'Y', '3FG': None, 'OMY': 'Y', 'MP8': 'P', 'FP9': 'P',
-        'ORN': 'A', '4BF': 'Y', 'HAO': None
-    }
-    return hetid.upper() in mod_aa_dict
-
-
 def is_lig(hetid):
     """Checks if a PDB compound can be excluded as a small molecule ligand"""
     h = hetid.upper()
-    return not (h == 'HOH' or is_mod_aa(h) or is_dna(h) or is_metalion(h) or is_other_ion(h) or is_artifact(h))
+    return not (h == 'HOH' or h in config.dna + config.ions)
 
 
 def parse_pdb(fil):
@@ -413,17 +304,6 @@ def start_pymol(quiet=False, options='-p', run=False):
         cmd.feedback('disable', 'all', 'everything')
 
 
-def get_bs_coordinates(fil, dist, lig):
-    """Load a structure file and get all coordinates from the binding site atoms within
-    a defined distance around a specific ligand."""
-    dist = int(dist)
-    cmd.load(fil)
-    cmd.select("tmp", "(all within %i of resn %s) and not resn %s" % (dist, lig, lig))
-    cmd.select("tmp", "tmp and not hetatm")
-    coordinates = cmd.get_model('tmp', 1).get_coord_list()
-    return coordinates
-
-
 def standard_settings():
     """Sets up standard settings for a nice visualization."""
     cmd.set('bg_rgb', [1.0, 1.0, 1.0])  # White background
@@ -458,6 +338,7 @@ def getligs(mol, altconf, idx_to_pdb, modres, covalent):
 
     data = namedtuple('ligand', 'mol mapping water members')
     ligands = []
+    # #@todo Consider ions and attribute them to ligand molecules
 
     #########################
     # Filtering using lists #
@@ -465,18 +346,18 @@ def getligs(mol, altconf, idx_to_pdb, modres, covalent):
 
     all_res = [o for o in pybel.ob.OBResidueIter(mol.OBMol)
                if not (o.GetResidueProperty(9) or o.GetResidueProperty(0))]
+
     water = [o for o in pybel.ob.OBResidueIter(mol.OBMol) if o.GetResidueProperty(9)]
     all_res = [a for a in all_res if is_lig(a.GetName()) and a.GetName() not in modres]  # Filter out non-ligands
 
     ############################################
     # Filtering by counting and artifacts list #
     ############################################
-    # #@todo Reduce the use of BioLiP lists
     artifacts = []
     unique_ligs = set(a.GetName() for a in all_res)
     for ulig in unique_ligs:
-        # Discard if appearing 10 times or more and is possible artifact
-        if is_biolip_artifact(ulig) and [a.GetName() for a in all_res].count(ulig) >= 15:
+        # Discard if appearing 15 times or more and is possible artifact
+        if ulig in config.biolip_list and [a.GetName() for a in all_res].count(ulig) >= 15:
             artifacts.append(ulig)
     all_res = [a for a in all_res if a.GetName() not in artifacts]
     all_res_dict = {(a.GetName(), a.GetChain(), a.GetNum()): a for a in all_res}
