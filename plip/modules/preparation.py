@@ -543,6 +543,7 @@ class PDBComplex():
         self.modres = set()
         self.altconf = []  # Atom idx of atoms with alternate conformations
         self.covalent = []  # Covalent linkages between ligands and protein residues/other ligands
+        self.excluded = []  # Excluded ligands
 
     def load_pdb(self, pdbpath):
         """Loads a pdb file with protein AND ligand(s), separates and prepares them."""
@@ -559,7 +560,8 @@ class PDBComplex():
         self.protcomplex.OBMol.AddPolarHydrogens()
         for atm in self.protcomplex:
             self.atoms[atm.idx] = atm
-        ligands = getligs(self.protcomplex, self.altconf, self.idx_to_pdb_mapping, self.modres, self.covalent)
+        ligands, excluded = getligs(self.protcomplex, self.altconf, self.idx_to_pdb_mapping, self.modres, self.covalent)
+        self.excluded = excluded
         resis = [obres for obres in pybel.ob.OBResidueIter(self.protcomplex.OBMol) if obres.GetResidueProperty(0)]
         for ligand in ligands:
             lig_obj = Ligand(ligand.mol, self, ligand.mapping, ligand.water, self.altconf, ligand.members)

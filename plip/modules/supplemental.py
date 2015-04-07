@@ -344,29 +344,30 @@ def getligs(mol, altconf, idx_to_pdb, modres, covalent):
     # Filtering using lists #
     #########################
 
-    all_res = [o for o in pybel.ob.OBResidueIter(mol.OBMol)
+    all_res1 = [o for o in pybel.ob.OBResidueIter(mol.OBMol)
                if not (o.GetResidueProperty(9) or o.GetResidueProperty(0))]
+    all_lignames = set([a.GetName() for a in all_res1])
 
     water = [o for o in pybel.ob.OBResidueIter(mol.OBMol) if o.GetResidueProperty(9)]
-    all_res = [a for a in all_res if is_lig(a.GetName()) and a.GetName() not in modres]  # Filter out non-ligands
+    all_res2 = [a for a in all_res1 if is_lig(a.GetName()) and a.GetName() not in modres]  # Filter out non-ligands
 
     ############################################
     # Filtering by counting and artifacts list #
     ############################################
     artifacts = []
-    unique_ligs = set(a.GetName() for a in all_res)
+    unique_ligs = set(a.GetName() for a in all_res2)
     for ulig in unique_ligs:
         # Discard if appearing 15 times or more and is possible artifact
-        if ulig in config.biolip_list and [a.GetName() for a in all_res].count(ulig) >= 15:
+        if ulig in config.biolip_list and [a.GetName() for a in all_res2].count(ulig) >= 15:
             artifacts.append(ulig)
-    all_res = [a for a in all_res if a.GetName() not in artifacts]
-    all_res_dict = {(a.GetName(), a.GetChain(), a.GetNum()): a for a in all_res}
+    all_res3 = [a for a in all_res2 if a.GetName() not in artifacts]
+    all_res_dict = {(a.GetName(), a.GetChain(), a.GetNum()): a for a in all_res3}
 
     #########################
     # Identify kmer ligands #
     #########################
 
-    lignames = list(set([a.GetName() for a in all_res]))
+    lignames = list(set([a.GetName() for a in all_res3]))
     # Remove all those not considered by ligands and pairings including alternate conformations
 
     ligdoubles = [[(link.id1, link.chain1, link.pos1),
@@ -435,7 +436,8 @@ def getligs(mol, altconf, idx_to_pdb, modres, covalent):
                          'ResNr': rnum})
         lig.title = '-'.join((rname, rchain, str(rnum)))
         ligands.append(data(mol=lig, mapping=mapold, water=water, members=members))
-    return ligands
+    excluded = sorted(list(all_lignames.difference(set(lignames))))
+    return ligands, excluded
 
 
 def read_pdb(pdbfname, safe=False):

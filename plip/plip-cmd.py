@@ -99,25 +99,37 @@ def process_pdb(pdbfile, outpath, xml=False, verbose_mode=False, pics=False, pym
     mol = PDBComplex()
     mol.output_path = outpath
     mol.load_pdb(pdbfile)
+    excluded = mol.excluded
 
     # Begin constructing the XML tree
+    # #@todo Order of elements in XML file (PDB ID first)
     report = et.Element('report')
     plipversion = et.SubElement(report, 'plipversion')
     plipversion.text = __version__
     pdbid = et.SubElement(report, 'pdbid')
     pdbid.text = mol.pymol_name.upper()
+    exligs = et.SubElement(report, 'excluded_ligands')
+    for i, exlig in enumerate(excluded):
+        e = et.SubElement(exligs, 'excluded_ligand', id=str(i+1))
+        e.text = exlig
 
     # Write header of rST file
     textlines = ['Prediction of noncovalent interactions for PDB structure %s' % mol.pymol_name.upper(), ]
     textlines.append("="*len(textlines[0]))
     textlines.append('Created on %s using PLIP v%s\n' % (time.strftime("%Y/%m/%d"), __version__))
+    if len(excluded) != 0:
+        textlines.append('Excluded molecules as ligands: %s\n' % ','.join([lig for lig in excluded]))
 
     if verbose_mode:
+        if len(excluded) == 0:
+            sys.stdout.write("No molecules excluded as ligands.\n")
+        else:
+            sys.stdout.write("Excluded molecules as ligands: %s\n" % ','.join([lig for lig in excluded]))
         num_ligs = len([site for site in mol.interaction_sets if not mol.interaction_sets[site].no_interactions])
         if num_ligs == 1:
-            sys.stdout.write("Analyzing %s with one ligand.\n" % mol.pymol_name)
+            sys.stdout.write("Analyzing %s with one ligand:\n" % mol.pymol_name)
         elif num_ligs > 1:
-            sys.stdout.write("Analyzing %s with %i ligands.\n" % (mol.pymol_name, num_ligs))
+            sys.stdout.write("Analyzing %s with %i ligands:\n" % (mol.pymol_name, num_ligs))
         else:
             sys.stdout.write("%s contains no ligands.\n" % mol.pymol_name)
 
