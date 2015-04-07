@@ -226,8 +226,12 @@ def cluster_doubles(double_list):
         # If they both are already in different clusters, merge the clusters
         if a in location and b in location:
             if location[a] != location[b]:
-                clusters[location[a]] = clusters[location[a]].union(clusters[location[b]])  # Merge clusters
-                clusters = clusters[:location[a]+1] + clusters[location[b]+1:]  # Delete other cluster
+                if location[a] < location[b]:
+                    clusters[location[a]] = clusters[location[a]].union(clusters[location[b]])  # Merge clusters
+                    clusters = clusters[:location[b]] + clusters[location[b]+1:]
+                else:
+                    clusters[location[b]] = clusters[location[b]].union(clusters[location[a]])  # Merge clusters
+                    clusters = clusters[:location[a]] + clusters[location[a]+1:]
                 # Rebuild index of locations for each element as they have changed now
                 location = {}
                 for i, cluster in enumerate(clusters):

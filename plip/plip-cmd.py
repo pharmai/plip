@@ -102,7 +102,6 @@ def process_pdb(pdbfile, outpath, xml=False, verbose_mode=False, pics=False, pym
     excluded = mol.excluded
 
     # Begin constructing the XML tree
-    # #@todo Order of elements in XML file (PDB ID first)
     report = et.Element('report')
     plipversion = et.SubElement(report, 'plipversion')
     plipversion.text = __version__

@@ -121,6 +121,7 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False, pse=
     for member in lig_members:
         resid, chain, resnr = member[0], member[1], str(member[2])
         cmd.select(ligname, '%s or (resn %s and chain %s and resi %s)' % (ligname, resid, chain, resnr))
+    # #@todo Does not work if no bonds are available (e.g.
     cmd.show('sticks', ligname)
     cmd.color('myblue')
     cmd.color('myorange', ligname)
