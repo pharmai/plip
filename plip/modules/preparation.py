@@ -185,6 +185,11 @@ class PLInteraction():
                                                          self.pication_paro, self.hydrophobic_contacts,
                                                          self.halogen_bonds, self.water_bridges])
 
+        self.interacting_chains = sorted(list(set([i.reschain for i in self.saltbridge_lneg + self.saltbridge_pneg +
+                                                   self.hbonds_pdon + self.hbonds_ldon + self.pistacking +
+                                                   self.pication_laro + self.pication_paro + self.hydrophobic_contacts +
+                                                   self.halogen_bonds + self.water_bridges])))
+
     def refine_hydrophobic(self, all_h, pistacks):
         """Apply several rules to reduce the number of hydrophobic interactions."""
         sel = {}
@@ -319,7 +324,7 @@ class PLInteraction():
 
     def refine_water_bridges(self, wbridges, hbonds_ldon, hbonds_pdon):
         """A donor atom already forming a hydrogen bond is not allowed to form a water bridge. Each water molecule
-        can only be donor for one water bridge, selecting the constellation with the omega angle closest to 110 deg."""
+        can only be donor for two water bridges, selecting the constellation with the omega angle closest to 110 deg."""
         donor_atoms_hbonds = [hb.d.idx for hb in hbonds_ldon+hbonds_pdon]
         wb_dict = {}
         wb_dict2 = {}

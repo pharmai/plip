@@ -476,7 +476,7 @@ def getligs(mol, altconf, idx_to_pdb, modres, covalent):
     unique_ligs = set(a.GetName() for a in all_res)
     for ulig in unique_ligs:
         # Discard if appearing 10 times or more and is possible artifact
-        if is_biolip_artifact(ulig) and [a.GetName() for a in all_res].count(ulig) >= 10:
+        if is_biolip_artifact(ulig) and [a.GetName() for a in all_res].count(ulig) >= 15:
             artifacts.append(ulig)
     all_res = [a for a in all_res if a.GetName() not in artifacts]
     all_res_dict = {(a.GetName(), a.GetChain(), a.GetNum()): a for a in all_res}

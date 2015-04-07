@@ -37,6 +37,7 @@ class TextOutput():
         self.name = pli_class.name
         self.pdbid = pli_class.pdbid.upper()
         self.lig_members = pli_class.lig_members
+        self.interacting_chains = pli_class.interacting_chains
         mapping = pli_class.idx_to_pdb
         lig_to_pdb = {key: mapping[pli_class.lig_to_pdb[key]] for key in pli_class.lig_to_pdb}  # Atom mapping ligand
         self.header = ['#PREDICTION OF NONCOVALENT INTERACTIONS FOR %s:%s' % (self.pdbid, self.name),
@@ -215,6 +216,7 @@ class TextOutput():
         for i, member in enumerate(sorted(self.lig_members)[1:]):
             txt.append('  + %s' % "-".join(str(element) for element in member))
         txt.append("-"*len(self.name))
+        txt.append("Interacting chain(s): %s\n" % ','.join([chain for chain in self.interacting_chains]))
         for section in [['Hydrophobic Interactions', self.hydrophobic_features, self.hydrophobic_info],
                         ['Hydrogen Bonds', self.hbond_features, self.hbond_info],
                         ['Water Bridges', self.waterbridge_features, self.waterbridge_info],
@@ -253,6 +255,10 @@ class TextOutput():
         position = et.SubElement(identifiers, 'position')
         composite = et.SubElement(identifiers, 'composite')
         members = et.SubElement(identifiers, 'members')
+        ichains = et.SubElement(report, 'interacting_chains')
+        for i, ichain in enumerate(self.interacting_chains):
+            c = et.SubElement(ichains, 'interacting_chain', id=str(i+1))
+            c.text = ichain
         hetid.text, chain.text, position.text = self.name.split('-')
         composite.text = 'True' if len(self.lig_members) > 1 else 'False'
         for i, member in enumerate(sorted(self.lig_members)):
