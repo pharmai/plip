@@ -9,6 +9,8 @@ Changelog
 * __Automatic grouping of composite ligands (e.g. polysaccharides)__
 * __Proper handling of alternative conformations in PDB structures__
 * __Exclusion of modified residues as ligands__
+* __Improved detection of hydrogen bonds__
+* __Prioritization of hydrogen bonds__
 * Adds atom type description in the output files
 * Basic support for usage on Windows (without multithreading)
 * Option to turn multithreading off by setting maxthreads to 0
