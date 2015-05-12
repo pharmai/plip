@@ -38,7 +38,10 @@ import lxml.etree as et
 
 __version__ = '1.0.2'
 descript = "Protein-Ligand Interaction Profiler (PLIP) v%s " \
-           "is a command-line based tool to analyze interactions in a protein-ligand complex." % __version__
+           "is a command-line based tool to analyze interactions in a protein-ligand complex. " \
+           "If you are using PLIP in your work, please cite: " \
+           "Salentin,S. et al. PLIP: fully automated protein-ligand interaction profiler. " \
+           "Nucl. Acids Res. first published online April 14, 2015 doi:10.1093/nar/gkv315" % __version__
 
 
 def threshold_limiter(aparser, arg):
