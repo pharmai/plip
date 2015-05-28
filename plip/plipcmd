@@ -21,10 +21,16 @@ limitations under the License.
 from __future__ import print_function
 
 # Own modules
-from plip.modules.preparation import *
-from plip.modules.visualize import visualize_in_pymol
-from plip.modules.report import TextOutput
-from plip.modules import config
+try:
+    from plip.modules.preparation import *
+    from plip.modules.visualize import visualize_in_pymol
+    from plip.modules.report import TextOutput
+    from plip.modules import config
+except ImportError:
+    from modules.preparation import *
+    from modules.visualize import visualize_in_pymol
+    from modules.report import TextOutput
+    from modules import config
 
 # Python standard library
 import sys
