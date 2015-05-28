@@ -3,32 +3,35 @@ PLIP
 
 Protein-Ligand Interaction Profiler (PLIP) - Analyze non-covalent protein-ligand interactions in 3D structures
 
-Changelog
----------
-#### 1.0.2
-* __Automatic grouping of composite ligands (e.g. polysaccharides)__
-* __Proper handling of alternative conformations in PDB structures__
-* __Exclusion of modified residues as ligands__
-* __Improved detection of hydrogen bonds__
-* __Prioritization of hydrogen bonds__
-* Adds atom type description in the output files
-* Basic support for usage on Windows (without multithreading)
-* Option to turn multithreading off by setting maxthreads to 0
-* Improved detection of hydrogen bond donors in ligands
-* Adaption of standard parameters
-* Fixes a bug in PyMOL visualization script leading to missing or wrong interactions with pseudoatoms
-* Fixes a bug leading to duplicate or triplicate detection of identical pi-cation interactions with guanidine
-* Adds now unit tests
-* Small changes to existing unit tests for new features
+Installation
+------------
 
-#### 1.0.1
-* __Option to change detection thresholds permanently or for single runs__
-* Option to (de)activate output for images, PyMOL session files and XML files
-* Changed standard behaviour to output of RST report only
-* Information on sidechain/backbone hydrogen bond type
-* Sorted output
-* Detection of more flavors of halogen bonds
-* Fixed bug leading to duplicate interactions with quartamine groups
+Previous to the installation of PLIP, make sure you have the following tools and libraries installed:
+* Python 2.x
+* OpenBabel >=2.3.2
+* PyMOL 1.7.x with Python bindings
+* pip (Python package managaer)
+* Imagemagick (optional, needed for automatic cropping of images)
 
-#### 1.0.0
-* __Initial Release__
+To install PLIP, simply run the following command using a terminal
+> python setup.py install
+
+Code Contributions
+------------------
+Sebastian Salentin sebastian.salentin (at) biotec.tu-dresden.de
+Joachim Haupt joachim.haupt (at) biotec.tu-dresden.de
+Melissa F. Adasme Mora melissa.adasme (at) biotec.tu-dresden.de (Testing and Validation)
+
+PLIP Web Server
+---------------
+Visit our PLIP Web Server on http://projects.biotec.tu-dresden.de/plip-web
+
+Contact Me
+----------
+Questions or comments about `PLIP`? Write me an email to sebastian.salentin (at) biotec.tu-dresden.de
+
+Citation Information
+--------------------
+If you are using PLIP in your work, please cite
+> Salentin,S. et al. PLIP: fully automated protein-ligand interaction profiler.
+> Nucl. Acids Res. first published online April 14, 2015 doi:10.1093/nar/gkv315

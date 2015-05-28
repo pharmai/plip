@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 """
 Protein-Ligand Interaction Profiler - Analyze and visualize protein-ligand interactions in PDB files.
 plip-cmd.py - Main script for PLIP command line execution.
@@ -20,10 +21,10 @@ limitations under the License.
 from __future__ import print_function
 
 # Own modules
-from modules.preparation import *
-from modules.visualize import visualize_in_pymol
-from modules.report import TextOutput
-from modules import config
+from plip.modules.preparation import *
+from plip.modules.visualize import visualize_in_pymol
+from plip.modules.report import TextOutput
+from plip.modules import config
 
 # Python standard library
 import sys
@@ -36,7 +37,7 @@ import multiprocessing
 # External libraries
 import lxml.etree as et
 
-__version__ = '1.0.2'
+__version__ = '1.1.0'
 descript = "Protein-Ligand Interaction Profiler (PLIP) v%s " \
            "is a command-line based tool to analyze interactions in a protein-ligand complex. " \
            "If you are using PLIP in your work, please cite: " \

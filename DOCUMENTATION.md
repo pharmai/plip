@@ -1,17 +1,9 @@
 ==================
-PLIProfiler v1.0.1
+PLIProfiler v1.1.0
 ==================
 
 The Protein-Ligand Interaction Profiler (PLIP) is a tool to analyze and visualize protein-ligand interactions in PDB files.
 
-Requirements
-============
-lxml
-openbabel
-pybel
-numpy
-pymol >= 1.7
-imagemagick (optional)
 
 Features
 ========
@@ -28,9 +20,9 @@ Quickstart
 ==========
 Run the PLIP python script with the option `-h` to list all available command line options.
 To analyze a protein-ligand complex from a Protein Data Bank entry -- e.g. 1vsn --, run
-    `python plip-cmd.py -i 1vsn`.
+    `plipcmd -i 1vsn`.
 To analyze a PDB file from your workstation, run
-    `python plip-cmd.py -f path_to_pdbfile.pdb`.
+    `plipcmd -f path_to_pdbfile.pdb`.
 
 Threshold settings
 ==================
@@ -89,12 +81,6 @@ pi-Cation Interaction - [255, 128, 0] - orange - dashed Line
 Halogen Bond - [64, 255, 191] - greencyan - solid Line
 Salt Bridge - [255, 255, 0] - yellow - dashed Line
 
-Code Contributions
-------------------
-Sebastian Salentin sebastian.salentin (at) biotec.tu-dresden.de
-Joachim Haupt joachim.haupt (at) biotec.tu-dresden.de
-Melissa F. Adasme Mora melissa.adasme (at) biotec.tu-dresden.de (Testing and Validation)
-
 Output Files
 ------------
 All output files contain information on non-covalent interactions between the protein and all relevant ligands in the PDB structure.
@@ -146,8 +132,3 @@ Is true if a hydrogen bond is formed with the sidechain of the protein and false
 <ligcoo>, <protcoo>
 Coordinates of protein and ligand interacting atoms or interaction centers (e.g. charge centers)
 
-
-Contact Me
-----------
-
-Questions or comments about `PLIP`? Write me an email to sebastian.salentin (at) biotec.tu-dresden.de
