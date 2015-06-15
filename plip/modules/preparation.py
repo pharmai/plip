@@ -72,6 +72,7 @@ class Mol():
         return donor_pairs
 
     def find_rings(self, mol, all_atoms):
+        #@todo Refactor code here to check aromaticity, length of rings in one take
         """Find rings and return only aromatic."""
         data = namedtuple('aromatic_ring', 'atoms normal obj center type')
         rings, arings = [], []
@@ -89,7 +90,8 @@ class Mol():
                     normals.append(np.cross(vec1, vec2))
                 # Given all normals of ring atoms and their neighbors, the angle between any has to be 7.5 deg or less
                 for n1, n2 in itertools.product(normals, repeat=2):
-                    if config.AROMATIC_PLANARITY < vecangle(n1, n2) < 180.0-config.AROMATIC_PLANARITY:
+                    arom_angle = vecangle(n1, n2)
+                    if not (arom_angle < config.AROMATIC_PLANARITY) or (arom_angle > 180.0 - config.AROMATIC_PLANARITY):
                             aromatic = False
                             break
                 # Ring is aromatic either by OpenBabel's criteria or if sufficiently planar
@@ -103,7 +105,7 @@ class Mol():
             r_atoms = [a for a in all_atoms if r.IsMember(a.OBAtom)]
             # Only consider rings with a minimum size of 5 atoms and restrict selection to avoid problems in
             # covalently bound ligands
-            if 4 < len(r_atoms) <= 6 and whichrestype(r_atoms[0]) in ['LIG', 'PHE', 'TYR', 'TRP', 'HIS']:
+            if 4 < len(r_atoms) <= 6:
                 typ = r.GetType() if not r.GetType() == '' else 'unknown'
                 ring_atms = [r_atoms[a].coords for a in [0, 2, 4]]  # Probe atoms for normals, assuming planarity
                 ringv1 = vector(ring_atms[0], ring_atms[1])
@@ -113,6 +115,7 @@ class Mol():
                                   obj=r,
                                   center=centroid([ra.coords for ra in r_atoms]),
                                   type=typ))
+        print mol.title, len(rings), len(arings)
         return rings
 
     def get_hydrophobic_atoms(self):
