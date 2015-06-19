@@ -115,7 +115,6 @@ class Mol():
                                   obj=r,
                                   center=centroid([ra.coords for ra in r_atoms]),
                                   type=typ))
-        print mol.title, len(rings), len(arings)
         return rings
 
     def get_hydrophobic_atoms(self):
