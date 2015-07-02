@@ -161,7 +161,7 @@ def saltbridge(poscenter, negcenter, protispos):
 
 def halogen(acceptor, donor):
     """Detect all halogen bonds of the type Y-O...X-C"""
-    data = namedtuple('halogenbond', 'acc don distance don_angle acc_angle restype resnr reschain donortype acctype')
+    data = namedtuple('halogenbond', 'acc don distance don_angle acc_angle restype resnr reschain donortype acctype sidechain')
     pairings = []
     for acc, don in itertools.product(acceptor, donor):
         dist = euclidean3d(acc.o.coords, don.x.coords)
@@ -169,11 +169,13 @@ def halogen(acceptor, donor):
             vec1, vec2 = vector(acc.o.coords, acc.y.coords), vector(acc.o.coords, don.x.coords)
             vec3, vec4 = vector(don.x.coords, acc.o.coords), vector(don.x.coords, don.c.coords)
             acc_angle, don_angle = vecangle(vec1, vec2), vecangle(vec3, vec4)
+            is_sidechain_hal = acc.o.OBAtom.GetResidue().GetAtomProperty(acc.o.OBAtom, 8)  # Check if sidechain atom
             if config.HALOGEN_ACC_ANGLE-config.HALOGEN_ANGLE_DEV < acc_angle < config.HALOGEN_ACC_ANGLE+config.HALOGEN_ANGLE_DEV:
                 if config.HALOGEN_DON_ANGLE-config.HALOGEN_ANGLE_DEV < don_angle < config.HALOGEN_DON_ANGLE+config.HALOGEN_ANGLE_DEV:
                     contact = data(acc=acc, don=don, distance=dist, don_angle=don_angle, acc_angle=acc_angle,
                                    restype=whichrestype(acc.o), resnr=whichresnumber(acc.o),
-                                   reschain=whichchain(acc.o), donortype=don.x.OBAtom.GetType(), acctype=acc.o.type)
+                                   reschain=whichchain(acc.o), donortype=don.x.OBAtom.GetType(), acctype=acc.o.type,
+                                   sidechain=is_sidechain_hal)
                     pairings.append(contact)
     return pairings
 

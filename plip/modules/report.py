@@ -35,6 +35,9 @@ class TextOutput():
 
         self.output_path = pli_class.output_path
         self.name = pli_class.name
+        self.bs_res = pli_class.bindingsite.bs_res
+        self.min_dist = pli_class.bindingsite.min_dist
+        self.bs_res_interacting = pli_class.interacting_res
         self.pdbid = pli_class.pdbid.upper()
         self.lig_members = pli_class.lig_members
         self.interacting_chains = pli_class.interacting_chains
@@ -150,12 +153,12 @@ class TextOutput():
         # HALOGEN BONDS #
         #################
 
-        self.halogen_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'DIST', 'DON_ANGLE', 'ACC_ANGLE', 'DON_IDX',
+        self.halogen_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'SIDECHAIN', 'DIST', 'DON_ANGLE', 'ACC_ANGLE', 'DON_IDX',
                                  'DONORTYPE', 'ACC_IDX', 'ACCEPTORTYPE', 'LIGCOO', 'PROTCOO')
         self.halogen_info = []
         for halogen in pli_class.halogen_bonds:
-            self.halogen_info.append((halogen.resnr, halogen.restype, halogen.reschain, '%.2f' % halogen.distance,
-                                      '%.2f' % halogen.don_angle, '%.2f' % halogen.acc_angle,
+            self.halogen_info.append((halogen.resnr, halogen.restype, halogen.reschain, halogen.sidechain,
+                                      '%.2f' % halogen.distance, '%.2f' % halogen.don_angle, '%.2f' % halogen.acc_angle,
                                       lig_to_pdb[halogen.don.x.idx], halogen.donortype,
                                       mapping[halogen.acc.o.idx], halogen.acctype,
                                       halogen.acc.o.coords, halogen.don.x.coords))
@@ -211,11 +214,13 @@ class TextOutput():
 
     def generate_rst(self):
         """Generates an flat text report for a single binding site"""
+
+        # #@todo Include info on bs res and distances
         txt = []
         txt.append('%s' % self.name)
         for i, member in enumerate(sorted(self.lig_members)[1:]):
             txt.append('  + %s' % "-".join(str(element) for element in member))
-        txt.append("-"*len(self.name))
+        txt.append("-" * len(self.name))
         txt.append("Interacting chain(s): %s\n" % ','.join([chain for chain in self.interacting_chains]))
         for section in [['Hydrophobic Interactions', self.hydrophobic_features, self.hydrophobic_info],
                         ['Hydrogen Bonds', self.hbond_features, self.hbond_info],
@@ -256,14 +261,21 @@ class TextOutput():
         composite = et.SubElement(identifiers, 'composite')
         members = et.SubElement(identifiers, 'members')
         ichains = et.SubElement(report, 'interacting_chains')
+        bsresidues = et.SubElement(report, 'bs_residues')
         for i, ichain in enumerate(self.interacting_chains):
-            c = et.SubElement(ichains, 'interacting_chain', id=str(i+1))
+            c = et.SubElement(ichains, 'interacting_chain', id=str(i + 1))
             c.text = ichain
+        for i, bsres in enumerate(self.bs_res):
+            contact = 'True' if bsres in self.bs_res_interacting else 'False'
+            distance = '%.1f' % self.min_dist[bsres][0]
+            aatype = self.min_dist[bsres][1]
+            c = et.SubElement(bsresidues, 'bs_residue', id=str(i + 1), contact=contact, min_dist=distance, aa=aatype)
+            c.text = bsres
         hetid.text, chain.text, position.text = self.name.split('-')
         composite.text = 'True' if len(self.lig_members) > 1 else 'False'
         for i, member in enumerate(sorted(self.lig_members)):
             bsid = "-".join(str(element) for element in member)
-            m = et.SubElement(members, 'member', id=str(i+1))
+            m = et.SubElement(members, 'member', id=str(i + 1))
             m.text = bsid
         interactions = et.SubElement(report, 'interactions')
 

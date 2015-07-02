@@ -187,10 +187,13 @@ class PLInteraction():
                                                          self.pication_paro, self.hydrophobic_contacts,
                                                          self.halogen_bonds, self.water_bridges])
 
-        self.interacting_chains = sorted(list(set([i.reschain for i in self.saltbridge_lneg + self.saltbridge_pneg +
-                                                   self.hbonds_pdon + self.hbonds_ldon + self.pistacking +
-                                                   self.pication_laro + self.pication_paro + self.hydrophobic_contacts +
-                                                   self.halogen_bonds + self.water_bridges])))
+        self.all_itypes = self.saltbridge_lneg + self.saltbridge_pneg + self.hbonds_pdon + self.hbonds_ldon \
+                          + self.pistacking + self.pication_laro + self.pication_paro + self.hydrophobic_contacts \
+                          + self.halogen_bonds + self.water_bridges
+
+        self.interacting_chains = sorted(list(set([i.reschain for i in self.all_itypes])))
+
+        self.interacting_res = list(set([''.join([str(i.resnr), i.reschain]) for i in self.all_itypes]))
 
     def refine_hydrophobic(self, all_h, pistacks):
         """Apply several rules to reduce the number of hydrophobic interactions."""
@@ -356,12 +359,14 @@ class PLInteraction():
 
 
 class BindingSite(Mol):
-    def __init__(self, atoms, protcomplex, cclass, altconf):
+    def __init__(self, atoms, protcomplex, cclass, altconf, min_dist):
         """Find all relevant parts which could take part in interactions"""
         Mol.__init__(self, altconf)
         self.complex = cclass
         self.full_mol = protcomplex
         self.all_atoms = atoms
+        self.min_dist = min_dist # Minimum distance of bs res to ligand
+        self.bs_res = list(set([''.join([str(whichresnumber(a)), whichchain(a)]) for a in self.all_atoms]))  # e.g. 47A
         self.rings = self.find_rings(self.full_mol, self.all_atoms)
         self.hydroph_atoms = self.hydrophobic_atoms(self.all_atoms)
         self.hbond_acc_atoms = self.find_hba(self.all_atoms)
@@ -568,26 +573,42 @@ class PDBComplex():
         for ligand in ligands:
             lig_obj = Ligand(ligand.mol, self, ligand.mapping, ligand.water, self.altconf, ligand.members)
             cutoff = lig_obj.max_dist_to_center + config.BS_DIST
-            bs_res = self.extract_bs(cutoff, lig_obj.centroid, resis)
+            bs_res = self.extract_bs(cutoff, lig_obj.centroid, ligand.mol, resis)
             # Get a list of all atoms belonging to the binding site, search by idx
             bs_atoms = [self.atoms[idx] for idx in [i for i in self.atoms.keys()
                                                     if self.atoms[i].OBAtom.GetResidue().GetIdx() in bs_res]
                         if idx in self.idx_to_pdb_mapping and self.idx_to_pdb_mapping[idx] not in self.altconf]
-            bs_obj = BindingSite(bs_atoms, self.protcomplex, self, self.altconf)
+
+            # Create hash with BSRES -> (MINDIST_TO_LIG, AA_TYPE)
+            min_dist = {}
+            for r in bs_atoms:
+                bs_res_id = ''.join([str(whichresnumber(r)), whichchain(r)])
+                for l in ligand.mol.atoms:
+                    distance = euclidean3d(r.coords, l.coords)
+                    if bs_res_id not in min_dist:
+                        min_dist[bs_res_id] = (distance, whichrestype(r))
+                    elif min_dist[bs_res_id][0] > distance:
+                        min_dist[bs_res_id] = (distance, whichrestype(r))
+
+            bs_obj = BindingSite(bs_atoms, self.protcomplex, self, self.altconf, min_dist)
             pli_obj = PLInteraction(lig_obj, bs_obj, self)
             self.interaction_sets[ligand.mol.title] = pli_obj
 
-    def extract_bs(self, cutoff, ligcentroid, resis):
-        """Return list of ids from residues belonging to the binding site"""
-        return [obres.GetIdx() for obres in resis if self.res_belongs_to_bs(obres, cutoff, ligcentroid)]
 
-    def res_belongs_to_bs(self, res, cutoff, ligcentroid):
+
+    def extract_bs(self, cutoff, ligcentroid, ligmol, resis):
+        """Return list of ids from residues belonging to the binding site"""
+        return [obres.GetIdx() for obres in resis if self.res_belongs_to_bs(obres, cutoff, ligcentroid, ligmol)]
+
+    def res_belongs_to_bs(self, res, cutoff, ligcentroid, ligmol):
         """Do an all-vs-all comparison of ligand and residue atoms until a distance of less than bs_dist cutoff
         is reached
         """
         for coo in ((atm.x(), atm.y(), atm.z()) for atm in pybel.ob.OBResidueAtomIter(res)):
-                if (abs(coo[0]-ligcentroid[0]) or abs(coo[1]-ligcentroid[1]) or abs(coo[2]-ligcentroid[2])) < cutoff:
-                    if euclidean3d(coo, ligcentroid) < cutoff:
+                # Fast distance check using centroid
+                if (abs(coo[0] - ligcentroid[0]) or abs(coo[1] - ligcentroid[1]) or abs(coo[2] - ligcentroid[2])) < cutoff:
+                    # Proper distance check (pairwise on atoms)
+                    if True in [euclidean3d(coo, ligcoo) < config.BS_DIST for ligcoo in [l.coords for l in ligmol.atoms]]:
                         return True
         return False
 
