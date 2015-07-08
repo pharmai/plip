@@ -594,8 +594,6 @@ class PDBComplex():
             pli_obj = PLInteraction(lig_obj, bs_obj, self)
             self.interaction_sets[ligand.mol.title] = pli_obj
 
-
-
     def extract_bs(self, cutoff, ligcentroid, ligmol, resis):
         """Return list of ids from residues belonging to the binding site"""
         return [obres.GetIdx() for obres in resis if self.res_belongs_to_bs(obres, cutoff, ligcentroid, ligmol)]

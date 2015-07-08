@@ -1,6 +1,11 @@
 Changelog
 ---------
 
+### 1.1.1
+* __Detailed information on binding site residues in XML files__
+* Improved extraction of binding site residues
+* Information whether halogen bonds are made with side- or main chain of protein
+
 #### 1.1.0
 * __Folder structure and setup.py for automatic installation using pip__
 * __H-Bond Donor Prioritization (see documentation for details)__

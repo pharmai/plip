@@ -25,7 +25,7 @@ from operator import itemgetter
 import lxml.etree as et
 
 
-class TextOutput():
+class TextOutput:
     """Gather report data and generate reports for one binding site in different formats"""
     def __init__(self, pli_class):
 
