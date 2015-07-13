@@ -44,7 +44,7 @@ from pymol import finish_launching
 def is_lig(hetid):
     """Checks if a PDB compound can be excluded as a small molecule ligand"""
     h = hetid.upper()
-    return not (h == 'HOH' or h in config.dna + config.ions)
+    return not (h == 'HOH' or h in config.ions)
 
 
 def parse_pdb(fil):
@@ -56,6 +56,7 @@ def parse_pdb(fil):
     III. Furthermore, covalent linkages between ligands and protein residues/other ligands are identified
     """
     # #@todo Also consider SSBOND entries here
+    # #@todo Detect metal complexation via covlinkage entries?
     i, j = 0, 0  # idx and PDB numbering
     d = {}
     modres = set()
@@ -340,7 +341,7 @@ def getligs(mol, altconf, idx_to_pdb, modres, covalent):
     # Read in file and get name #
     #############################
 
-    data = namedtuple('ligand', 'mol mapping water members')
+    data = namedtuple('ligand', 'mol mapping water members longname type')
     ligands = []
     # #@todo Consider ions and attribute them to ligand molecules
 
@@ -366,6 +367,31 @@ def getligs(mol, altconf, idx_to_pdb, modres, covalent):
             artifacts.append(ulig)
     all_res3 = [a for a in all_res2 if a.GetName() not in artifacts]
     all_res_dict = {(a.GetName(), a.GetChain(), a.GetNum()): a for a in all_res3}
+
+    #######################################
+    # Basic support for RNA/DNA as ligand #
+    #######################################
+    nucleotides = ['A', 'C', 'T', 'G', 'U', 'DA', 'DC', 'DT', 'DG', 'DU']
+    dna_rna = {}  # Dictionary of DNA/RNA residues by chain
+    covlinkage = namedtuple("covlinkage", "id1 chain1 pos1 conf1 id2 chain2 pos2 conf2")
+    # Create missing covlinkage entries for DNA/RNA
+    for ligand in all_res_dict:
+        resname, chain, pos = ligand
+        if resname in nucleotides:
+            if chain not in dna_rna:
+                dna_rna[chain] = [(resname, pos), ]
+            else:
+                dna_rna[chain].append((resname, pos))
+    for chain in dna_rna:
+        nuc_list = dna_rna[chain]
+        for i, nucleotide in enumerate(nuc_list):
+            if not i == len(nuc_list) - 1:
+                name, pos = nucleotide
+                nextnucleotide = nuc_list[i + 1]
+                nextname, nextpos = nextnucleotide
+                newlink = covlinkage(id1=name, chain1=chain, pos1=pos, conf1='',
+                                     id2=nextname, chain2=chain, pos2=nextpos, conf2='')
+                covalent.append(newlink)
 
     #########################
     # Identify kmer ligands #
@@ -403,6 +429,16 @@ def getligs(mol, altconf, idx_to_pdb, modres, covalent):
     for kmer in res_kmers:  # iterate over all ligands
         members = [(res.GetName(), res.GetChain(), res.GetNum()) for res in kmer]
         rname, rchain, rnum = sorted(members)[0]  # representative name, chain, and number
+        ordered_members = sorted(members, key=lambda x: (x[1], x[2]))
+        names = [x[0] for x in ordered_members]
+        longname = '-'.join([x[0] for x in ordered_members])
+        # #@todo Improve classification
+        if 'U' in names or 'DU' in names:
+            ligtype = 'RNA'
+        elif 'T' in names or 'DT' in names:
+            ligtype = 'DNA'
+        else:
+            ligtype = 'Small Molecule or Other'
         hetatoms = set()
         for obresidue in kmer:
             hetatoms_res = set([(obatom.GetIdx(), obatom) for obatom in pybel.ob.OBResidueAtomIter(obresidue)
@@ -439,7 +475,7 @@ def getligs(mol, altconf, idx_to_pdb, modres, covalent):
                          'Chain': rchain,
                          'ResNr': rnum})
         lig.title = '-'.join((rname, rchain, str(rnum)))
-        ligands.append(data(mol=lig, mapping=mapold, water=water, members=members))
+        ligands.append(data(mol=lig, mapping=mapold, water=water, members=members, longname=longname, type=ligtype))
     excluded = sorted(list(all_lignames.difference(set(lignames))))
     return ligands, excluded
 

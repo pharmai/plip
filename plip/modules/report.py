@@ -35,6 +35,8 @@ class TextOutput:
 
         self.output_path = pli_class.output_path
         self.name = pli_class.name
+        self.longname = pli_class.ligand.longname
+        self.ligtype = pli_class.ligand.type
         self.bs_res = pli_class.bindingsite.bs_res
         self.min_dist = pli_class.bindingsite.min_dist
         self.bs_res_interacting = pli_class.interacting_res
@@ -217,7 +219,7 @@ class TextOutput:
 
         # #@todo Include info on bs res and distances
         txt = []
-        txt.append('%s' % self.name)
+        txt.append('%s (%s) - %s' % (self.name, self.longname, self.ligtype))
         for i, member in enumerate(sorted(self.lig_members)[1:]):
             txt.append('  + %s' % "-".join(str(element) for element in member))
         txt.append("-" * len(self.name))
@@ -255,6 +257,8 @@ class TextOutput:
         """Generates an XML-formatted report for a single binding site"""
         report = et.Element('bindingsite')
         identifiers = et.SubElement(report, 'identifiers')
+        longname = et.SubElement(identifiers, 'longname')
+        ligtype = et.SubElement(identifiers, 'ligtype')
         hetid = et.SubElement(identifiers, 'hetid')
         chain = et.SubElement(identifiers, 'chain')
         position = et.SubElement(identifiers, 'position')
@@ -273,6 +277,8 @@ class TextOutput:
             c.text = bsres
         hetid.text, chain.text, position.text = self.name.split('-')
         composite.text = 'True' if len(self.lig_members) > 1 else 'False'
+        longname.text = self.longname
+        ligtype.text = self.ligtype
         for i, member in enumerate(sorted(self.lig_members)):
             bsid = "-".join(str(element) for element in member)
             m = et.SubElement(members, 'member', id=str(i + 1))

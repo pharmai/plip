@@ -46,15 +46,12 @@ WATER_BRIDGE_THETA_MIN = 100  # Min. angle between water oxygen, donor hydrogen 
 # Blacklists #
 ##############
 
-# DNA or RNA bases
-dna = ['A', 'C', 'T', 'G', 'U', 'DA', 'DC', 'DT', 'DG', 'DU']
-
 # Ions
 ions = ['LI', 'BE', 'NA', 'MG', 'K', 'CA', 'RB', 'SR', 'CS', 'BA', 'V', 'CR', 'MN', 'CO', 'NI', 'FE', 'FE1', 'CL',
         'IOD', 'BR', 'FE2', 'FE3', 'FE4', 'CO', 'NI', 'CU', 'ZN', 'Y', 'ZR1', 'ZR2', 'ZR3', 'MO', 'RU', 'RU1', 'RH',
         'RH1', 'PD', 'AG', 'CD', 'LA', 'HFA', 'HFB', 'HFC', 'HFD', 'HFE', 'TA1', 'TA2', 'TA3', 'TA4', 'TA5', 'TA6', 'W',
         'W1', 'RE', 'OS', 'IR', 'PT', 'PT1', 'AU', 'HG', 'CE', 'PR', 'SM', 'EU', 'GD', 'TB', 'HO', 'ER', 'YB', 'LU',
-        'PA', 'U', 'AL', 'GA', 'GE', 'IN', 'SN1', 'SB', 'TL', 'PB']
+        'PA', 'AL', 'GA', 'GE', 'IN', 'SN1', 'SB', 'TL', 'PB']
 
 # BioLiP list of suspicious ligands from http://zhanglab.ccmb.med.umich.edu/BioLiP/ligand_list (2014-07-10)
 biolip_list = ['ACE', 'HEX', 'TMA', 'SOH', 'P25', 'CCN', 'PR', 'PTN', 'NO3', 'TCN', 'BU1', 'BCN', 'CB3', 'HCS', 'NBN',

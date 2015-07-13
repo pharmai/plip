@@ -419,12 +419,18 @@ class BindingSite(Mol):
 
 
 class Ligand(Mol):
-    def __init__(self, lig, cclass, mapping, water, altconf, members):
+    def __init__(self, cclass, ligand):
+        altconf = cclass.altconf
         Mol.__init__(self, altconf)
+        mapping = ligand.mapping
+        members = ligand.members
+        water = ligand.water
+        self.longname = ligand.longname
+        self.type = ligand.type
         self.complex = cclass
-        self.molecule = lig
-        self.name = lig.title
-        self.all_atoms = lig.atoms
+        self.molecule = ligand.mol
+        self.name = self.molecule.title
+        self.all_atoms = self.molecule.atoms
         self.atmdict = {l.idx: l for l in self.all_atoms}
         self.rings = self.find_rings(self.molecule, self.all_atoms)
         self.hydroph_atoms = self.hydrophobic_atoms(self.all_atoms)
@@ -464,7 +470,7 @@ class Ligand(Mol):
             if not set([at.GetAtomicNum() for at in pybel.ob.OBResidueAtomIter(hoh)]) == {1} and oxy is not None:
                 if euclidean3d(self.centroid, oxy.coords) < self.max_dist_to_center + config.BS_DIST:
                     self.water.append(oxy)
-        s = lig.title.split('-')
+        s = self.name.split('-')
         data = namedtuple('pymol_data', 'hetid chain resid maptopdb bs_id')
         self.pymol_data = data(hetid=s[0], chain=s[1], resid=s[2], maptopdb=mapping, bs_id=s)
         self.halogenbond_don = self.find_hal(self.all_atoms)
@@ -571,7 +577,7 @@ class PDBComplex():
         self.excluded = excluded
         resis = [obres for obres in pybel.ob.OBResidueIter(self.protcomplex.OBMol) if obres.GetResidueProperty(0)]
         for ligand in ligands:
-            lig_obj = Ligand(ligand.mol, self, ligand.mapping, ligand.water, self.altconf, ligand.members)
+            lig_obj = Ligand(self, ligand)
             cutoff = lig_obj.max_dist_to_center + config.BS_DIST
             bs_res = self.extract_bs(cutoff, lig_obj.centroid, ligand.mol, resis)
             # Get a list of all atoms belonging to the binding site, search by idx
