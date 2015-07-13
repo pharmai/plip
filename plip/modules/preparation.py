@@ -30,7 +30,7 @@ import config
 ################
 
 
-class Mol():
+class Mol:
 
     def __init__(self, altconf):
         self.rings = None
@@ -72,7 +72,6 @@ class Mol():
         return donor_pairs
 
     def find_rings(self, mol, all_atoms):
-        #@todo Refactor code here to check aromaticity, length of rings in one take
         """Find rings and return only aromatic."""
         data = namedtuple('aromatic_ring', 'atoms normal obj center type')
         rings, arings = [], []
@@ -88,16 +87,17 @@ class Mol():
                     n_coords = [pybel.Atom(neigh).coords for neigh in adj if ring.IsMember(neigh)]
                     vec1, vec2 = vector(a.coords, n_coords[0]), vector(a.coords, n_coords[1])
                     normals.append(np.cross(vec1, vec2))
-                # Given all normals of ring atoms and their neighbors, the angle between any has to be 7.5 deg or less
+                # Given all normals of ring atoms and their neighbors, the angle between any has to be 5.0 deg or less
                 for n1, n2 in itertools.product(normals, repeat=2):
                     arom_angle = vecangle(n1, n2)
-                    if not (arom_angle < config.AROMATIC_PLANARITY) or (arom_angle > 180.0 - config.AROMATIC_PLANARITY):
-                            aromatic = False
-                            break
+                    if all([arom_angle > config.AROMATIC_PLANARITY, arom_angle < 180.0 - config.AROMATIC_PLANARITY]):
+                        aromatic = False
+                        break
                 # Ring is aromatic either by OpenBabel's criteria or if sufficiently planar
                 if aromatic or ring.IsAromatic():
                     arings.append(ring)
         else:
+            # Detection for proteins should work more reliably just with OpenBabel
             arings = [r for r in mol.OBMol.GetSSSR() if r.IsAromatic()]
 
         # Store all rings which are detected as aromatic by Babel or are sufficiently planar
@@ -139,7 +139,7 @@ class Mol():
         return [charge for charge in self.charged if charge.type == 'negative']
 
 
-class PLInteraction():
+class PLInteraction:
     """Class to store a ligand, a protein and their interactions."""
     def __init__(self, lig_obj, bs_obj, protcomplex):
         """Detect all interactions when initializing"""
@@ -539,7 +539,7 @@ class Ligand(Mol):
         return a_set
 
 
-class PDBComplex():
+class PDBComplex:
     """Contains a collection of objects associated with a PDB complex, i.e. one or several ligands and their binding
     sites as well as information about the pliprofiler between them. Provides functions to load and prepare input files
     such as PDB files.

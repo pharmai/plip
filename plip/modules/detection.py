@@ -79,7 +79,7 @@ def pistacking(rings_bs, rings_lig):
         # DISTANCE AND RING ANGLE CALCULATION
         d = euclidean3d(r.center, l.center)
         b = vecangle(r.normal, l.normal)
-        a = min(b, 180-b if not 180-b < 0 else b)  # Smallest of two angles, depending on direction of normal
+        a = min(b, 180 - b if not 180 - b < 0 else b)  # Smallest of two angles, depending on direction of normal
 
         # RING CENTER OFFSET CALCULATION (project each ring center into the other ring)
         proj1 = projection(l.normal, l.center, r.center)
