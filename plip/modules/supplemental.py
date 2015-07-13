@@ -211,7 +211,7 @@ def projection(pnormal1, ppoint, tpoint):
     sn = -np.dot(pnormal, vector(ppoint, tpoint))
     sd = np.dot(pnormal, pnormal)
     sb = sn / sd
-    return [c1 + c2 for c1, c2 in zip(tpoint, [sb*pn for pn in pnormal])]
+    return [c1 + c2 for c1, c2 in zip(tpoint, [sb * pn for pn in pnormal])]
 
 
 def cluster_doubles(double_list):
@@ -480,39 +480,13 @@ def getligs(mol, altconf, idx_to_pdb, modres, covalent):
     return ligands, excluded
 
 
-def read_pdb(pdbfname, safe=False):
-    """Reads a given PDB file and returns a Pybel Molecule. If requested, do it
-    safely to except Open Babel crashes. All bonds are read in as single bonds
-    if requested, saving a lot of time at OpenBabel import."""
-    global exitcode
+def read_pdb(pdbfname):
+    """Reads a given PDB file and returns a Pybel Molecule."""
     pybel.ob.obErrorLog.StopLogging()  # Suppress all OpenBabel warnings
     if os.name != 'nt':  # Resource module not available for Windows
-        resource.setrlimit(resource.RLIMIT_STACK, (2**28, -1))  # set stack size to 256MB
-    sys.setrecursionlimit(10**5)  # increase Python recoursion limit
-    success = True
-    if safe:  # read the file safely, since it can happen, that babel crashes on large files
-        if os.path.exists(pdbfname):
-            def f(fname):
-                readmol('pdb', fname)
-            p = Process(target=f, args=(pdbfname,))  # make the file reading a separate process
-            p.start()
-            p.join()
-            exitcode = p.exitcode
-            success = exitcode == 0
-            del p
-        else:
-            print("  Error: PDB file not found!")
-            success = False
-            exitcode = 1
-    if success:
-        mol = readmol('pdb', pdbfname)  # only read the file iff it was successful before
-    elif exitcode == 4:
-        sys.stderr.write('Error: Input file could not be read by OpenBabel.')
-        sys.exit(4)
-    else:
-        mol = pybel.Molecule(pybel.ob.OBMol())
-        print("  Error: Failed to read '%s' with OpenBabel (exit code %d)!" % (pdbfname, exitcode))
-    return mol
+        resource.setrlimit(resource.RLIMIT_STACK, (2 ** 28, -1))  # set stack size to 256MB
+    sys.setrecursionlimit(10 ** 5)  # increase Python recoursion limit
+    return readmol('pdb', pdbfname)  # only read the file iff it was successful before
 
 
 def readmol(fformat='mol', path=None):

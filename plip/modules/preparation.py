@@ -561,7 +561,7 @@ class PDBComplex:
     def load_pdb(self, pdbpath):
         """Loads a pdb file with protein AND ligand(s), separates and prepares them."""
         self.sourcefiles['pdbcomplex'] = pdbpath
-        self.protcomplex = read_pdb(pdbpath, safe=False)  # Don't do safe reading
+        self.protcomplex = read_pdb(pdbpath)
         # Counting is different from PDB if TER records present
         self.idx_to_pdb_mapping, self.modres, self.covalent = parse_pdb(open(tilde_expansion(pdbpath)).readlines())
         # #@todo Include this in the parse_pdb function, return named tuple?
@@ -579,13 +579,15 @@ class PDBComplex:
         for ligand in ligands:
             lig_obj = Ligand(self, ligand)
             cutoff = lig_obj.max_dist_to_center + config.BS_DIST
-            bs_res = self.extract_bs(cutoff, lig_obj.centroid, ligand.mol, resis)
+            bs_res = self.extract_bs(cutoff, lig_obj.centroid, resis)
             # Get a list of all atoms belonging to the binding site, search by idx
             bs_atoms = [self.atoms[idx] for idx in [i for i in self.atoms.keys()
                                                     if self.atoms[i].OBAtom.GetResidue().GetIdx() in bs_res]
                         if idx in self.idx_to_pdb_mapping and self.idx_to_pdb_mapping[idx] not in self.altconf]
+            bs_atoms_refined = []
 
             # Create hash with BSRES -> (MINDIST_TO_LIG, AA_TYPE)
+            # and refine binding site atom selection with exact threshold
             min_dist = {}
             for r in bs_atoms:
                 bs_res_id = ''.join([str(whichresnumber(r)), whichchain(r)])
@@ -595,26 +597,21 @@ class PDBComplex:
                         min_dist[bs_res_id] = (distance, whichrestype(r))
                     elif min_dist[bs_res_id][0] > distance:
                         min_dist[bs_res_id] = (distance, whichrestype(r))
+                    if distance <= config.BS_DIST and r not in bs_atoms_refined:
+                        bs_atoms_refined.append(r)
 
-            bs_obj = BindingSite(bs_atoms, self.protcomplex, self, self.altconf, min_dist)
+            bs_obj = BindingSite(bs_atoms_refined, self.protcomplex, self, self.altconf, min_dist)
             pli_obj = PLInteraction(lig_obj, bs_obj, self)
             self.interaction_sets[ligand.mol.title] = pli_obj
 
-    def extract_bs(self, cutoff, ligcentroid, ligmol, resis):
+    def extract_bs(self, cutoff, ligcentroid, resis):
         """Return list of ids from residues belonging to the binding site"""
-        return [obres.GetIdx() for obres in resis if self.res_belongs_to_bs(obres, cutoff, ligcentroid, ligmol)]
+        return [obres.GetIdx() for obres in resis if self.res_belongs_to_bs(obres, cutoff, ligcentroid)]
 
-    def res_belongs_to_bs(self, res, cutoff, ligcentroid, ligmol):
-        """Do an all-vs-all comparison of ligand and residue atoms until a distance of less than bs_dist cutoff
-        is reached
-        """
-        for coo in ((atm.x(), atm.y(), atm.z()) for atm in pybel.ob.OBResidueAtomIter(res)):
-                # Fast distance check using centroid
-                if (abs(coo[0] - ligcentroid[0]) or abs(coo[1] - ligcentroid[1]) or abs(coo[2] - ligcentroid[2])) < cutoff:
-                    # Proper distance check (pairwise on atoms)
-                    if True in [euclidean3d(coo, ligcoo) < config.BS_DIST for ligcoo in [l.coords for l in ligmol.atoms]]:
-                        return True
-        return False
+    def res_belongs_to_bs(self, res, cutoff, ligcentroid):
+        """Check for each residue if its centroid is within a certain distance to the ligand centroid."""
+        rescentroid = centroid([(atm.x(), atm.y(), atm.z()) for atm in pybel.ob.OBResidueAtomIter(res)])
+        return True if euclidean3d(rescentroid, ligcentroid) < cutoff else False
 
     def get_atom(self, idx):
         return self.atoms[idx]
