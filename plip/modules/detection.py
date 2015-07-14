@@ -256,6 +256,7 @@ def metal_complexation(metals, metal_binding_lig, metal_binding_bs):
             vectors.append(vector(metal.coords, target.atom.coords))
         angles = [euclidean3d(pair[0], pair[1]) for pair in itertools.combinations(vectors, 2)]
         rms = math.degrees(np.sqrt(np.mean(np.square([angles]))))
+        # #@todo Add geometry information to contact
         # #@todo Put that into config and add threshold for variation
         # Check rms against coordination number
         # 4 -> tetrahedral (109,5 deg) or square planar (127,3 deg)
@@ -271,7 +272,6 @@ def metal_complexation(metals, metal_binding_lig, metal_binding_bs):
             contact = data(metal=metal, metal_type=metal.type, target=target, target_type=target.type,
                            coordination_num=coo_num, distance=distance, resnr=target.resnr, restype=target.restype,
                            reschain=target.reschain, location=target.location, rms=rms)
-            print contact
             pairings.append(contact)
     return pairings
 

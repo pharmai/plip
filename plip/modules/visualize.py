@@ -78,7 +78,7 @@ def png_workaround(filepath, width=1200, height=800):
         getheight = 'h=`convert ' + newfile + ' -ping -format "%h" info:`;'  # Get the hight of the new image
         newres = 'if [ "$w" -gt "$h" ]; then newr="${w%.*}x$w"; else newr="${h%.*}x$h"; fi;'  # Set quadratic ratio
         quadratic = 'convert ' + newfile + ' -gravity center -extent "$newr" ' + newfile  # Fill with whitespace
-        os.system(getwidth+getheight+newres+quadratic)
+        os.system(getwidth + getheight + newres + quadratic)
     else:
         sys.stderr.write('Imagemagick not available. Images will not be resized or cropped.')
 

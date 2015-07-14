@@ -597,14 +597,14 @@ class Ligand(Mol):
             # All atomic numbers of neighboring atoms
             n_atoms_atomicnum = [n.GetAtomicNum() for n in pybel.ob.OBAtomAtomIter(a.OBAtom)]
             if a.atomicnum == 8:  # Oxygen
-                if n_atoms_atomicnum.count('1') == 1 and len(n_atoms) == 2:  # Oxygen in alcohol (R-[O]-H)
+                if n_atoms_atomicnum.count('1') == 1 and len(n_atoms_atomicnum) == 2:  # Oxygen in alcohol (R-[O]-H)
                     a_set.append(data(atom=a, type='O', fgroup='alcohol', restype=whichrestype(a),
                                       resnr=whichresnumber(a), reschain=whichchain(a), location='ligand'))
                 if True in [n.IsAromatic() for n in n_atoms] and not a.OBAtom.IsAromatic():  # Phenolate oxygen
                     a_set.append(data(atom=a, type='O', fgroup='phenolate', restype=whichrestype(a),
                                       resnr=whichresnumber(a), reschain=whichchain(a), location='ligand'))
             if a.atomicnum == 6:  # It's a carbon atom
-                if n_atoms_atomicnum.count(8) == 2 and n_atoms.count(6) == 1:  # It's a carboxylate group
+                if n_atoms_atomicnum.count(8) == 2 and n_atoms_atomicnum.count(6) == 1:  # It's a carboxylate group
                     for neighbor in [n for n in n_atoms if n.GetAtomicNum() == 8]:
                         a_set.append(data(atom=pybel.Atom(neighbor), type='O', fgroup='carboxylate', restype=whichrestype(neighbor),
                                           resnr=whichresnumber(neighbor), reschain=whichchain(neighbor),
