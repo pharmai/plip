@@ -183,8 +183,9 @@ class PLInteraction:
 
         self.water_bridges = self.refine_water_bridges(self.water_bridges, self.hbonds_ldon, self.hbonds_pdon)
 
+        print self.pdbid
         self.metal_complexes = metal_complexation(self.ligand.metals, self.ligand.metal_binding,
-                                                  self.bindingsite.metal_binding)
+                                                  self.bindingsite.metal_binding, self.ligand.get_neg_charged())
 
         self.all_itypes = self.saltbridge_lneg + self.saltbridge_pneg + self.hbonds_pdon + self.hbonds_ldon \
                           + self.pistacking + self.pication_laro + self.pication_paro + self.hydrophobic_contacts \
@@ -515,7 +516,7 @@ class Ligand(Mol):
         self.halogenbond_don = self.find_hal(self.all_atoms)
         self.metal_binding = self.find_metal_binding(self.all_atoms, self.water)
         # #@todo Update documentation
-        self.metals = [a for a in self.all_atoms if a.type in ['Ca', 'Mg', 'Mn', 'Fe', 'Cu', 'Zn']]
+        self.metals = [a for a in self.all_atoms if a.type.upper() in config.METAL_IONS]
 
     def find_hal(self, atoms):
         """Look for halogen bond donors (X-C, with X=F, Cl, Br, I)"""
@@ -621,8 +622,8 @@ class Ligand(Mol):
                                           restype=whichrestype(neighbor), resnr=whichresnumber(neighbor),
                                           reschain=whichchain(neighbor), location='ligand'))
             if a.atomicnum == 7:  # It's a nitrogen atom
-                if set(n_atoms_atomicnum) == {8} and len(n_atoms_atomicnum) == 2:  # It's imidazole
-                    a_set.append(data(atom=a, type='N', fgroup='imidazole', restype=whichrestype(a),
+                if n_atoms_atomicnum.count(6) == 2:  # It's imidazole/pyrrole or similar
+                    a_set.append(data(atom=a, type='N', fgroup='imidazole/pyrrole', restype=whichrestype(a),
                                       resnr=whichresnumber(a), reschain=whichchain(a), location='ligand'))
             if a.atomicnum == 7:  # It's a sulfur atom
                 if True in [n.IsAromatic() for n in n_atoms] and not a.OBAtom.IsAromatic():  # Thiolate

@@ -122,7 +122,7 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False, pse=
     # Visualize and color metal ions if there are any
     if not len(metal_ids) == 0:
         cmd.select(ligname, '%s or id %s' % (ligname, metal_ids_str))
-        cmd.show('nb_spheres', 'id %s' % metal_ids_str)
+        cmd.show('spheres', 'id %s and %s' % (metal_ids_str, pdbid))
 
     # Additionally, select all members of composite ligands
     for member in lig_members:
@@ -135,6 +135,8 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False, pse=
     cmd.util.cnc('all')
     if not len(metal_ids) == 0:
         cmd.color('hotpink', 'id %s' % metal_ids_str)
+        cmd.hide('sticks', 'id %s' % metal_ids_str)
+        cmd.set('sphere_scale', 0.3, ligname)
     cmd.deselect()
 
     ###########################
@@ -407,6 +409,7 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False, pse=
     cmd.origin(ligname)
     if 'Centroids*' in cmd.get_names("selections"):
         cmd.color('grey80', 'Centroids*')
+    cmd.hide('spheres', '%sCartoon' % pdbid)
 
     ##############################
     # Organization of selections #

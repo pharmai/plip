@@ -170,12 +170,12 @@ class TextOutput:
         ###################
 
         self.metal_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'METAL_IDX', 'METAL_TYPE', 'TARGET_IDX', 'TARGET_TYPE',
-                               'COORDINATION', 'DIST', 'LOCATION', 'RMS')
+                               'COORDINATION', 'DIST', 'LOCATION', 'RMS', 'GEOMETRY')
         self.metal_info = []
         for m in pli_class.metal_complexes:
             # #@todo Change mapping when ligand is involved as target
             self.metal_info.append((m.resnr, m.restype, m.reschain, lig_to_pdb[m.metal.idx], m.metal_type, mapping[m.target.atom.idx], m.target_type,
-                                    m.coordination_num, '%.2f' % m.distance, m.location, '%.2f' % m.rms))
+                                    m.coordination_num, '%.2f' % m.distance, m.location, '%.2f' % m.rms, m.geometry))
 
     def write_section(self, name, features, info, f):
         """Provides formatting for one section (e.g. hydrogen bonds)"""

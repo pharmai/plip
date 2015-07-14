@@ -114,11 +114,11 @@ def whichrestype(atom):
     """Returns the residue name of an Pybel or OpenBabel atom."""
     if isinstance(atom, Atom):
         try:
-            return atom.OBAtom.GetResidue().GetName()
+            return atom.OBAtom.GetResidue().GetName() if atom.OBAtom.GetResidue() is not None else None
         except AttributeError:
             return None
     elif isinstance(atom, OBAtom):
-        return atom.GetResidue().GetName() if atom.GetResidue is not None else None
+            return atom.GetResidue().GetName() if atom.GetResidue() is not None else None
     else:
         return None
 
@@ -126,9 +126,9 @@ def whichrestype(atom):
 def whichresnumber(atom):
     """Returns the residue number of an Pybel or OpenBabel atom (numbering as in original PDB file)."""
     if isinstance(atom, Atom):
-        return atom.OBAtom.GetResidue().GetNum()
+        return atom.OBAtom.GetResidue().GetNum() if atom.OBAtom.GetResidue() is not None else None
     elif isinstance(atom, OBAtom):
-        return atom.GetResidue().GetNum()
+        return atom.GetResidue().GetNum() if atom.GetResidue() is not None else None
     else:
         return None
 
@@ -136,9 +136,9 @@ def whichresnumber(atom):
 def whichchain(atom):
     """Returns the residue number of an PyBel or OpenBabel atom."""
     if isinstance(atom, Atom):
-        return atom.OBAtom.GetResidue().GetChain()
+        return atom.OBAtom.GetResidue().GetChain() if atom.OBAtom.GetResidue() is not None else None
     elif isinstance(atom, OBAtom):
-        return atom.GetResidue().GetChain()
+        return atom.GetResidue().GetChain() if atom.GetResidue() is not None else None
     else:
         return None
 
@@ -441,7 +441,15 @@ def getligs(mol, altconf, idx_to_pdb, modres, covalent):
         elif 'A' in names or 'DA' in names or 'C' in names or 'DC' in names or 'G' in names or 'DG' in names:
             ligtype = 'DNA/RNA'
         else:
-            ligtype = 'Small Molecule or Other'
+            ligtype = 'UNSPECIFIED'
+
+        for name in names:
+            if name in config.METAL_IONS:
+                if len(names) == 1:
+                    ligtype = 'ION'
+                else:
+                    if "ION" not in ligtype:
+                        ligtype += ':ION'
         hetatoms = set()
         for obresidue in kmer:
             hetatoms_res = set([(obatom.GetIdx(), obatom) for obatom in pybel.ob.OBResidueAtomIter(obresidue)

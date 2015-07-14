@@ -19,6 +19,7 @@ limitations under the License.
 # Python standard library
 import itertools
 import math
+from collections import defaultdict
 
 # Own modules
 from supplemental import *
@@ -232,14 +233,15 @@ def water_bridges(bs_hba, lig_hba, bs_hbd, lig_hbd, water):
                 pairings.append(contact)
     return pairings
 
-def metal_complexation(metals, metal_binding_lig, metal_binding_bs):
+def metal_complexation(metals, metal_binding_lig, metal_binding_bs, lig_neg_charged):
     """Find all metal complexes between metals and appropriate groups in both protein and ligand, as well as water"""
-    data = namedtuple('metal_complex', 'metal metal_type target target_type coordination_num distance resnr restype reschain location rms')
+    data = namedtuple('metal_complex', 'metal metal_type target target_type coordination_num distance resnr restype reschain location rms, geometry')
     pairings_dict = {}
     pairings = []
     #@todo Find, based on known coordination numbers, better rules to select correct targets
     #@todo Or take e.g. n closest ones or cluster with most similar distance
     #@todo Complete information in data namedtuple
+    #@todo Also consider negative charges in ligands as targets (as in iron-sulfur clusters)
     for metal, target in itertools.product(metals, metal_binding_lig + metal_binding_bs):
         distance = euclidean3d(metal.coords, target.atom.coords)
         if distance < config.METAL_DIST_MAX:
@@ -248,22 +250,51 @@ def metal_complexation(metals, metal_binding_lig, metal_binding_bs):
             else:
                 pairings_dict[metal].append((target, distance))
     for metal in pairings_dict:
-        coo_num = len(pairings_dict[metal])  # #@todo Highly experimental
+        coo_num_prev = len(pairings_dict[metal])  # #@todo Highly experimental
         contact_pairs = pairings_dict[metal]
-        vectors = []
+        all_vectors = []
+        vectors_dict = defaultdict(list)
+        # #@todo DEBUG
         for contact_pair in contact_pairs:
             target, distance = contact_pair
-            vectors.append(vector(metal.coords, target.atom.coords))
-        angles = [euclidean3d(pair[0], pair[1]) for pair in itertools.combinations(vectors, 2)]
-        rms = math.degrees(np.sqrt(np.mean(np.square([angles]))))
+            all_vectors.append(vector(metal.coords, target.atom.coords))
+            vectors_dict[target].append(vector(metal.coords, target.atom.coords))
+        angles = [math.degrees(euclidean3d(pair[0], pair[1])) for pair in itertools.combinations(all_vectors, 2)]
+
+        for target in vectors_dict:
+            vectors = vectors_dict[target]
+            angles = [math.degrees(euclidean3d(pair[0], pair[1])) for pair in itertools.product(vectors, all_vectors)]
+            #print 180.0 - np.sqrt(np.mean(np.square([angles]))), target.restype, target.type
+            # #@todo Assume a certain geometry, then check for highest outlier
+        #print '-------'
+        if abs(coo_num_prev - 6) < (min((abs(coo_num_prev - 5), abs(coo_num_prev - 4)))):
+            pass
+            #print "COO6", coo_num_prev, metal.type
+            # Assume coordination number 6
+        elif abs(coo_num_prev - 5) < abs(coo_num_prev - 4):
+            pass
+            #print "COO5", coo_num_prev, metal.type
+            # Assume coordination number 5
+        else:
+            pass
+            #print "COO4", coo_num_prev, metal.type
+            # Assume coordination number 4
+        coo_num = coo_num_prev # #@todo Has to be adapted after checks
+
+        if not len(angles) <= 1:
+            rms = np.sqrt(np.mean(np.square([angles])))
+        else:
+            rms = 0.0
         # #@todo Add geometry information to contact
+        # #@todo Add information on polydental/monodental binding of residues
         # #@todo Put that into config and add threshold for variation
+        # #@todo Check if some angles violate coordination and keep top n
         # Check rms against coordination number
-        # 4 -> tetrahedral (109,5 deg) or square planar (127,3 deg)
-        # 5 ->
-        # 6 ->
-        # 7 ->
-        # 8 ->
+        # #@todo Now considering coordination numbers of 4,5, and 6 (and lower?)
+        # #@todo Which angles to check (vectors metal-target or target-target?)
+        # 4 -> tetrahedral (109.5 deg) or square planar (127.3 deg)
+        # 5 -> trigonal bipyramid (90.0, 120.0, 180.0 deg) or square pyramid (?)
+        # 6 -> octahedral (113.8 deg)
 
         for contact_pair in contact_pairs:
             target, distance = contact_pair
@@ -271,7 +302,7 @@ def metal_complexation(metals, metal_binding_lig, metal_binding_bs):
             # #@todo Or subdivide into specific types, e.g. carboxyl, serin.O, etc.!
             contact = data(metal=metal, metal_type=metal.type, target=target, target_type=target.type,
                            coordination_num=coo_num, distance=distance, resnr=target.resnr, restype=target.restype,
-                           reschain=target.reschain, location=target.location, rms=rms)
+                           reschain=target.reschain, location=target.location, rms=rms, geometry='Unspecified')
             pairings.append(contact)
     return pairings
 
