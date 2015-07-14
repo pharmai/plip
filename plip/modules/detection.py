@@ -18,6 +18,7 @@ limitations under the License.
 
 # Python standard library
 import itertools
+import math
 
 # Own modules
 from supplemental import *
@@ -230,3 +231,47 @@ def water_bridges(bs_hba, lig_hba, bs_hbd, lig_hbd, water):
                                restype=whichrestype(acc.a), reschain=whichchain(acc.a), protisdon=False)
                 pairings.append(contact)
     return pairings
+
+def metal_complexation(metals, metal_binding_lig, metal_binding_bs):
+    """Find all metal complexes between metals and appropriate groups in both protein and ligand, as well as water"""
+    data = namedtuple('metal_complex', 'metal metal_type target target_type coordination_num distance resnr restype reschain location rms')
+    pairings_dict = {}
+    pairings = []
+    #@todo Find, based on known coordination numbers, better rules to select correct targets
+    #@todo Or take e.g. n closest ones or cluster with most similar distance
+    #@todo Complete information in data namedtuple
+    for metal, target in itertools.product(metals, metal_binding_lig + metal_binding_bs):
+        distance = euclidean3d(metal.coords, target.atom.coords)
+        if distance < config.METAL_DIST_MAX:
+            if metal not in pairings_dict:
+                pairings_dict[metal] = [(target, distance), ]
+            else:
+                pairings_dict[metal].append((target, distance))
+    for metal in pairings_dict:
+        coo_num = len(pairings_dict[metal])  # #@todo Highly experimental
+        contact_pairs = pairings_dict[metal]
+        vectors = []
+        for contact_pair in contact_pairs:
+            target, distance = contact_pair
+            vectors.append(vector(metal.coords, target.atom.coords))
+        angles = [euclidean3d(pair[0], pair[1]) for pair in itertools.combinations(vectors, 2)]
+        rms = math.degrees(np.sqrt(np.mean(np.square([angles]))))
+        # #@todo Put that into config and add threshold for variation
+        # Check rms against coordination number
+        # 4 -> tetrahedral (109,5 deg) or square planar (127,3 deg)
+        # 5 ->
+        # 6 ->
+        # 7 ->
+        # 8 ->
+
+        for contact_pair in contact_pairs:
+            target, distance = contact_pair
+            # #@todo Location should be either ligand, water, protein.sidechain, protein.mainchain
+            # #@todo Or subdivide into specific types, e.g. carboxyl, serin.O, etc.!
+            contact = data(metal=metal, metal_type=metal.type, target=target, target_type=target.type,
+                           coordination_num=coo_num, distance=distance, resnr=target.resnr, restype=target.restype,
+                           reschain=target.reschain, location=target.location, rms=rms)
+            print contact
+            pairings.append(contact)
+    return pairings
+

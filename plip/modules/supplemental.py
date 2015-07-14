@@ -343,6 +343,7 @@ def getligs(mol, altconf, idx_to_pdb, modres, covalent):
 
     data = namedtuple('ligand', 'mol mapping water members longname type')
     ligands = []
+    # #@todo For now, remove covalent entries with ions from main list
     # #@todo Consider ions and attribute them to ligand molecules
 
     #########################
@@ -437,6 +438,8 @@ def getligs(mol, altconf, idx_to_pdb, modres, covalent):
             ligtype = 'RNA'
         elif 'T' in names or 'DT' in names:
             ligtype = 'DNA'
+        elif 'A' in names or 'DA' in names or 'C' in names or 'DC' in names or 'G' in names or 'DG' in names:
+            ligtype = 'DNA/RNA'
         else:
             ligtype = 'Small Molecule or Other'
         hetatoms = set()

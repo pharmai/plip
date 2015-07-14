@@ -100,6 +100,8 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False, pse=
     save_to = protcomplex_class.output_path
     chain = ligdata.chain if not ligdata.chain == "0" else ""
     ligname = ligdata.hetid
+    metal_ids = [lig_to_pdb[x.idx] for x in pli.ligand.metals]
+    metal_ids_str = '+'.join([str(i) for i in metal_ids])
 
     ########################
     # Basic visualizations #
@@ -117,6 +119,11 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False, pse=
     cmd.hide('everything', 'all')
     cmd.select(ligname, 'resn %s and chain %s and resi %s' % (ligdata.hetid, chain, ligdata.resid))
 
+    # Visualize and color metal ions if there are any
+    if not len(metal_ids) == 0:
+        cmd.select(ligname, '%s or id %s' % (ligname, metal_ids_str))
+        cmd.show('nb_spheres', 'id %s' % metal_ids_str)
+
     # Additionally, select all members of composite ligands
     for member in lig_members:
         resid, chain, resnr = member[0], member[1], str(member[2])
@@ -126,6 +133,8 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False, pse=
     cmd.color('myblue')
     cmd.color('myorange', ligname)
     cmd.util.cnc('all')
+    if not len(metal_ids) == 0:
+        cmd.color('hotpink', 'id %s' % metal_ids_str)
     cmd.deselect()
 
     ###########################
@@ -134,7 +143,8 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False, pse=
 
     for group in ['Hydrophobic-P', 'Hydrophobic-L', 'HBondDonor-P', 'HBondDonor-L', 'HBondAccept-P', 'HBondAccept-L',
                   'HalogenAccept', 'HalogenDonor', 'Water', 'MetalIons', 'StackRings-P', 'PosCharge-P', 'PosCharge-L',
-                  'NegCharge-P', 'NegCharge-L', 'PiCatRing-P', 'StackRings-L', 'PiCatRing-L']:
+                  'NegCharge-P', 'NegCharge-L', 'PiCatRing-P', 'StackRings-L', 'PiCatRing-L', 'Metal-M', 'Metal-P',
+                  'Metal-W', 'Metal-L']:
         cmd.select(group, 'None')
 
     ######################################
@@ -319,13 +329,51 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False, pse=
     cmd.color('lightblue', 'Water')
     cmd.show('spheres', 'Water')
 
+    ###################
+    # Metal Complexes #
+    ###################
+
+    if not len(pli.metal_complexes) == 0:
+        cmd.select('Metal-M', 'id %s' % metal_ids_str)
+        for metal_complex in pli.metal_complexes:
+            m_idx = lig_to_pdb[metal_complex.metal.idx]
+            # #@todo Check mapping here for correct binding to ligand/water/protein
+            if metal_complex.location == 'water':
+                w_idx = mapping[metal_complex.target.atom.idx]
+                cmd.select('Metal-W', 'Metal-W or id %s' % w_idx)
+                cmd.select('tmp_m', 'id %i' % m_idx)
+                cmd.select('tmp_w', 'id %s' % w_idx)
+                cmd.distance('MetalComplexes', 'tmp_m', 'tmp_w')
+            if metal_complex.location.startswith('protein'):
+                t_idx = mapping[metal_complex.target.atom.idx]
+                cmd.select('Metal-P', 'Metal-P or id %s' % t_idx)
+                cmd.select('tmp_m', 'id %i' % m_idx)
+                cmd.select('tmp_t', 'id %s' % t_idx)
+                cmd.distance('MetalComplexes', 'tmp_m', 'tmp_t')
+            if metal_complex.location == 'ligand':
+                l_idx = lig_to_pdb[metal_complex.target.atom.idx]
+                cmd.select('Metal-L', 'Metal-L or id %s' % l_idx)
+                cmd.select('tmp_m', 'id %i' % m_idx)
+                cmd.select('tmp_l', 'id %s' % l_idx)
+                cmd.distance('MetalComplexes', 'tmp_m', 'tmp_l')
+
+        cmd.delete('tmp_m or tmp_t or tmp_w or tmp_l')
+    if object_exists('MetalComplexes'):
+        cmd.set('dash_color', 'violetpurple', 'MetalComplexes')
+        cmd.set('dash_gap', 0.5, 'MetalComplexes')
+        # Show water molecules for metal complexes
+        cmd.show('spheres', 'Metal-W')
+        cmd.color('lightblue', 'Metal-W')
+        #@todo Account for lig + visualize
+
+
     ######################
     # Visualize the rest #
     ######################
 
     # Show sticks for all residues interacing with the ligand
     cmd.select('AllBSRes', 'byres (Hydrophobic-P or HBondDonor-P or HBondAccept-P or PosCharge-P or NegCharge-P or '
-                           'StackRings-P or PiCatRing-P or HalogenAcc)')
+                           'StackRings-P or PiCatRing-P or HalogenAcc or Metal-P)')
     cmd.show('sticks', 'AllBSRes')
     # Show spheres for the ring centroids
     cmd.hide('everything', 'centroids*')
@@ -336,6 +384,7 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False, pse=
         cmd.show('spheres', 'chargecenter*')
         cmd.set('sphere_scale', 0.4, 'chargecenter*')
         cmd.color('yellow', 'chargecenter*')
+
 
     ####################
     # Last refinements #
@@ -375,13 +424,13 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False, pse=
     # Group non-empty selections
     cmd.group('Structures', '%s %s %sCartoon' % (pdbid, ligname, pdbid))
     cmd.group('Interactions', 'Hydrophobic HBonds HalogenBonds WaterBridges PiCation PiStackingP PiStackingT '
-                              'Saltbridges')
+                              'Saltbridges MetalComplexes')
     cmd.group('Atoms', '')
     cmd.group('Atoms.Protein', 'Hydrophobic-P HBondAccept-P HBondDonor-P HalogenAccept Centroids-P PiCatRing-P '
-                               'StackRings-P PosCharge-P NegCharge-P AllBSRes Chargecenter-P')
+                               'StackRings-P PosCharge-P NegCharge-P AllBSRes Chargecenter-P  Metal-P')
     cmd.group('Atoms.Ligand', 'Hydrophobic-L HBondAccept-L HBondDonor-L HalogenDonor Centroids-L NegCharge-L '
-                              'PosCharge-L NegCharge-L ChargeCenter-L StackRings-L PiCatRing-L')
-    cmd.group('Atoms.Other', 'Water')
+                              'PosCharge-L NegCharge-L ChargeCenter-L StackRings-L PiCatRing-L Metal-L Metal-M')
+    cmd.group('Atoms.Other', 'Water Metal-W')
     cmd.order('*', 'y')
 
     ###############################################

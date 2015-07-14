@@ -165,6 +165,18 @@ class TextOutput:
                                       mapping[halogen.acc.o.idx], halogen.acctype,
                                       halogen.acc.o.coords, halogen.don.x.coords))
 
+        ###################
+        # METAL COMPLEXES #
+        ###################
+
+        self.metal_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'METAL_IDX', 'METAL_TYPE', 'TARGET_IDX', 'TARGET_TYPE',
+                               'COORDINATION', 'DIST', 'LOCATION', 'RMS')
+        self.metal_info = []
+        for m in pli_class.metal_complexes:
+            # #@todo Change mapping when ligand is involved as target
+            self.metal_info.append((m.resnr, m.restype, m.reschain, lig_to_pdb[m.metal.idx], m.metal_type, mapping[m.target.atom.idx], m.target_type,
+                                    m.coordination_num, '%.2f' % m.distance, m.location, '%.2f' % m.rms))
+
     def write_section(self, name, features, info, f):
         """Provides formatting for one section (e.g. hydrogen bonds)"""
         if not len(info) == 0:
@@ -230,7 +242,8 @@ class TextOutput:
                         ['Salt Bridges', self.saltbridge_features, self.saltbridge_info],
                         ['pi-Stacking', self.pistacking_features, self.pistacking_info],
                         ['pi-Cation Interactions', self.pication_features, self.pication_info],
-                        ['Halogen Bonds', self.halogen_features, self.halogen_info]]:
+                        ['Halogen Bonds', self.halogen_features, self.halogen_info],
+                        ['Metal Complexes', self.metal_features, self.metal_info]]:
             iname, features, interaction_information = section
             # Sort results first by res number, then by distance and finally ligand coordinates to get a unique order
             interaction_information = sorted(interaction_information, key=itemgetter(0, 2, -2))
@@ -321,4 +334,5 @@ class TextOutput:
         interactions.append(format_interactions('pi_stacks', self.pistacking_features, self.pistacking_info))
         interactions.append(format_interactions('pi_cation_interactions', self.pication_features, self.pication_info))
         interactions.append(format_interactions('halogen_bonds', self.halogen_features, self.halogen_info))
+        interactions.append(format_interactions('metal_complexes', self.metal_features, self.metal_info))
         return report

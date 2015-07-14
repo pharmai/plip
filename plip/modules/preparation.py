@@ -182,14 +182,15 @@ class PLInteraction:
                                            self.ligand.water)
 
         self.water_bridges = self.refine_water_bridges(self.water_bridges, self.hbonds_ldon, self.hbonds_pdon)
-        self.no_interactions = all(len(i) == 0 for i in [self.saltbridge_lneg, self.saltbridge_pneg, self.hbonds_ldon,
-                                                         self.hbonds_pdon, self.pistacking, self.pication_paro,
-                                                         self.pication_paro, self.hydrophobic_contacts,
-                                                         self.halogen_bonds, self.water_bridges])
+
+        self.metal_complexes = metal_complexation(self.ligand.metals, self.ligand.metal_binding,
+                                                  self.bindingsite.metal_binding)
 
         self.all_itypes = self.saltbridge_lneg + self.saltbridge_pneg + self.hbonds_pdon + self.hbonds_ldon \
                           + self.pistacking + self.pication_laro + self.pication_paro + self.hydrophobic_contacts \
-                          + self.halogen_bonds + self.water_bridges
+                          + self.halogen_bonds + self.water_bridges + self.metal_complexes
+
+        self.no_interactions = all(len(i) == 0 for i in self.all_itypes)
 
         self.interacting_chains = sorted(list(set([i.reschain for i in self.all_itypes])))
 
@@ -373,6 +374,7 @@ class BindingSite(Mol):
         self.hbond_don_atom_pairs = self.find_hbd(self.all_atoms, self.hydroph_atoms)
         self.charged = self.find_charged(self.full_mol)
         self.halogenbond_acc = self.find_hal(self.all_atoms)
+        self.metal_binding = self.find_metal_binding(self.full_mol)
 
     def find_hal(self, atoms):
         """Look for halogen bond acceptors (Y-{O|P|N|S}, with Y=C,P,S)"""
@@ -416,6 +418,43 @@ class BindingSite(Mol):
                                       resnr=res.GetNum(),
                                       reschain=res.GetChain()))
         return a_set
+
+    def find_metal_binding(self, mol):
+        """Looks for atoms that could possibly be involved in chelating a metal ion.
+        This can be any main chain oxygen atom or oxygen, nitrogen and sulfur from specific amino acids"""
+        data = namedtuple('metal_binding', 'atom type restype resnr reschain location')
+        a_set = []
+        for res in pybel.ob.OBResidueIter(mol.OBMol):
+            resname = res.GetName().upper()
+            if resname in ['ASP', 'GLU', 'SER', 'THR', 'TYR']:  # Look for oxygens here
+                for a in pybel.ob.OBResidueAtomIter(res):
+                    if a.GetType().startswith('O') and res.GetAtomProperty(a, 8) \
+                            and not self.complex.idx_to_pdb_mapping[a.GetIdx()] in self.altconf:
+                                a_set.append(data(atom=pybel.Atom(a), type='O', restype=res.GetName(),
+                                                  resnr=res.GetNum(), reschain=res.GetChain(),
+                                                  location='protein.sidechain'))
+            if resname == 'HIS':  # Look for nitrogen here
+                for a in pybel.ob.OBResidueAtomIter(res):
+                    if a.GetType().startswith('N') and res.GetAtomProperty(a, 8) \
+                            and not self.complex.idx_to_pdb_mapping[a.GetIdx()] in self.altconf:
+                                a_set.append(data(atom=pybel.Atom(a), type='N', restype=res.GetName(),
+                                                  resnr=res.GetNum(), reschain=res.GetChain(),
+                                                  location='protein.sidechain'))
+            if resname == 'CYS':  # Look for sulfur here
+                for a in pybel.ob.OBResidueAtomIter(res):
+                    if a.GetType().startswith('S') and res.GetAtomProperty(a, 8) \
+                            and not self.complex.idx_to_pdb_mapping[a.GetIdx()] in self.altconf:
+                                a_set.append(data(atom=pybel.Atom(a), type='S', restype=res.GetName(),
+                                                  resnr=res.GetNum(), reschain=res.GetChain(),
+                                                  location='protein.sidechain'))
+            for a in pybel.ob.OBResidueAtomIter(res):  # All main chain oxygens
+                if a.GetType().startswith('O') and res.GetAtomProperty(a, 2) \
+                and not self.complex.idx_to_pdb_mapping[a.GetIdx()] in self.altconf and resname != 'HOH':
+                    a_set.append(data(atom=pybel.Atom(a), type='O', restype=res.GetName(),
+                                      resnr=res.GetNum(), reschain=res.GetChain(),
+                                      location='protein.mainchain'))
+        return a_set
+
 
 
 class Ligand(Mol):
@@ -474,6 +513,9 @@ class Ligand(Mol):
         data = namedtuple('pymol_data', 'hetid chain resid maptopdb bs_id')
         self.pymol_data = data(hetid=s[0], chain=s[1], resid=s[2], maptopdb=mapping, bs_id=s)
         self.halogenbond_don = self.find_hal(self.all_atoms)
+        self.metal_binding = self.find_metal_binding(self.all_atoms, self.water)
+        # #@todo Update documentation
+        self.metals = [a for a in self.all_atoms if a.type in ['Ca', 'Mg', 'Mn', 'Fe', 'Cu', 'Zn']]
 
     def find_hal(self, atoms):
         """Look for halogen bond donors (X-C, with X=F, Cl, Br, I)"""
@@ -493,6 +535,7 @@ class Ligand(Mol):
         """
         data = namedtuple('lcharge', 'atoms type center fgroup')
         a_set = []
+        # #@todo Refactor by putting n_atoms here and writing checks for each functional group as methods
         for a in all_atoms:
             if a.atomicnum == 7:  # It's a nitrogen, so could be a protonated amine or quaternary ammonium
                 n_atoms = [a_neighbor.GetAtomicNum() for a_neighbor in pybel.ob.OBAtomAtomIter(a.OBAtom)]
@@ -536,6 +579,55 @@ class Ligand(Mol):
                         a_contributing = [pybel.Atom(neighbor) for neighbor in pybel.ob.OBAtomAtomIter(a.OBAtom)
                                           if neighbor.GetAtomicNum() == 7]
                         a_set.append(data(atoms=a_contributing, type='positive', center=a.coords, fgroup='guanidine'))
+        return a_set
+
+    def find_metal_binding(self, lig_atoms, water_oxygens):
+        """Looks for atoms that could possibly be involved in binding a metal ion.
+        This can be any water oxygen, as well as oxygen from carboxylate, phophoryl, phenolate, alcohol;
+        nitrogen from imidazole; sulfur from thiolate.
+        """
+        a_set = []
+        data = namedtuple('metal_binding', 'atom type fgroup restype resnr reschain location')
+        for oxygen in water_oxygens:
+            a_set.append(data(atom=oxygen, type='O', fgroup='water', restype=whichrestype(oxygen),
+                              resnr=whichresnumber(oxygen), reschain=whichchain(oxygen), location='water'))
+        # #@todo Check detection
+        for a in lig_atoms:
+            n_atoms = pybel.ob.OBAtomAtomIter(a.OBAtom)  # Neighboring atoms
+            # All atomic numbers of neighboring atoms
+            n_atoms_atomicnum = [n.GetAtomicNum() for n in pybel.ob.OBAtomAtomIter(a.OBAtom)]
+            if a.atomicnum == 8:  # Oxygen
+                if n_atoms_atomicnum.count('1') == 1 and len(n_atoms) == 2:  # Oxygen in alcohol (R-[O]-H)
+                    a_set.append(data(atom=a, type='O', fgroup='alcohol', restype=whichrestype(a),
+                                      resnr=whichresnumber(a), reschain=whichchain(a), location='ligand'))
+                if True in [n.IsAromatic() for n in n_atoms] and not a.OBAtom.IsAromatic():  # Phenolate oxygen
+                    a_set.append(data(atom=a, type='O', fgroup='phenolate', restype=whichrestype(a),
+                                      resnr=whichresnumber(a), reschain=whichchain(a), location='ligand'))
+            if a.atomicnum == 6:  # It's a carbon atom
+                if n_atoms_atomicnum.count(8) == 2 and n_atoms.count(6) == 1:  # It's a carboxylate group
+                    for neighbor in [n for n in n_atoms if n.GetAtomicNum() == 8]:
+                        a_set.append(data(atom=pybel.Atom(neighbor), type='O', fgroup='carboxylate', restype=whichrestype(neighbor),
+                                          resnr=whichresnumber(neighbor), reschain=whichchain(neighbor),
+                                          location='ligand'))
+            if a.atomicnum == 15:  # It's a phosphor atom
+                if n_atoms_atomicnum.count(8) >= 3:  # It's a phosphoryl
+                    for neighbor in [n for n in n_atoms if n.GetAtomicNum() == 8]:
+                        a_set.append(data(atom=pybel.Atom(neighbor), type='O', fgroup='phosphoryl', restype=whichrestype(neighbor),
+                                          resnr=whichresnumber(neighbor), reschain=whichchain(neighbor),
+                                          location='ligand'))
+                if n_atoms_atomicnum.count(8) == 2:  # It's another phosphor-containing group #@todo (correct name?)
+                    for neighbor in [n for n in n_atoms if n.GetAtomicNum() == 8]:
+                        a_set.append(data(atom=pybel.Atom(neighbor), type='O', fgroup='phosphor.other',
+                                          restype=whichrestype(neighbor), resnr=whichresnumber(neighbor),
+                                          reschain=whichchain(neighbor), location='ligand'))
+            if a.atomicnum == 7:  # It's a nitrogen atom
+                if set(n_atoms_atomicnum) == {8} and len(n_atoms_atomicnum) == 2:  # It's imidazole
+                    a_set.append(data(atom=a, type='N', fgroup='imidazole', restype=whichrestype(a),
+                                      resnr=whichresnumber(a), reschain=whichchain(a), location='ligand'))
+            if a.atomicnum == 7:  # It's a sulfur atom
+                if True in [n.IsAromatic() for n in n_atoms] and not a.OBAtom.IsAromatic():  # Thiolate
+                    a_set.append(data(atom=a, type='S', fgroup='thiolate', restype=whichrestype(a),
+                                      resnr=whichresnumber(a), reschain=whichchain(a), location='ligand'))
         return a_set
 
 

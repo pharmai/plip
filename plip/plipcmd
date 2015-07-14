@@ -43,7 +43,7 @@ import multiprocessing
 # External libraries
 import lxml.etree as et
 
-__version__ = '1.1.1'
+__version__ = '1.1.2'
 descript = "Protein-Ligand Interaction Profiler (PLIP) v%s " \
            "is a command-line based tool to analyze interactions in a protein-ligand complex. " \
            "If you are using PLIP in your work, please cite: " \
@@ -124,7 +124,7 @@ def process_pdb(pdbfile, outpath, xml=False, verbose_mode=False, pics=False, pym
 
     # Write header of rST file
     textlines = ['Prediction of noncovalent interactions for PDB structure %s' % mol.pymol_name.upper(), ]
-    textlines.append("="*len(textlines[0]))
+    textlines.append("=" * len(textlines[0]))
     textlines.append('Created on %s using PLIP v%s\n' % (time.strftime("%Y/%m/%d"), __version__))
     if len(excluded) != 0:
         textlines.append('Excluded molecules as ligands: %s\n' % ','.join([lig for lig in excluded]))
@@ -151,16 +151,21 @@ def process_pdb(pdbfile, outpath, xml=False, verbose_mode=False, pics=False, pym
 
     for i, site in enumerate(sorted(mol.interaction_sets)):
         s = mol.interaction_sets[site]
+        longname, ligtype = s.ligand.longname, s.ligand.type
+        members = s.lig_members
         bindingsite = TextOutput(s).generate_xml()
-        bindingsite.set('id', str(i+1))
+        bindingsite.set('id', str(i + 1))
         bindingsite.set('has_interactions', 'False')
-        report.insert(i+1, bindingsite)
+        report.insert(i + 1, bindingsite)
         for itype in TextOutput(s).generate_rst():
             textlines.append(itype)
         if not s.no_interactions:
             bindingsite.set('has_interactions', 'True')
             if verbose_mode:
-                sys.stdout.write("  @ %s\n" % site)
+                if len(members) == 1:  # Single ligand
+                    sys.stdout.write("  @ %s [%s]\n" % (site, ligtype))
+                else:  # Composite ligand
+                    sys.stdout.write("  @ %s (%s) [%s]\n" % (site, longname, ligtype))
 
             if pymol or pics:
                 if os.name != 'nt':
@@ -206,7 +211,7 @@ def process_pdb(pdbfile, outpath, xml=False, verbose_mode=False, pics=False, pym
         tree.write('%s/report.xml' % tilde_expansion(outpath), pretty_print=True, xml_declaration=True)
 
     with open('%s/report.rst.txt' % tilde_expansion(outpath), 'w') as f:
-        [f.write(textline+'\n') for textline in textlines]
+        [f.write(textline + '\n') for textline in textlines]
 
 
 def main(args):
@@ -217,9 +222,9 @@ def main(args):
     if args.verbose:
         # Print title and version
         title = "* Protein-Ligand Interaction Profiler v%s *" % __version__
-        sys.stdout.write('\n'+'*'*len(title)+'\n')
+        sys.stdout.write('\n' + '*' * len(title) + '\n')
         sys.stdout.write(title)
-        sys.stdout.write('\n'+'*'*len(title)+'\n\n')
+        sys.stdout.write('\n' + '*' * len(title) + '\n\n')
 
     if args.input is not None:  # Process PDB file
         if os.path.getsize(args.input) == 0:
@@ -293,7 +298,7 @@ if __name__ == '__main__':
             if t.type == 'distance':
                 if tvalue > 10:  # Check value for angle thresholds
                     parser.error("Threshold for distances must not be larger than 10 Angstrom.")
-                elif tvalue > config.BS_DIST+1:  # Dynamically adapt the search space for binding site residues
+                elif tvalue > config.BS_DIST + 1:  # Dynamically adapt the search space for binding site residues
                     config.BS_DIST = tvalue + 1
             setattr(config, t.name.upper(), tvalue)
     # Check additional conditions for interdependent thresholds

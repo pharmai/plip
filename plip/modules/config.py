@@ -41,17 +41,19 @@ WATER_BRIDGE_MAXDIST = 4.0  # Max. distance between water oxygen and polar atom 
 WATER_BRIDGE_OMEGA_MIN = 75  # Min. angle between acceptor, water oxygen and donor hydrogen (Jiang et al., 2005) - 5
 WATER_BRIDGE_OMEGA_MAX = 140  # Max. angle between acceptor, water oxygen and donor hydrogen (Jiang et al., 2005)
 WATER_BRIDGE_THETA_MIN = 100  # Min. angle between water oxygen, donor hydrogen and donor atom (Jiang et al., 2005)
+METAL_DIST_MAX = 3.2  # Max. distance between metal ion and interacting atom (Harding, 2001)
 
 ##############
 # Blacklists #
 ##############
 
 # Ions
-ions = ['LI', 'BE', 'NA', 'MG', 'K', 'CA', 'RB', 'SR', 'CS', 'BA', 'V', 'CR', 'MN', 'CO', 'NI', 'FE', 'FE1', 'CL',
-        'IOD', 'BR', 'FE2', 'FE3', 'FE4', 'CO', 'NI', 'CU', 'ZN', 'Y', 'ZR1', 'ZR2', 'ZR3', 'MO', 'RU', 'RU1', 'RH',
-        'RH1', 'PD', 'AG', 'CD', 'LA', 'HFA', 'HFB', 'HFC', 'HFD', 'HFE', 'TA1', 'TA2', 'TA3', 'TA4', 'TA5', 'TA6', 'W',
-        'W1', 'RE', 'OS', 'IR', 'PT', 'PT1', 'AU', 'HG', 'CE', 'PR', 'SM', 'EU', 'GD', 'TB', 'HO', 'ER', 'YB', 'LU',
-        'PA', 'AL', 'GA', 'GE', 'IN', 'SN1', 'SB', 'TL', 'PB']
+#ions = ['LI', 'BE', 'NA', 'MG', 'K', 'CA', 'RB', 'SR', 'CS', 'BA', 'V', 'CR', 'MN', 'CO', 'NI', 'FE', 'FE1', 'CL',
+#        'IOD', 'BR', 'FE2', 'FE3', 'FE4', 'CO', 'NI', 'CU', 'ZN', 'Y', 'ZR1', 'ZR2', 'ZR3', 'MO', 'RU', 'RU1', 'RH',
+#        'RH1', 'PD', 'AG', 'CD', 'LA', 'HFA', 'HFB', 'HFC', 'HFD', 'HFE', 'TA1', 'TA2', 'TA3', 'TA4', 'TA5', 'TA6', 'W',
+#        'W1', 'RE', 'OS', 'IR', 'PT', 'PT1', 'AU', 'HG', 'CE', 'PR', 'SM', 'EU', 'GD', 'TB', 'HO', 'ER', 'YB', 'LU',
+#        'PA', 'AL', 'GA', 'GE', 'IN', 'SN1', 'SB', 'TL', 'PB']
+ions = ['', ]
 
 # BioLiP list of suspicious ligands from http://zhanglab.ccmb.med.umich.edu/BioLiP/ligand_list (2014-07-10)
 biolip_list = ['ACE', 'HEX', 'TMA', 'SOH', 'P25', 'CCN', 'PR', 'PTN', 'NO3', 'TCN', 'BU1', 'BCN', 'CB3', 'HCS', 'NBN',
