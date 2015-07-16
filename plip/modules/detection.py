@@ -260,6 +260,7 @@ def metal_complexation(metals, metal_binding_lig, metal_binding_bs):
                    6: ['octahedral', ]}
 
         # Angle signatures for each geometry (as seen from each target atom)
+        # #@todo Use edge angles for more specificity?
         ideal_angles = {'linear': [[180.0]] * 2,
                         'trigonal.planar': [[120.0, 120.0]] * 3,
                         'trigonal.pyramidal': [[109.5, 109.5]] * 3,
@@ -352,17 +353,19 @@ def metal_complexation(metals, metal_binding_lig, metal_binding_bs):
                 else:
                     final_geom, final_coo, rms, excluded = "NA", "NA", 0.0, []
 
-        if config.VERBOSE:
-            print "  Metal ion %s complexed with %s geometry (coo. number %r/ %i observed)." % (metal.type, final_geom, final_coo, num_targets)
-
         # Record all contact pairing, excluding those with targets superfluous for chosen geometry
-        for contact_pair in contact_pairs:
-            target, distance = contact_pair
-            if target.atom.idx not in excluded:
-                contact = data(metal=metal, metal_type=metal.type, target=target, target_type=target.type,
-                               coordination_num=final_coo, distance=distance, resnr=target.resnr,
-                               restype=target.restype, reschain=target.reschain, location=target.location,
-                               rms=rms, geometry=final_geom, num_partners=num_targets)
-                pairings.append(contact)
+        only_water = set([x[0].location for x in contact_pairs]) == {'water'}
+        if not only_water:  # No complex if just with water as targets
+            if config.VERBOSE:
+                # #@todo Geometry prediction in BETA
+                print "  [BETA] Metal ion %s complexed with %s geometry (coo. number %r/ %i observed)." % (metal.type, final_geom, final_coo, num_targets)
+            for contact_pair in contact_pairs:
+                target, distance = contact_pair
+                if target.atom.idx not in excluded:
+                    contact = data(metal=metal, metal_type=metal.type, target=target, target_type=target.type,
+                                   coordination_num=final_coo, distance=distance, resnr=target.resnr,
+                                   restype=target.restype, reschain=target.reschain, location=target.location,
+                                   rms=rms, geometry=final_geom, num_partners=num_targets)
+                    pairings.append(contact)
     return pairings
 

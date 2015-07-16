@@ -56,7 +56,6 @@ def parse_pdb(fil):
     III. Furthermore, covalent linkages between ligands and protein residues/other ligands are identified
     """
     # #@todo Also consider SSBOND entries here
-    # #@todo Detect metal complexation via covlinkage entries?
     i, j = 0, 0  # idx and PDB numbering
     d = {}
     modres = set()

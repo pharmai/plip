@@ -140,8 +140,6 @@ def process_pdb(pdbfile, outpath):
 
     for i, site in enumerate(sorted(mol.interaction_sets)):
         s = mol.interaction_sets[site]
-        longname, ligtype = s.ligand.longname, s.ligand.type
-        members = s.lig_members
         bindingsite = TextOutput(s).generate_xml()
         bindingsite.set('id', str(i + 1))
         bindingsite.set('has_interactions', 'False')
@@ -190,17 +188,17 @@ def process_pdb(pdbfile, outpath):
     ###########################################
 
     tree = et.ElementTree(report)
-    create_folder_if_not_exists(tilde_expansion(outpath))
+    create_folder_if_not_exists(outpath)
     if config.XML:
-        tree.write('%s/report.xml' % tilde_expansion(outpath), pretty_print=True, xml_declaration=True)
+        tree.write('%s/report.xml' % outpath, pretty_print=True, xml_declaration=True)
 
-    with open('%s/report.rst.txt' % tilde_expansion(outpath), 'w') as f:
+    with open('%s/report.rst.txt' % outpath, 'w') as f:
         [f.write(textline + '\n') for textline in textlines]
 
 
 def main(inputstruct, inputpdbid):
     """Main function. Calls functions for processing, report generation and visualization."""
-    pdbid, outp = None, None
+    pdbid, outp, pdbpath = None, None, None
     outp = tilde_expansion("".join([config.OUTPATH, '/']) if not config.OUTPATH.endswith('/') else config.OUTPATH)
 
     if config.VERBOSE:
@@ -296,5 +294,5 @@ if __name__ == '__main__':
         parser.error("The water bridge minimum distance has to be smaller than the water bridge maximum distance.")
     if not config.WATER_BRIDGE_OMEGA_MIN < config.WATER_BRIDGE_OMEGA_MAX:
         parser.error("The water bridge omega minimum angle has to be smaller than the water bridge omega maximum angle")
-    expanded_path = tilde_expansion(arguments.input) if not arguments.input is None else None
+    expanded_path = tilde_expansion(arguments.input) if arguments.input is not None else None
     main(expanded_path, arguments.pdbid)  # Start main script

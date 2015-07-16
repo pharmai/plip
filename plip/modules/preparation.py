@@ -40,7 +40,6 @@ class Mol:
         self.hbond_acc_atoms = None
         self.altconf = altconf
 
-
     def hydrophobic_atoms(self, all_atoms):
         """Select all carbon atoms which have only carbons and/or hydrogens as direct neighbors."""
         data = namedtuple('hydrophobic', 'atoms')
@@ -193,6 +192,8 @@ class PLInteraction:
         self.interacting_chains = sorted(list(set([i.reschain for i in self.all_itypes])))
 
         self.interacting_res = list(set([''.join([str(i.resnr), str(i.reschain)]) for i in self.all_itypes]))
+        if config.VERBOSE:
+            sys.stdout.write('  Ligand interacts with %i binding site residue(s).\n' % len(self.interacting_res))
 
     def refine_hydrophobic(self, all_h, pistacks):
         """Apply several rules to reduce the number of hydrophobic interactions."""
@@ -256,7 +257,8 @@ class PLInteraction:
                         min_dist = h.distance
                         min_h = h
                 hydroph_final.append(min_h)
-
+        if config.VERBOSE and not len(all_h) == 0:
+            sys.stdout.write('  Reduced number of hydrophobic contacts from %i to %i.\n' % (len(all_h), len(hydroph_final)))
         return hydroph_final
 
     def refine_hbonds_ldon(self, all_hbonds, salt_lneg, salt_pneg):
@@ -329,7 +331,7 @@ class PLInteraction:
     def refine_water_bridges(self, wbridges, hbonds_ldon, hbonds_pdon):
         """A donor atom already forming a hydrogen bond is not allowed to form a water bridge. Each water molecule
         can only be donor for two water bridges, selecting the constellation with the omega angle closest to 110 deg."""
-        donor_atoms_hbonds = [hb.d.idx for hb in hbonds_ldon+hbonds_pdon]
+        donor_atoms_hbonds = [hb.d.idx for hb in hbonds_ldon + hbonds_pdon]
         wb_dict = {}
         wb_dict2 = {}
 
@@ -472,6 +474,8 @@ class Ligand(Mol):
         self.rings = self.find_rings(self.molecule, self.all_atoms)
         self.hydroph_atoms = self.hydrophobic_atoms(self.all_atoms)
         self.hbond_acc_atoms = self.find_hba(self.all_atoms)
+        if config.VERBOSE and not len(self.rings) == 0:
+            sys.stdout.write('  Contains %i aromatic ring(s).\n' % len(self.rings))
 
         ##########################################################
         # Special Case for hydrogen bond acceptor identification #
@@ -565,6 +569,8 @@ class Ligand(Mol):
             if self.is_functional_group(a, 'halocarbon'):
                 n_atoms = [na for na in pybel.ob.OBAtomAtomIter(a.OBAtom) if na.GetAtomicNum() == 6]
                 a_set.append(data(x=a, c=pybel.Atom(n_atoms[0])))
+        if config.VERBOSE and len(a_set) != 0:
+            sys.stdout.write('  Ligand contains %i halogen atoms.\n' % len(a_set))
         return a_set
 
     def find_charged(self, all_atoms):
@@ -690,7 +696,7 @@ class PDBComplex:
         # Counting is different from PDB if TER records present
         self.idx_to_pdb_mapping, self.modres, self.covalent = parse_pdb(open(pdbpath).readlines())
         # #@todo Include this in the parse_pdb function, return named tuple?
-        self.altconf = get_altconf_atoms(open(tilde_expansion(pdbpath)).readlines())
+        self.altconf = get_altconf_atoms(open(pdbpath).readlines())
         try:
             self.pymol_name = self.protcomplex.data['HEADER'][56:60].lower()  # Get name from HEADER data
         except KeyError:  # Extract the PDBID from the filename
@@ -703,9 +709,7 @@ class PDBComplex:
         ligands, excluded = getligs(self.protcomplex, self.altconf, self.idx_to_pdb_mapping, self.modres, self.covalent)
         self.excluded = excluded
         if config.VERBOSE:
-            if len(excluded) == 0:
-                sys.stdout.write("\nNo molecules excluded as ligands.\n")
-            else:
+            if len(excluded) != 0:
                 sys.stdout.write("Excluded molecules as ligands: %s\n" % ','.join([lig for lig in excluded]))
 
         resis = [obres for obres in pybel.ob.OBResidueIter(self.protcomplex.OBMol) if obres.GetResidueProperty(0)]
@@ -754,6 +758,9 @@ class PDBComplex:
                         min_dist[bs_res_id] = (distance, whichrestype(r))
                     if distance <= config.BS_DIST and r not in bs_atoms_refined:
                         bs_atoms_refined.append(r)
+            if config.VERBOSE:
+                num_bs_atoms = len(bs_atoms_refined)
+                sys.stdout.write('  Binding site atoms in vicinity (%.1f A max. dist: %i).\n' % (config.BS_DIST, num_bs_atoms))
 
             bs_obj = BindingSite(bs_atoms_refined, self.protcomplex, self, self.altconf, min_dist)
             pli_obj = PLInteraction(lig_obj, bs_obj, self)
