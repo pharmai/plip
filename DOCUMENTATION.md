@@ -1,5 +1,5 @@
 ==================
-PLIProfiler v1.1.2
+PLIProfiler v1.2.0
 ==================
 
 The Protein-Ligand Interaction Profiler (PLIP) is a tool to analyze and visualize protein-ligand interactions in PDB files.

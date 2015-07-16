@@ -495,7 +495,8 @@ def read_pdb(pdbfname):
     """Reads a given PDB file and returns a Pybel Molecule."""
     pybel.ob.obErrorLog.StopLogging()  # Suppress all OpenBabel warnings
     if os.name != 'nt':  # Resource module not available for Windows
-        resource.setrlimit(resource.RLIMIT_STACK, (2 ** 28, -1))  # set stack size to 256MB
+        maxsize = resource.getrlimit(resource.RLIMIT_STACK)[-1]
+        resource.setrlimit(resource.RLIMIT_STACK, (min(2 ** 28, maxsize), maxsize))
     sys.setrecursionlimit(10 ** 5)  # increase Python recoursion limit
     return readmol('pdb', pdbfname)  # only read the file iff it was successful before
 

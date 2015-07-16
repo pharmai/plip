@@ -43,7 +43,7 @@ import multiprocessing
 # External libraries
 import lxml.etree as et
 
-__version__ = '1.1.2'
+__version__ = '1.2.0'
 descript = "Protein-Ligand Interaction Profiler (PLIP) v%s " \
            "is a command-line based tool to analyze interactions in a protein-ligand complex. " \
            "If you are using PLIP in your work, please cite: " \
@@ -79,21 +79,21 @@ def check_pdb_status(pdbid):
     return [status, current_pdbid.lower()]
 
 
-def fetch_pdb(pdbid, verbose_mode):
+def fetch_pdb(pdbid):
     """Get the newest entry from the RCSB server for the given PDB ID. Exits with '1' if PDB ID is invalid."""
     pdbid = pdbid.lower()
-    if verbose_mode:
+    if config.VERBOSE:
         sys.stdout.write('Checking status of PDB ID %s ... ' % pdbid)
     state, current_entry = check_pdb_status(pdbid)  # Get state and current PDB ID
 
-    if verbose_mode:
+    if config.VERBOSE:
         if state == 'OBSOLETE':
             sys.stdout.write('entry is obsolete, getting %s instead.\n' % current_entry)
         elif state == 'CURRENT':
             sys.stdout.write('entry is up to date.\n')
     if state == 'UNKNOWN':
         sysexit(3, 'Invalid PDB ID')
-    if verbose_mode:
+    if config.VERBOSE:
         sys.stdout.write('Downloading file from PDB ... ')
     pdburl = 'http://www.rcsb.org/pdb/files/%s.pdb' % current_entry  # Get URL for current entry
     pdbfile = None
@@ -104,8 +104,10 @@ def fetch_pdb(pdbid, verbose_mode):
     return [pdbfile, current_entry]
 
 
-def process_pdb(pdbfile, outpath, xml=False, verbose_mode=False, pics=False, pymol=False, maxthreads=None):
+def process_pdb(pdbfile, outpath):
     """Analysis of a single PDB file. Can generate textual reports XML, PyMOL session files and images as output."""
+    if config.VERBOSE:
+        sys.stdout.write('Starting analysis of structure...\n')
     mol = PDBComplex()
     mol.output_path = outpath
     mol.load_pdb(pdbfile)
@@ -119,7 +121,7 @@ def process_pdb(pdbfile, outpath, xml=False, verbose_mode=False, pics=False, pym
     pdbid.text = mol.pymol_name.upper()
     exligs = et.SubElement(report, 'excluded_ligands')
     for i, exlig in enumerate(excluded):
-        e = et.SubElement(exligs, 'excluded_ligand', id=str(i+1))
+        e = et.SubElement(exligs, 'excluded_ligand', id=str(i + 1))
         e.text = exlig
 
     # Write header of rST file
@@ -128,19 +130,6 @@ def process_pdb(pdbfile, outpath, xml=False, verbose_mode=False, pics=False, pym
     textlines.append('Created on %s using PLIP v%s\n' % (time.strftime("%Y/%m/%d"), __version__))
     if len(excluded) != 0:
         textlines.append('Excluded molecules as ligands: %s\n' % ','.join([lig for lig in excluded]))
-
-    if verbose_mode:
-        if len(excluded) == 0:
-            sys.stdout.write("No molecules excluded as ligands.\n")
-        else:
-            sys.stdout.write("Excluded molecules as ligands: %s\n" % ','.join([lig for lig in excluded]))
-        num_ligs = len([site for site in mol.interaction_sets if not mol.interaction_sets[site].no_interactions])
-        if num_ligs == 1:
-            sys.stdout.write("Analyzing %s with one ligand:\n" % mol.pymol_name)
-        elif num_ligs > 1:
-            sys.stdout.write("Analyzing %s with %i ligands:\n" % (mol.pymol_name, num_ligs))
-        else:
-            sys.stdout.write("%s contains no ligands.\n" % mol.pymol_name)
 
     ######################################################################################################
     # Generate XML- and rST-formatted reports for each binding site and initialize visualization threads #
@@ -161,22 +150,17 @@ def process_pdb(pdbfile, outpath, xml=False, verbose_mode=False, pics=False, pym
             textlines.append(itype)
         if not s.no_interactions:
             bindingsite.set('has_interactions', 'True')
-            if verbose_mode:
-                if len(members) == 1:  # Single ligand
-                    sys.stdout.write("  @ %s [%s]\n" % (site, ligtype))
-                else:  # Composite ligand
-                    sys.stdout.write("  @ %s (%s) [%s]\n" % (site, longname, ligtype))
 
-            if pymol or pics:
+            if config.PYMOL or config.PICS:
                 if os.name != 'nt':
-                    if maxthreads != 0:
+                    if config.MAXTHREADS != 0:
                         # Initialize thread for PyMOL visualization and add to list of threads to be processed
-                        p = multiprocessing.Process(target=visualize_in_pymol, args=(mol, site, False, pics, pymol))
+                        p = multiprocessing.Process(target=visualize_in_pymol, args=(mol, site))
                         threads.append(p)
                     else:
-                        visualize_in_pymol(mol, site, False, pics, pymol)
+                        visualize_in_pymol(mol, site)
                 else:
-                    visualize_in_pymol(mol, site, False, pics, pymol)
+                    visualize_in_pymol(mol, site)
         else:
             textlines.append('No interactions detected.')
         sys.stdout = sys.__stdout__  # Change back to original stdout, gets changed when PyMOL has been used before
@@ -185,14 +169,14 @@ def process_pdb(pdbfile, outpath, xml=False, verbose_mode=False, pics=False, pym
     # Use multithreading for PyMOL visualization #
     ##############################################
 
-    if maxthreads is None:  # Use as many threads as there are processor cores (should be a safe value)
+    if config.MAXTHREADS is None:  # Use as many threads as there are processor cores (should be a safe value)
         maxthreads = multiprocessing.cpu_count()
     else:
-        maxthreads = max(2, maxthreads)
+        maxthreads = max(2, config.MAXTHREADS)
     while len(threads) != 0:
         # Add threads as long as there are free threads available
         for i, tr in enumerate(threads):
-            if len(running_threads) <= maxthreads-2:  # One can be still added, one used for the main process
+            if len(running_threads) <= maxthreads - 2:  # One can be still added, one used for the main process
                 tr.start()
                 running_threads.append(tr)
                 threads.pop(i)
@@ -207,49 +191,47 @@ def process_pdb(pdbfile, outpath, xml=False, verbose_mode=False, pics=False, pym
 
     tree = et.ElementTree(report)
     create_folder_if_not_exists(tilde_expansion(outpath))
-    if xml:
+    if config.XML:
         tree.write('%s/report.xml' % tilde_expansion(outpath), pretty_print=True, xml_declaration=True)
 
     with open('%s/report.rst.txt' % tilde_expansion(outpath), 'w') as f:
         [f.write(textline + '\n') for textline in textlines]
 
 
-def main(args):
+def main(inputstruct, inputpdbid):
     """Main function. Calls functions for processing, report generation and visualization."""
     pdbid, outp = None, None
-    outp = "".join([args.outpath, '/']) if not args.outpath.endswith('/') else args.outpath
+    outp = tilde_expansion("".join([config.OUTPATH, '/']) if not config.OUTPATH.endswith('/') else config.OUTPATH)
 
-    if args.verbose:
+    if config.VERBOSE:
         # Print title and version
         title = "* Protein-Ligand Interaction Profiler v%s *" % __version__
         sys.stdout.write('\n' + '*' * len(title) + '\n')
         sys.stdout.write(title)
         sys.stdout.write('\n' + '*' * len(title) + '\n\n')
 
-    if args.input is not None:  # Process PDB file
-        if os.path.getsize(args.input) == 0:
+    if inputstruct is not None:  # Process PDB file
+        if os.path.getsize(inputstruct) == 0:
             sysexit(2, 'Error: Empty PDB file')  # Exit if input file is empty
-        process_pdb(args.input, outp, xml=args.xml, verbose_mode=args.verbose, pics=args.pics, pymol=args.pymol,
-                    maxthreads=int(args.maxthreads))
+        process_pdb(inputstruct, outp)
     else:  # Try to fetch the current PDB structure directly from the RCBS server
         try:
-            pdbfile, pdbid = fetch_pdb(args.pdbid.lower(), verbose_mode=args.verbose)
-            pdbpath = '%s/%s.pdb' % (args.outpath.rstrip('/'), pdbid)
-            create_folder_if_not_exists(args.outpath)
-
-            if args.verbose:
-                sys.stdout.write('file downloaded as %s\n\n' % pdbpath)
-
-            with open(tilde_expansion(pdbpath), 'w') as g:
+            pdbfile, pdbid = fetch_pdb(inputpdbid.lower())
+            pdbpath = tilde_expansion('%s/%s.pdb' % (config.OUTPATH.rstrip('/'), pdbid))
+            create_folder_if_not_exists(config.OUTPATH)
+            with open(pdbpath, 'w') as g:
                 g.write(pdbfile)
-            process_pdb(tilde_expansion(pdbpath), tilde_expansion(outp), xml=args.xml, verbose_mode=args.verbose,
-                        pics=args.pics, pymol=args.pymol, maxthreads=int(args.maxthreads))
+            if config.VERBOSE:
+                sys.stdout.write('file downloaded as %s\n\n' % pdbpath)
         except ValueError:  # Invalid PDB ID, cannot fetch from RCBS server
             sysexit(3, 'Error: Invalid PDB ID')
+
+        process_pdb(pdbpath, outp)
+
     if pdbid is not None and outp is not None:
         if outp in ['.', './']:
             outp = 'the working directory.'
-        if args.verbose:
+        if config.VERBOSE:
             sys.stdout.write('\nNearly finished with analysis of %s. Find the result files in %s\n\n' % (pdbid, outp))
 
 if __name__ == '__main__':
@@ -289,6 +271,10 @@ if __name__ == '__main__':
                             help=argparse.SUPPRESS)
 
     arguments = parser.parse_args()
+    config.VERBOSE = True if arguments.verbose else False
+    config.MAXTHREADS = arguments.maxthreads
+    config.XML, config.PICS, config.PYMOL = arguments.xml, arguments.pics, arguments.pymol
+    config.OUTPATH = arguments.outpath
     # Assign values to global thresholds
     for t in thresholds:
         tvalue = getattr(arguments, t.name)
@@ -310,4 +296,5 @@ if __name__ == '__main__':
         parser.error("The water bridge minimum distance has to be smaller than the water bridge maximum distance.")
     if not config.WATER_BRIDGE_OMEGA_MIN < config.WATER_BRIDGE_OMEGA_MAX:
         parser.error("The water bridge omega minimum angle has to be smaller than the water bridge omega maximum angle")
-    main(arguments)  # Start main script
+    expanded_path = tilde_expansion(arguments.input) if not arguments.input is None else None
+    main(expanded_path, arguments.pdbid)  # Start main script

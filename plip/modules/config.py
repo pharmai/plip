@@ -16,6 +16,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+VERBOSE = False  # Set verbose mode
+MAXTHREADS = 1  # Maximum number of main threads for binding site visualization
+XML = False
+PICS = False
+PYMOL = False
+OUTPATH = './'
+
 # Configuration file for Protein-Ligand Interaction Profiler (PLIP)
 # Set thresholds for detection of interactions
 
@@ -42,6 +49,8 @@ WATER_BRIDGE_OMEGA_MIN = 75  # Min. angle between acceptor, water oxygen and don
 WATER_BRIDGE_OMEGA_MAX = 140  # Max. angle between acceptor, water oxygen and donor hydrogen (Jiang et al., 2005)
 WATER_BRIDGE_THETA_MIN = 100  # Min. angle between water oxygen, donor hydrogen and donor atom (Jiang et al., 2005)
 METAL_DIST_MAX = 3.2  # Max. distance between metal ion and interacting atom (Harding, 2001)
+# #@todo Refine with literature and define if this is for single angles or rms of angles
+METAL_ANGLE_DEV = 5.0  # Max. deviation of angles in metal coordination
 
 #############
 # Whitelist #
