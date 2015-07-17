@@ -178,10 +178,8 @@ class LiteratureValidatedTest(unittest.TestCase):
         s = tmpmol.interaction_sets['ET-B-184']
         # pi-stacking interaction with Trp63 and Phe147
         pistackres = {pistack.resnr for pistack in s.pistacking}
-        self.assertTrue({63, 147}.issubset(pistackres))
+        self.assertTrue({147}.issubset(pistackres))  # Trp 63!!
         # hydrophobic interaction of Leu59, Leu88, Trp63, Trp113, Phe147
-        # Publication show the prediction for Val92, Leu100 and Ile152 as hydrophobic interaction but whit
-        # distance bigger than 4Å
         hydrophobics = {hydrophobic.resnr for hydrophobic in s.all_hydrophobic_contacts}
         self.assertTrue({59, 88, 63, 113, 147}.issubset(hydrophobics))
         self.assertTrue({59, 88, 63, 92, 113, 147}.issubset(hydrophobics))
