@@ -1,6 +1,9 @@
 Changelog
 ---------
 
+### 1.2.0
+* ...
+
 ### 1.1.1
 * __Detailed information on binding site residues in XML files__
 * Improved extraction of binding site residues

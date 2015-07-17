@@ -83,7 +83,7 @@ def png_workaround(filepath, width=1200, height=800):
         sys.stderr.write('Imagemagick not available. Images will not be resized or cropped.')
 
 
-def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False, pse=False, fancy=False):
+def visualize_in_pymol(protcomplex_class, pli_site):
     """Visualizes the protein-ligand pliprofiler at one site in PyMOL."""
 
     #####################
@@ -107,8 +107,7 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False, pse=
     # Basic visualizations #
     ########################
 
-    opts = '-p' if show else '-pcq'
-    start_pymol(run=True, options=opts, quiet=True)
+    start_pymol(run=True, options='-pcq', quiet=True)
     standard_settings()
     cmd.set('dash_gap', 0)  # Show not dashes, but lines for the pliprofiler
     cmd.set('ray_shadow', 0)  # Turn on ray shadows for clearer ray-traced images
@@ -368,7 +367,6 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False, pse=
         cmd.color('lightblue', 'Metal-W')
         #@todo Account for lig + visualize
 
-
     ######################
     # Visualize the rest #
     ######################
@@ -386,7 +384,6 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False, pse=
         cmd.show('spheres', 'chargecenter*')
         cmd.set('sphere_scale', 0.4, 'chargecenter*')
         cmd.color('yellow', 'chargecenter*')
-
 
     ####################
     # Last refinements #
@@ -410,6 +407,9 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False, pse=
     if 'Centroids*' in cmd.get_names("selections"):
         cmd.color('grey80', 'Centroids*')
     cmd.hide('spheres', '%sCartoon' % pdbid)
+    cmd.hide('cartoon', '%sCartoon and resn DA+DG+DC+DU+DT+A+G+C+U+T' % pdbid)  # Hide DNA/RNA Cartoon
+    if ligname == 'SF4':  # Special case for iron-sulfur clusters, can't be visualized with sticks
+        cmd.show('spheres', '%s' % ligname)
 
     ##############################
     # Organization of selections #
@@ -451,10 +451,10 @@ def visualize_in_pymol(protcomplex_class, pli_site, show=False, pics=False, pse=
     cmd.hide('everything', 'hydrogens')
 
     filename = '%s-%s' % (pdbid.upper(), "-".join(ligdata.bs_id).upper())
-    if pse:
+    if config.PYMOL:
         cmd.save("".join([save_to, "%s.pse" % filename]))
 
     # Create output pictures (experimental)
     set_fancy_ray()
-    if pics:
+    if config.PICS:
         png_workaround("".join([save_to, filename]))

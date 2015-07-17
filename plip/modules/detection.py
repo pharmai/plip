@@ -18,7 +18,6 @@ limitations under the License.
 
 # Python standard library
 import itertools
-import math
 from collections import defaultdict
 
 # Own modules
@@ -129,7 +128,7 @@ def pication(rings, pos_charged, protcharged):
                                                 vector(n_atoms_coords[2], n_atoms_coords[0]))
                         b = vecangle(ring.normal, amine_normal)
                         # Smallest of two angles, depending on direction of normal
-                        a = min(b, 180-b if not 180-b < 0 else b)
+                        a = min(b, 180 - b if not 180 - b < 0 else b)
                         if not a > 30.0:
                             resnr, restype = whichresnumber(ring.atoms[0]), whichrestype(ring.atoms[0])
                             reschain = whichchain(ring.atoms[0])
@@ -233,15 +232,11 @@ def water_bridges(bs_hba, lig_hba, bs_hbd, lig_hbd, water):
                 pairings.append(contact)
     return pairings
 
-def metal_complexation(metals, metal_binding_lig, metal_binding_bs, lig_neg_charged):
+def metal_complexation(metals, metal_binding_lig, metal_binding_bs):
     """Find all metal complexes between metals and appropriate groups in both protein and ligand, as well as water"""
-    data = namedtuple('metal_complex', 'metal metal_type target target_type coordination_num distance resnr restype reschain location rms, geometry')
+    data = namedtuple('metal_complex', 'metal metal_type target target_type coordination_num distance resnr restype reschain location rms, geometry num_partners')
     pairings_dict = {}
     pairings = []
-    #@todo Find, based on known coordination numbers, better rules to select correct targets
-    #@todo Or take e.g. n closest ones or cluster with most similar distance
-    #@todo Complete information in data namedtuple
-    #@todo Also consider negative charges in ligands as targets (as in iron-sulfur clusters)
     for metal, target in itertools.product(metals, metal_binding_lig + metal_binding_bs):
         distance = euclidean3d(metal.coords, target.atom.coords)
         if distance < config.METAL_DIST_MAX:
@@ -250,59 +245,127 @@ def metal_complexation(metals, metal_binding_lig, metal_binding_bs, lig_neg_char
             else:
                 pairings_dict[metal].append((target, distance))
     for metal in pairings_dict:
-        coo_num_prev = len(pairings_dict[metal])  # #@todo Highly experimental
         contact_pairs = pairings_dict[metal]
-        all_vectors = []
+        num_targets = len(contact_pairs)
         vectors_dict = defaultdict(list)
-        # #@todo DEBUG
         for contact_pair in contact_pairs:
             target, distance = contact_pair
-            all_vectors.append(vector(metal.coords, target.atom.coords))
-            vectors_dict[target].append(vector(metal.coords, target.atom.coords))
-        angles = [math.degrees(euclidean3d(pair[0], pair[1])) for pair in itertools.combinations(all_vectors, 2)]
+            vectors_dict[target.atom.idx].append(vector(metal.coords, target.atom.coords))
+
+        # Listing of coordination numbers and their geometries
+        configs = {2: ['linear', ],
+                   3: ['trigonal.planar', 'trigonal.pyramidal'],
+                   4: ['tetrahedral', 'square.planar'],
+                   5: ['trigonal.bipyramidal', 'square.pyramidal'],
+                   6: ['octahedral', ]}
+
+        # Angle signatures for each geometry (as seen from each target atom)
+        # #@todo Use edge angles for more specificity?
+        ideal_angles = {'linear': [[180.0]] * 2,
+                        'trigonal.planar': [[120.0, 120.0]] * 3,
+                        'trigonal.pyramidal': [[109.5, 109.5]] * 3,
+                        'tetrahedral': [[109.5, 109.5, 109.5, 109.5]] * 4,
+                        'square.planar': [[90.0, 90.0, 90.0, 90.0]] * 4,
+                        'trigonal.bipyramidal': [[120.0, 120.0, 90.0, 90.0]] * 3 + [[90.0, 90.0, 90.0, 180.0]] * 2,
+                        'square.pyramidal': [[90.0, 90.0, 90.0, 180.0]] * 4 + [[90.0, 90.0, 90.0, 90.0]],
+                        'octahedral': [[90.0, 90.0, 90.0, 90.0, 180.0]] * 6}
+        angles_dict = {}
 
         for target in vectors_dict:
-            vectors = vectors_dict[target]
-            angles = [math.degrees(euclidean3d(pair[0], pair[1])) for pair in itertools.product(vectors, all_vectors)]
-            #print 180.0 - np.sqrt(np.mean(np.square([angles]))), target.restype, target.type
-            # #@todo Assume a certain geometry, then check for highest outlier
-        #print '-------'
-        if abs(coo_num_prev - 6) < (min((abs(coo_num_prev - 5), abs(coo_num_prev - 4)))):
-            pass
-            #print "COO6", coo_num_prev, metal.type
-            # Assume coordination number 6
-        elif abs(coo_num_prev - 5) < abs(coo_num_prev - 4):
-            pass
-            #print "COO5", coo_num_prev, metal.type
-            # Assume coordination number 5
-        else:
-            pass
-            #print "COO4", coo_num_prev, metal.type
-            # Assume coordination number 4
-        coo_num = coo_num_prev # #@todo Has to be adapted after checks
+            cur_vector = vectors_dict[target]
+            other_vectors = []
+            for t in vectors_dict:
+                if not t == target:
+                    [other_vectors.append(x) for x in vectors_dict[t]]
+            angles = [vecangle(pair[0], pair[1]) for pair in itertools.product(cur_vector, other_vectors)]
+            angles_dict[target] = angles
 
-        if not len(angles) <= 1:
-            rms = np.sqrt(np.mean(np.square([angles])))
-        else:
+        all_total = []  # Record fit information for each geometry tested
+        gdata = namedtuple('gdata', 'geometry rms coordination excluded diff_targets') # Geometry Data
+        if num_targets == 1:
+            geometry = 'NA'
+            coo_num = 'NA'
             rms = 0.0
-        # #@todo Add geometry information to contact
-        # #@todo Add information on polydental/monodental binding of residues
-        # #@todo Put that into config and add threshold for variation
-        # #@todo Check if some angles violate coordination and keep top n
-        # Check rms against coordination number
-        # #@todo Now considering coordination numbers of 4,5, and 6 (and lower?)
-        # #@todo Which angles to check (vectors metal-target or target-target?)
-        # 4 -> tetrahedral (109.5 deg) or square planar (127.3 deg)
-        # 5 -> trigonal bipyramid (90.0, 120.0, 180.0 deg) or square pyramid (?)
-        # 6 -> octahedral (113.8 deg)
+        else:
+            for coo in sorted(configs, reverse=True):  # Start with highest coordination number
+                geometries = configs[coo]
+                for geometry in geometries:
+                    signature = ideal_angles[geometry]  # Set of ideal angles for geometry, from each perspective
+                    geometry_total = 0
+                    geometry_scores = []  # All scores for one geometry (from all subsignatures)
+                    used_up_targets = []  # Use each target just once for a subsignature
+                    not_used = []
+                    coo_diff = num_targets - coo  # How many more observed targets are there?
 
-        for contact_pair in contact_pairs:
-            target, distance = contact_pair
-            # #@todo Location should be either ligand, water, protein.sidechain, protein.mainchain
-            # #@todo Or subdivide into specific types, e.g. carboxyl, serin.O, etc.!
-            contact = data(metal=metal, metal_type=metal.type, target=target, target_type=target.type,
-                           coordination_num=coo_num, distance=distance, resnr=target.resnr, restype=target.restype,
-                           reschain=target.reschain, location=target.location, rms=rms, geometry='Unspecified')
-            pairings.append(contact)
+                    # Find best match for each subsignature
+                    for subsignature in signature:  # Ideal angles from one perspective
+                        best_target = None  # There's one best-matching target for each subsignature
+                        best_target_score = 999
+
+                        for k, target in enumerate(angles_dict):
+                            if target not in used_up_targets:
+                                observed_angles = angles_dict[target]  # Observed angles from perspective of one target
+                                single_target_scores = []
+                                used_up_observed_angles = []
+                                for i, ideal_angle in enumerate(subsignature):
+                                    # For each angle in the signature, find the best-matching observed angle
+                                    best_match = None
+                                    best_match_diff = 999
+                                    for j, observed_angle in enumerate(observed_angles):
+                                        if j not in used_up_observed_angles:
+                                            diff = abs(ideal_angle - observed_angle)
+                                            if diff < best_match_diff:
+                                                best_match_diff = diff
+                                                best_match = j
+                                    used_up_observed_angles.append(best_match)
+                                    single_target_scores.append(best_match_diff)
+                                # Calculate RMS for target angles
+                                target_total = sum([x ** 2 for x in single_target_scores]) ** 0.5  # Tot. score targ/sig
+                                if target_total < best_target_score:
+                                    best_target_score = target_total
+                                    best_target = target
+
+                        used_up_targets.append(best_target)
+                        geometry_scores.append(best_target_score)
+                        # Total score is mean of RMS values
+                        geometry_total = np.mean(geometry_scores)
+                    # Record the targets not used for excluding them when deciding for a final geometry
+                    [not_used.append(target) for target in angles_dict if target not in used_up_targets]
+                    gdata = namedtuple('gdata', 'geometry rms coordination excluded diff_targets')  # Geometry Data
+                    all_total.append(gdata(geometry=geometry, rms=geometry_total, coordination=coo,
+                                           excluded=not_used, diff_targets=coo_diff))
+
+        # Make a decision here. Starting with the geometry with lowest difference in ideal and observed partners ...
+        # Check if the difference between the RMS to the next best solution is not larger than 0.5
+        final_geom, final_coo, excluded = None, None, []
+        if not num_targets == 1:  # Can't decide for any geoemtry in that case
+            all_total = sorted(all_total, key=lambda x: abs(x.diff_targets))
+            for i, total in enumerate(all_total):
+                next_total = all_total[i + 1]
+                this_rms, next_rms = total.rms, next_total.rms
+                diff_to_next = next_rms - this_rms
+                if diff_to_next > 0.5:
+                    final_geom, final_coo, rms, excluded = total.geometry, total.coordination, total.rms, total.excluded
+                    break
+                elif next_total.rms < 3.5:
+                    final_geom, final_coo, rms, excluded = next_total.geometry, next_total.coordination, next_total.rms, next_total.excluded
+                    break
+                else:
+                    final_geom, final_coo, rms, excluded = "NA", "NA", 0.0, []
+
+        # Record all contact pairing, excluding those with targets superfluous for chosen geometry
+        only_water = set([x[0].location for x in contact_pairs]) == {'water'}
+        if not only_water:  # No complex if just with water as targets
+            if config.VERBOSE:
+                # #@todo Geometry prediction in BETA
+                print "  [BETA] Metal ion %s complexed with %s geometry (coo. number %r/ %i observed)." % (metal.type, final_geom, final_coo, num_targets)
+            for contact_pair in contact_pairs:
+                target, distance = contact_pair
+                if target.atom.idx not in excluded:
+                    contact = data(metal=metal, metal_type=metal.type, target=target, target_type=target.type,
+                                   coordination_num=final_coo, distance=distance, resnr=target.resnr,
+                                   restype=target.restype, reschain=target.reschain, location=target.location,
+                                   rms=rms, geometry=final_geom, num_partners=num_targets)
+                    pairings.append(contact)
     return pairings
 
