@@ -149,6 +149,7 @@ class PLInteraction:
         self.lig_to_pdb = lig_obj.pymol_data.maptopdb
         self.output_path = protcomplex.output_path
         self.altconf = protcomplex.altconf
+        # #@todo Refactor code to combine different directionality
 
         self.saltbridge_lneg = saltbridge(self.bindingsite.get_pos_charged(), self.ligand.get_neg_charged(), True)
         self.saltbridge_pneg = saltbridge(self.ligand.get_pos_charged(), self.bindingsite.get_neg_charged(), False)
@@ -189,11 +190,36 @@ class PLInteraction:
 
         self.no_interactions = all(len(i) == 0 for i in self.all_itypes)
 
-        self.interacting_chains = sorted(list(set([i.reschain for i in self.all_itypes])))
+        # Exclude empty chains (coming from ligand as a target, from metal complexes)
+        self.interacting_chains = sorted(list(set([i.reschain for i in self.all_itypes if not i.reschain == ' '])))
 
         self.interacting_res = list(set([''.join([str(i.resnr), str(i.reschain)]) for i in self.all_itypes]))
         if config.VERBOSE:
-            sys.stdout.write('  Ligand interacts with %i binding site residue(s).\n' % len(self.interacting_res))
+            sys.stdout.write('  Ligand interacts with %i binding site residue(s) in chain(s) %s.\n'
+                             % (len(self.interacting_res), '/'.join(self.interacting_chains)))
+            interactions_list = []
+            num_saltbridges = len(self.saltbridge_lneg + self.saltbridge_pneg)
+            num_hbonds = len(self.hbonds_ldon + self.hbonds_pdon)
+            num_pication = len(self.pication_laro + self.pication_paro)
+            num_pistack = len(self.pistacking)
+            num_halogen = len(self.halogen_bonds)
+            num_waterbridges = len(self.water_bridges)
+            if num_saltbridges != 0:
+                interactions_list.append('%i salt bridge(s)' % num_saltbridges)
+            if num_hbonds != 0:
+                interactions_list.append('%i hydrogen bond(s)' % num_hbonds)
+            if num_pication != 0:
+                interactions_list.append('%i pi-cation interaction(s)' % num_pication)
+            if num_pistack != 0:
+                interactions_list.append('%i pi-stacking(s)' % num_pistack)
+            if num_halogen != 0:
+                interactions_list.append('%i halogen bond(s)' % num_halogen)
+            if num_waterbridges != 0:
+                interactions_list.append('%i water bridge(s)' % num_waterbridges)
+            if not len(interactions_list) == 0:
+                sys.stdout.write('  Complex uses %s.\n' % ', '.join(interactions_list))
+            else:
+                sys.stdout.write('  No interactions for this ligand.\n')
 
     def refine_hydrophobic(self, all_h, pistacks):
         """Apply several rules to reduce the number of hydrophobic interactions."""
@@ -257,7 +283,7 @@ class PLInteraction:
                         min_dist = h.distance
                         min_h = h
                 hydroph_final.append(min_h)
-        if config.VERBOSE and not len(all_h) == 0:
+        if config.VERBOSE and not len(all_h) == 0 and not len(all_h) == len(hydroph_final):
             sys.stdout.write('  Reduced number of hydrophobic contacts from %i to %i.\n' % (len(all_h), len(hydroph_final)))
         return hydroph_final
 
@@ -334,23 +360,24 @@ class PLInteraction:
         donor_atoms_hbonds = [hb.d.idx for hb in hbonds_ldon + hbonds_pdon]
         wb_dict = {}
         wb_dict2 = {}
+        omega = 110.0
 
         # Just one hydrogen bond per donor atom
         for wbridge in [wb for wb in wbridges if wb.d.idx not in donor_atoms_hbonds]:
             if (wbridge.water.idx, wbridge.a.idx) not in wb_dict:
                 wb_dict[(wbridge.water.idx, wbridge.a.idx)] = wbridge
             else:
-                if abs(110.0-wb_dict[(wbridge.water.idx, wbridge.a.idx)].w_angle) < abs(110.0-wbridge.w_angle):
+                if abs(omega - wb_dict[(wbridge.water.idx, wbridge.a.idx)].w_angle) < abs(omega - wbridge.w_angle):
                     wb_dict[(wbridge.water.idx, wbridge.a.idx)] = wbridge
         for wb_tuple in wb_dict:
             water, acceptor = wb_tuple
             if water not in wb_dict2:
-                wb_dict2[water] = [(abs(110.0-wb_dict[wb_tuple].w_angle), wb_dict[wb_tuple]), ]
+                wb_dict2[water] = [(abs(omega - wb_dict[wb_tuple].w_angle), wb_dict[wb_tuple]), ]
             elif len(wb_dict2[water]) == 1:
-                wb_dict2[water].append((abs(110.0-wb_dict[wb_tuple].w_angle), wb_dict[wb_tuple]))
+                wb_dict2[water].append((abs(omega - wb_dict[wb_tuple].w_angle), wb_dict[wb_tuple]))
                 wb_dict2[water] = sorted(wb_dict2[water])
             else:
-                if wb_dict2[water][1][0] < abs(110.0-wb_dict[wb_tuple].w_angle):
+                if wb_dict2[water][1][0] < abs(omega - wb_dict[wb_tuple].w_angle):
                     wb_dict2[water] = [wb_dict2[water][0], (wb_dict[wb_tuple].w_angle, wb_dict[wb_tuple])]
 
         filtered_wb = []
@@ -570,7 +597,7 @@ class Ligand(Mol):
                 n_atoms = [na for na in pybel.ob.OBAtomAtomIter(a.OBAtom) if na.GetAtomicNum() == 6]
                 a_set.append(data(x=a, c=pybel.Atom(n_atoms[0])))
         if config.VERBOSE and len(a_set) != 0:
-            sys.stdout.write('  Ligand contains %i halogen atoms.\n' % len(a_set))
+            sys.stdout.write('  Ligand contains %i halogen atom(s).\n' % len(a_set))
         return a_set
 
     def find_charged(self, all_atoms):
@@ -733,8 +760,11 @@ class PDBComplex:
                 longname = ligand.longname if not len(ligand.longname) > 20 else ligand.longname[:20] + '...'
                 ligtype = 'Unspecified type' if ligand.type == 'UNSPECIFIED' else ligand.type
                 ligtext = "\n%s [%s] -- %s" % (longname, ligtype, site)
+                any_in_biolip = len(set([x[0] for x in ligand.members]).intersection(config.biolip_list)) != 0
+                if ligtype != 'POLYMER' and any_in_biolip:
+                    ligtext += ' (possible artifact/unspecific binder)'
                 sys.stdout.write(ligtext)
-                sys.stdout.write('\n' + '=' * len(ligtext) + '\n')
+                sys.stdout.write('\n' + '-' * len(ligtext) + '\n')
 
             lig_obj = Ligand(self, ligand)
             cutoff = lig_obj.max_dist_to_center + config.BS_DIST

@@ -342,8 +342,6 @@ def getligs(mol, altconf, idx_to_pdb, modres, covalent):
 
     data = namedtuple('ligand', 'mol mapping water members longname type')
     ligands = []
-    # #@todo For now, remove covalent entries with ions from main list
-    # #@todo Consider ions and attribute them to ligand molecules
 
     #########################
     # Filtering using lists #
@@ -433,14 +431,16 @@ def getligs(mol, altconf, idx_to_pdb, modres, covalent):
         names = [x[0] for x in ordered_members]
         longname = '-'.join([x[0] for x in ordered_members])
         # #@todo Improve classification
-        if 'U' in names or 'DU' in names:
-            ligtype = 'RNA'
-        elif 'T' in names or 'DT' in names:
-            ligtype = 'DNA'
-        elif 'A' in names or 'DA' in names or 'C' in names or 'DC' in names or 'G' in names or 'DG' in names:
-            ligtype = 'DNA/RNA'
+        if len(names) > 3:  # Polymer
+            if len({'U', 'A', 'C', 'G'}.intersection(set(names))) != 0:
+                ligtype = 'RNA'
+            elif len({'DT', 'DA', 'DC', 'DG'}.intersection(set(names))) != 0:
+                ligtype = 'DNA'
+            else:
+                ligtype = "POLYMER"
+
         else:
-            ligtype = 'UNSPECIFIED'
+            ligtype = 'SMALLMOLECULE'
 
         for name in names:
             if name in config.METAL_IONS:
@@ -448,7 +448,7 @@ def getligs(mol, altconf, idx_to_pdb, modres, covalent):
                     ligtype = 'ION'
                 else:
                     if "ION" not in ligtype:
-                        ligtype += ':ION'
+                        ligtype += '+ION'
         hetatoms = set()
         for obresidue in kmer:
             hetatoms_res = set([(obatom.GetIdx(), obatom) for obatom in pybel.ob.OBResidueAtomIter(obresidue)

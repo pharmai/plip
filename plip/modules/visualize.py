@@ -365,7 +365,6 @@ def visualize_in_pymol(protcomplex_class, pli_site):
         # Show water molecules for metal complexes
         cmd.show('spheres', 'Metal-W')
         cmd.color('lightblue', 'Metal-W')
-        #@todo Account for lig + visualize
 
     ######################
     # Visualize the rest #

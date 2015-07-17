@@ -304,13 +304,16 @@ class TextOutput:
             # Sort results first by res number, then by distance and finally ligand coordinates to get a unique order
             interaction_information = sorted(interaction_information, key=itemgetter(0, 2, -2))
             for j, single_contact in enumerate(interaction_information):
-                new_contact = et.SubElement(interaction, element_name[:-1], id=str(j+1))
+                if not element_name == 'metal_complexes':
+                    new_contact = et.SubElement(interaction, element_name[:-1], id=str(j + 1))
+                else:  # Metal Complex[es]
+                    new_contact = et.SubElement(interaction, element_name[:-2], id=str(j + 1))
                 for i, feature in enumerate(single_contact):
                     # Just assign the value unless it's an atom list, use subelements in this case
                     if features[i] == 'LIG_IDX_LIST':
                         feat = et.SubElement(new_contact, features[i].lower())
                         for k, atm_idx in enumerate(feature.split(',')):
-                            idx = et.SubElement(feat, 'idx', id=str(k+1))
+                            idx = et.SubElement(feat, 'idx', id=str(k + 1))
                             idx.text = str(atm_idx)
                     elif features[i] in ['LIGCOO', 'PROTCOO']:
                         feat = et.SubElement(new_contact, features[i].lower())
