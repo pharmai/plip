@@ -36,6 +36,7 @@ class MetalCoordinationTest(unittest.TestCase):
         # #@todo Modify this test and implement other unit tests
         # #@todo Add tests for coordination numbers and geometry
         # #@todo E.g. 1GMW (Cu)
+        # #@todo e.g. 101M (Heme, Fe); 4HRO, 1A01 (both Fe)
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/1eve.pdb')
         s = tmpmol.interaction_sets['E20-A-2001']

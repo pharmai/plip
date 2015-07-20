@@ -1,8 +1,8 @@
 # coding=utf-8
 """
 Protein-Ligand Interaction Profiler - Analyze and visualize protein-ligand interactions in PDB files.
-test_literature_validated.py - Unit Tests for special cases.
-Copyright 2014 Sebastian Salentin
+test_special_cases.py - Unit Tests for special cases.
+Copyright 2014-2015 Sebastian Salentin
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

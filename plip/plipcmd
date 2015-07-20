@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 """
 Protein-Ligand Interaction Profiler - Analyze and visualize protein-ligand interactions in PDB files.
-plip-cmd.py - Main script for PLIP command line execution.
-Copyright 2014 Sebastian Salentin
+plipcmd - Main script for PLIP command line execution.
+Copyright 2014-2015 Sebastian Salentin
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ def fetch_pdb(pdbid):
     elif state == 'CURRENT':
         message('entry is up to date.\n')
     elif state == 'UNKNOWN':
-        sysexit(3, 'Invalid PDB ID')
+        sysexit(3, 'Invalid PDB ID (Entry does not exist on PDB server)')
     message('Downloading file from PDB ... ')
     pdburl = 'http://www.rcsb.org/pdb/files/%s.pdb' % current_entry  # Get URL for current entry
     pdbfile = None
@@ -205,6 +205,8 @@ def main(inputstruct, inputpdbid):
         process_pdb(inputstruct, outp)
     else:  # Try to fetch the current PDB structure directly from the RCBS server
         try:
+            if len(inputpdbid) != 4 or extract_pdbid(inputpdbid.lower()) == 'UnknownProtein':
+                sysexit(3, 'Error: Invalid PDB ID (Wrong format)')
             pdbfile, pdbid = fetch_pdb(inputpdbid.lower())
             pdbpath = tilde_expansion('%s/%s.pdb' % (config.OUTPATH.rstrip('/'), pdbid))
             create_folder_if_not_exists(config.OUTPATH)
@@ -212,7 +214,7 @@ def main(inputstruct, inputpdbid):
                 g.write(pdbfile)
             message('file downloaded as %s\n\n' % pdbpath)
         except ValueError:  # Invalid PDB ID, cannot fetch from RCBS server
-            sysexit(3, 'Error: Invalid PDB ID')
+            sysexit(3, 'Error: Invalid PDB ID (Entry does not exist)')
 
         process_pdb(pdbpath, outp)
 

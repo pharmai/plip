@@ -1,7 +1,7 @@
 """
 Protein-Ligand Interaction Profiler - Analyze and visualize protein-ligand interactions in PDB files.
 supplemental.py - Supplemental functions for PLIP analysis.
-Copyright 2014 Sebastian Salentin
+Copyright 2014-2015 Sebastian Salentin
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ from pymol import finish_launching
 def is_lig(hetid):
     """Checks if a PDB compound can be excluded as a small molecule ligand"""
     h = hetid.upper()
-    return not (h == 'HOH' or h in config.ions)
+    return not (h == 'HOH' or h in config.UNSUPPORTED)
 
 
 def parse_pdb(fil):
@@ -430,7 +430,6 @@ def getligs(mol, altconf, idx_to_pdb, modres, covalent):
         ordered_members = sorted(members, key=lambda x: (x[1], x[2]))
         names = [x[0] for x in ordered_members]
         longname = '-'.join([x[0] for x in ordered_members])
-        # #@todo Improve classification
         if len(names) > 3:  # Polymer
             if len({'U', 'A', 'C', 'G'}.intersection(set(names))) != 0:
                 ligtype = 'RNA'
@@ -512,8 +511,9 @@ def readmol(path):
             mol = pybel.ob.OBMol()
             obc.ReadString(mol, str(f.read()))
             if not mol.Empty():
-                message('[EXPERIMENTAL] Input is PDBQT file. Some features (especially visualization) '
-                                     'might not work as expected. Please consider using PDB format instead.\n')
+                if sformat == 'pdbqt':
+                    message('[EXPERIMENTAL] Input is PDBQT file. Some features (especially visualization) might not '
+                            'work as expected. Please consider using PDB format instead.\n')
                 return pybel.Molecule(mol), sformat
         sysexit(4, 'No valid PDB or PDBQT file provided.')
 

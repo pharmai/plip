@@ -1,7 +1,7 @@
 """
 Protein-Ligand Interaction Profiler - Analyze and visualize protein-ligand interactions in PDB files.
 preparation.py - Prepare PDB input files for processing.
-Copyright 2014 Sebastian Salentin
+Copyright 2014-2015 Sebastian Salentin
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

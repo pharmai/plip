@@ -67,10 +67,9 @@ METAL_IONS = ['CA', 'CO', 'MG', 'MN', 'FE', 'CU', 'ZN', 'FE2', 'FE3', 'FE4', 'LI
 ##############
 
 # Other Ions/Atoms (not yet supported)
-# #@todo Rename
 anions = ['CL', 'IOD', 'BR']
 other = ['MO', 'RE', 'HO']
-ions = anions + other
+UNSUPPORTED = anions + other
 
 # BioLiP list of suspicious ligands from http://zhanglab.ccmb.med.umich.edu/BioLiP/ligand_list (2014-07-10)
 biolip_list = ['ACE', 'HEX', 'TMA', 'SOH', 'P25', 'CCN', 'PR', 'PTN', 'NO3', 'TCN', 'BU1', 'BCN', 'CB3', 'HCS', 'NBN',

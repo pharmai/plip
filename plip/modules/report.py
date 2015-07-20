@@ -1,7 +1,7 @@
 """
 Protein-Ligand Interaction Profiler - Analyze and visualize protein-ligand interactions in PDB files.
 report.py - Write PLIP results to output files.
-Copyright 2014 Sebastian Salentin
+Copyright 2014-2015 Sebastian Salentin
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -172,12 +172,13 @@ class TextOutput:
         ###################
 
         self.metal_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'METAL_IDX', 'METAL_TYPE', 'TARGET_IDX', 'TARGET_TYPE',
-                               'COORDINATION', 'DIST', 'LOCATION', 'RMS', 'GEOMETRY')
+                               'COORDINATION', 'DIST', 'LOCATION', 'RMS', 'GEOMETRY', 'COMPLEXNUM')
         self.metal_info = []
         for m in pli_class.metal_complexes:
-            # #@todo Change mapping when ligand is involved as target
-            self.metal_info.append((m.resnr, m.restype, m.reschain, lig_to_pdb[m.metal.idx], m.metal_type, mapping[m.target.atom.idx], m.target_type,
-                                    m.coordination_num, '%.2f' % m.distance, m.location, '%.2f' % m.rms, m.geometry))
+            pdb_idx = lig_to_pdb[m.target.atom.idx] if m.location == 'ligand' else mapping[m.target.atom.idx]
+            self.metal_info.append((m.resnr, m.restype, m.reschain, lig_to_pdb[m.metal.idx], m.metal_type,
+                                    pdb_idx, m.target_type, m.coordination_num, '%.2f' % m.distance,
+                                    m.location, '%.2f' % m.rms, m.geometry, str(m.complexnum)))
 
     def write_section(self, name, features, info, f):
         """Provides formatting for one section (e.g. hydrogen bonds)"""
@@ -197,7 +198,7 @@ class TextOutput:
                     cell_dict[j] = []
                 cell_dict[j].append(val)
         for item in cell_dict:
-            cell_dict[item] = max([len(x) for x in cell_dict[item]])+1  # Contains adapted width for each column
+            cell_dict[item] = max([len(x) for x in cell_dict[item]]) + 1  # Contains adapted width for each column
 
         # Format top line
         num_cols = len(array[0])

@@ -1,7 +1,7 @@
 """
 Protein-Ligand Interaction Profiler - Analyze and visualize protein-ligand interactions in PDB files.
 detection.py - Detect non-covalent interactions.
-Copyright 2014 Sebastian Salentin
+Copyright 2014-2015 Sebastian Salentin
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -234,7 +234,8 @@ def water_bridges(bs_hba, lig_hba, bs_hbd, lig_hbd, water):
 
 def metal_complexation(metals, metal_binding_lig, metal_binding_bs):
     """Find all metal complexes between metals and appropriate groups in both protein and ligand, as well as water"""
-    data = namedtuple('metal_complex', 'metal metal_type target target_type coordination_num distance resnr restype reschain location rms, geometry num_partners')
+    data = namedtuple('metal_complex', 'metal metal_type target target_type coordination_num distance resnr restype '
+                                       'reschain location rms, geometry num_partners complexnum')
     pairings_dict = {}
     pairings = []
     for metal, target in itertools.product(metals, metal_binding_lig + metal_binding_bs):
@@ -244,7 +245,9 @@ def metal_complexation(metals, metal_binding_lig, metal_binding_bs):
                 pairings_dict[metal] = [(target, distance), ]
             else:
                 pairings_dict[metal].append((target, distance))
-    for metal in pairings_dict:
+    for cnum, metal in enumerate(pairings_dict):
+        rms = 0.0
+        # cnum +1 being the complex number
         contact_pairs = pairings_dict[metal]
         num_targets = len(contact_pairs)
         vectors_dict = defaultdict(list)
@@ -281,7 +284,7 @@ def metal_complexation(metals, metal_binding_lig, metal_binding_bs):
             angles_dict[target] = angles
 
         all_total = []  # Record fit information for each geometry tested
-        gdata = namedtuple('gdata', 'geometry rms coordination excluded diff_targets') # Geometry Data
+        gdata = namedtuple('gdata', 'geometry rms coordination excluded diff_targets')  # Geometry Data
         if num_targets == 1:
             geometry = 'NA'
             coo_num = 'NA'
@@ -331,7 +334,6 @@ def metal_complexation(metals, metal_binding_lig, metal_binding_bs):
                         geometry_total = np.mean(geometry_scores)
                     # Record the targets not used for excluding them when deciding for a final geometry
                     [not_used.append(target) for target in angles_dict if target not in used_up_targets]
-                    gdata = namedtuple('gdata', 'geometry rms coordination excluded diff_targets')  # Geometry Data
                     all_total.append(gdata(geometry=geometry, rms=geometry_total, coordination=coo,
                                            excluded=not_used, diff_targets=coo_diff))
 
@@ -364,7 +366,7 @@ def metal_complexation(metals, metal_binding_lig, metal_binding_bs):
                     contact = data(metal=metal, metal_type=metal.type, target=target, target_type=target.type,
                                    coordination_num=final_coo, distance=distance, resnr=target.resnr,
                                    restype=target.restype, reschain=target.reschain, location=target.location,
-                                   rms=rms, geometry=final_geom, num_partners=num_targets)
+                                   rms=rms, geometry=final_geom, num_partners=num_targets, complexnum=cnum + 1)
                     pairings.append(contact)
     return pairings
 
