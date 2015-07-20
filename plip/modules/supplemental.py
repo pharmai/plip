@@ -26,11 +26,13 @@ import config
 import re
 from collections import namedtuple
 import os
-from multiprocessing import Process
 if os.name != 'nt':  # Resource module not available for Windows
     import resource
 import subprocess
 import math  # Reimport for Windows
+import codecs
+import gzip
+import zipfile
 
 # External libraries
 import pybel
@@ -61,9 +63,17 @@ def parse_pdb(fil):
     modres = set()
     covlinkage = namedtuple("covlinkage", "id1 chain1 pos1 conf1 id2 chain2 pos2 conf2")
     covalent = []
+    alt = []
     previous_ter = False
     for line in fil:
         if line.startswith(("ATOM", "HETATM")):
+
+            # Retrieve alternate conformations
+            atomid, location = int(line[6:11]), line[16]
+            location = 'A' if location == ' ' else location
+            if location != 'A':
+                alt.append(atomid)
+
             if not previous_ter:
                 i += 1
                 j += 1
@@ -84,19 +94,7 @@ def parse_pdb(fil):
             conf2, id2, chain2, pos2 = line[46].strip(), line[47:50].strip(), line[51].strip(), int(line[52:56])
             covalent.append(covlinkage(id1=id1, chain1=chain1, pos1=pos1, conf1=conf1,
                                        id2=id2, chain2=chain2, pos2=pos2, conf2=conf2))
-    return d, modres, covalent
-
-
-def get_altconf_atoms(f):
-    """Return a list of PDB atom ids belonging to atoms with alternate conformations."""
-    alt = []
-    for line in f:
-        if line.startswith(("ATOM", "HETATM")):
-            atomid, location = int(line[6:11]), line[16]
-            location = 'A' if location == ' ' else location
-            if location != 'A':
-                alt.append(atomid)
-    return alt
+    return d, modres, covalent, alt
 
 
 def extract_pdbid(string):
@@ -173,7 +171,7 @@ def vecangle(v1, v2, deg=True):
         return 0.0
     dm = np.dot(v1, v2)
     cm = np.linalg.norm(v1) * np.linalg.norm(v2)
-    angle = np.arccos(round(dm/cm, 10))  # Round here to prevent floating point errors
+    angle = np.arccos(round(dm / cm, 10))  # Round here to prevent floating point errors
     return math.degrees(angle) if deg else angle
 
 
@@ -499,23 +497,40 @@ def read_pdb(pdbfname):
     return readmol(pdbfname)
 
 
+def read(fil):
+    """Returns a file handler and detects gzipped files."""
+    if os.path.splitext(fil)[-1] == '.gz':
+        return gzip.open(fil, 'rb')
+    elif os.path.splitext(fil)[-1] == '.zip':
+        zf = zipfile.ZipFile(fil, 'r')
+        return zf.open(zf.infolist()[0].filename)
+    else:
+        try:
+            codecs.open(fil, 'r', 'utf-8').read()
+            return codecs.open(fil, 'r', 'utf-8')
+        except UnicodeDecodeError:
+            return open(fil, 'r')
+
+
 def readmol(path):
     """Reads the given molecule file and returns the corresponding Pybel molecule as well as the input file type.
     In contrast to the standard Pybel implementation, the file is closed properly."""
     supported_formats = ['pdb', 'pdbqt']
     obc = pybel.ob.OBConversion()
 
-    with open(path) as f:
-        for sformat in supported_formats:
-            obc.SetInFormat(sformat)
-            mol = pybel.ob.OBMol()
-            obc.ReadString(mol, str(f.read()))
-            if not mol.Empty():
-                if sformat == 'pdbqt':
-                    message('[EXPERIMENTAL] Input is PDBQT file. Some features (especially visualization) might not '
-                            'work as expected. Please consider using PDB format instead.\n')
-                return pybel.Molecule(mol), sformat
-        sysexit(4, 'No valid PDB or PDBQT file provided.')
+    with read(path) as f:
+        filestr = str(f.read())
+
+    for sformat in supported_formats:
+        obc.SetInFormat(sformat)
+        mol = pybel.ob.OBMol()
+        obc.ReadString(mol, filestr)
+        if not mol.Empty():
+            if sformat == 'pdbqt':
+                message('[EXPERIMENTAL] Input is PDBQT file. Some features (especially visualization) might not '
+                        'work as expected. Please consider using PDB format instead.\n')
+            return pybel.Molecule(mol), sformat
+    sysexit(4, 'No valid PDB or PDBQT file provided.')
 
 
 def sysexit(code, msg):

@@ -495,7 +495,7 @@ class Ligand(Mol):
         self.type = ligand.type
         self.complex = cclass
         self.molecule = ligand.mol  # Pybel Molecule
-        self.smile = self.molecule.write(format='smi')
+        self.smile = self.molecule.write(format='can')  # Canonical smile
         if not len(self.smile) == 0:
             self.smile = self.smile.split()[0]
         else:
@@ -729,9 +729,8 @@ class PDBComplex:
         message('PDB structure successfully read.\n')
 
         # Counting is different from PDB if TER records present
-        self.idx_to_pdb_mapping, self.modres, self.covalent = parse_pdb(open(pdbpath).readlines())
-        # #@todo Include this in the parse_pdb function, return named tuple?
-        self.altconf = get_altconf_atoms(open(pdbpath).readlines())
+        self.idx_to_pdb_mapping, self.modres, self.covalent, self.altconf = parse_pdb(read(pdbpath).readlines())
+        # #@todo return named tuple?
         try:
             self.pymol_name = self.protcomplex.data['HEADER'][56:60].lower()  # Get name from HEADER data
         except KeyError:  # Extract the PDBID from the filename
