@@ -29,7 +29,6 @@ import os
 if os.name != 'nt':  # Resource module not available for Windows
     import resource
 import subprocess
-import math  # Reimport for Windows
 import codecs
 import gzip
 import zipfile
@@ -56,6 +55,7 @@ def parse_pdb(fil):
     This functions reads in a PDB file and provides a mapping as a dictionary.
     II. Additionally, it returns a list of modified residues.
     III. Furthermore, covalent linkages between ligands and protein residues/other ligands are identified
+    IV. Alternative conformations
     """
     # #@todo Also consider SSBOND entries here
     i, j = 0, 0  # idx and PDB numbering
@@ -149,7 +149,7 @@ def euclidean3d(v1, v2):
     if not len(v1) == 3 and len(v2) == 3:
         print("Vectors are not in 3D space. Returning None.")
         return None
-    return math.sqrt((v1[0] - v2[0]) ** 2 + (v1[1] - v2[1]) ** 2 + (v1[2] - v2[2]) ** 2)
+    return np.sqrt((v1[0] - v2[0]) ** 2 + (v1[1] - v2[1]) ** 2 + (v1[2] - v2[2]) ** 2)
 
 
 def vector(p1, p2):
@@ -158,7 +158,7 @@ def vector(p1, p2):
     :param p2: coordinates of point p2
     :returns : numpy array with vector coordinates
     """
-    return None if len(p1) != len(p2) else np.array([p2[i]-p1[i] for i in xrange(len(p1))])
+    return None if len(p1) != len(p2) else np.array([p2[i] - p1[i] for i in xrange(len(p1))])
 
 
 def vecangle(v1, v2, deg=True):
@@ -172,7 +172,7 @@ def vecangle(v1, v2, deg=True):
     dm = np.dot(v1, v2)
     cm = np.linalg.norm(v1) * np.linalg.norm(v2)
     angle = np.arccos(round(dm / cm, 10))  # Round here to prevent floating point errors
-    return math.degrees(angle) if deg else angle
+    return np.degrees([angle, ])[0] if deg else angle
 
 
 def normalize_vector(v):

@@ -45,3 +45,5 @@ class SpecialCasesTest(unittest.TestCase):
         exitcode1 = subprocess.call('../plipcmd -i 4v59 -o /tmp', shell=True)
         self.assertEqual(exitcode1, 5)  # Specific exitcode 5
 
+    # #@todo Add unit tests for zipped and gzipped files
+

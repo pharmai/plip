@@ -730,7 +730,6 @@ class PDBComplex:
 
         # Counting is different from PDB if TER records present
         self.idx_to_pdb_mapping, self.modres, self.covalent, self.altconf = parse_pdb(read(pdbpath).readlines())
-        # #@todo return named tuple?
         try:
             self.pymol_name = self.protcomplex.data['HEADER'][56:60].lower()  # Get name from HEADER data
         except KeyError:  # Extract the PDBID from the filename

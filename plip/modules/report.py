@@ -278,7 +278,7 @@ class TextOutput:
         position = et.SubElement(identifiers, 'position')
         composite = et.SubElement(identifiers, 'composite')
         members = et.SubElement(identifiers, 'members')
-        smile = et.SubElement(identifiers, 'smile')
+        smiles = et.SubElement(identifiers, 'smiles')
         num_heavy_atoms = et.SubElement(report, 'num_heavy_atoms')
         ichains = et.SubElement(report, 'interacting_chains')
         bsresidues = et.SubElement(report, 'bs_residues')
@@ -295,7 +295,7 @@ class TextOutput:
         composite.text = 'True' if len(self.lig_members) > 1 else 'False'
         longname.text = self.longname
         ligtype.text = self.ligtype
-        smile.text = self.smile
+        smiles.text = self.smile
         num_heavy_atoms.text = str(self.num_heavy_atoms)  # Number of heavy atoms in ligand
         for i, member in enumerate(sorted(self.lig_members)):
             bsid = "-".join(str(element) for element in member)
