@@ -19,6 +19,7 @@ limitations under the License.
 VERBOSE = False  # Set verbose mode
 MAXTHREADS = 1  # Maximum number of main threads for binding site visualization
 XML = False
+TXT = False
 PICS = False
 PYMOL = False
 OUTPATH = './'

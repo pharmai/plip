@@ -43,6 +43,8 @@ class TextOutput:
         self.pdbid = pli_class.pdbid.upper()
         self.lig_members = pli_class.lig_members
         self.interacting_chains = pli_class.interacting_chains
+        self.smile = pli_class.ligand.smile
+        self.num_heavy_atoms = pli_class.ligand.heavy_atoms
         mapping = pli_class.idx_to_pdb
         lig_to_pdb = {key: mapping[pli_class.lig_to_pdb[key]] for key in pli_class.lig_to_pdb}  # Atom mapping ligand
         self.header = ['#PREDICTION OF NONCOVALENT INTERACTIONS FOR %s:%s' % (self.pdbid, self.name),
@@ -221,15 +223,14 @@ class TextOutput:
             else:
                 sign = '-'
             for col in range(num_cols):
-                form += (cell_dict[col]+1)*sign
+                form += (cell_dict[col] + 1) * sign
                 form += '+'
             form += '\n'
         return form
 
-    def generate_rst(self):
+    def generate_txt(self):
         """Generates an flat text report for a single binding site"""
 
-        # #@todo Include info on bs res and distances
         txt = []
         txt.append('%s (%s) - %s' % (self.name, self.longname, self.ligtype))
         for i, member in enumerate(sorted(self.lig_members)[1:]):
@@ -263,7 +264,6 @@ class TextOutput:
                     table.append(values)
                 txt.append(self.rst_table(table))
         txt.append('\n')
-
         return txt
 
     def generate_xml(self):
@@ -277,6 +277,8 @@ class TextOutput:
         position = et.SubElement(identifiers, 'position')
         composite = et.SubElement(identifiers, 'composite')
         members = et.SubElement(identifiers, 'members')
+        smile = et.SubElement(identifiers, 'smile')
+        num_heavy_atoms = et.SubElement(report, 'num_heavy_atoms')
         ichains = et.SubElement(report, 'interacting_chains')
         bsresidues = et.SubElement(report, 'bs_residues')
         for i, ichain in enumerate(self.interacting_chains):
@@ -292,6 +294,8 @@ class TextOutput:
         composite.text = 'True' if len(self.lig_members) > 1 else 'False'
         longname.text = self.longname
         ligtype.text = self.ligtype
+        smile.text = self.smile
+        num_heavy_atoms.text = str(self.num_heavy_atoms)  # Number of heavy atoms in ligand
         for i, member in enumerate(sorted(self.lig_members)):
             bsid = "-".join(str(element) for element in member)
             m = et.SubElement(members, 'member', id=str(i + 1))

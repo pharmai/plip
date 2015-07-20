@@ -497,17 +497,36 @@ def read_pdb(pdbfname):
         maxsize = resource.getrlimit(resource.RLIMIT_STACK)[-1]
         resource.setrlimit(resource.RLIMIT_STACK, (min(2 ** 28, maxsize), maxsize))
     sys.setrecursionlimit(10 ** 5)  # increase Python recoursion limit
-    return readmol('pdb', pdbfname)  # only read the file iff it was successful before
+    return readmol(pdbfname)
 
 
-def readmol(fformat='mol', path=None):
-    """Reads the given molecule file and returns the corresponding Pybel molecule.
+def readmol(path):
+    """Reads the given molecule file and returns the corresponding Pybel molecule as well as the input file type.
     In contrast to the standard Pybel implementation, the file is closed properly."""
+    supported_formats = ['pdb', 'pdbqt']
     obc = pybel.ob.OBConversion()
-    obc.SetInFormat(fformat)
-    mol = pybel.ob.OBMol()
+
     with open(path) as f:
-        obc.ReadString(mol, str(f.read()))
-        if mol.Empty():
-            sys.exit(4)
-    return pybel.Molecule(mol)
+        for sformat in supported_formats:
+            obc.SetInFormat(sformat)
+            mol = pybel.ob.OBMol()
+            obc.ReadString(mol, str(f.read()))
+            if not mol.Empty():
+                message('[EXPERIMENTAL] Input is PDBQT file. Some features (especially visualization) '
+                                     'might not work as expected. Please consider using PDB format instead.\n')
+                return pybel.Molecule(mol), sformat
+        sysexit(4, 'No valid PDB or PDBQT file provided.')
+
+
+def sysexit(code, msg):
+    """Exit using an custom error message and error code."""
+    sys.stderr.write(msg)
+    sys.exit(code)
+
+
+def message(msg, indent=False):
+    """Writes messages in verbose mode"""
+    if config.VERBOSE:
+        if indent:
+            msg = '  ' + msg
+        sys.stdout.write(msg)

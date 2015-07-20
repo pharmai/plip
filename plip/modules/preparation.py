@@ -194,9 +194,9 @@ class PLInteraction:
         self.interacting_chains = sorted(list(set([i.reschain for i in self.all_itypes if not i.reschain == ' '])))
 
         self.interacting_res = list(set([''.join([str(i.resnr), str(i.reschain)]) for i in self.all_itypes]))
-        if config.VERBOSE:
-            sys.stdout.write('  Ligand interacts with %i binding site residue(s) in chain(s) %s.\n'
-                             % (len(self.interacting_res), '/'.join(self.interacting_chains)))
+        if len(self.interacting_res) != 0:
+            message('Ligand interacts with %i binding site residue(s) in chain(s) %s.\n'
+                    % (len(self.interacting_res), '/'.join(self.interacting_chains)), indent=True)
             interactions_list = []
             num_saltbridges = len(self.saltbridge_lneg + self.saltbridge_pneg)
             num_hbonds = len(self.hbonds_ldon + self.hbonds_pdon)
@@ -217,9 +217,9 @@ class PLInteraction:
             if num_waterbridges != 0:
                 interactions_list.append('%i water bridge(s)' % num_waterbridges)
             if not len(interactions_list) == 0:
-                sys.stdout.write('  Complex uses %s.\n' % ', '.join(interactions_list))
-            else:
-                sys.stdout.write('  No interactions for this ligand.\n')
+                message('Complex uses %s.\n' % ', '.join(interactions_list), indent=True)
+        else:
+            message('No interactions for this ligand.\n', indent=True)
 
     def refine_hydrophobic(self, all_h, pistacks):
         """Apply several rules to reduce the number of hydrophobic interactions."""
@@ -283,8 +283,9 @@ class PLInteraction:
                         min_dist = h.distance
                         min_h = h
                 hydroph_final.append(min_h)
-        if config.VERBOSE and not len(all_h) == 0 and not len(all_h) == len(hydroph_final):
-            sys.stdout.write('  Reduced number of hydrophobic contacts from %i to %i.\n' % (len(all_h), len(hydroph_final)))
+        before, reduced = len(all_h), len(hydroph_final)
+        if not before == 0 and not before == reduced:
+            message('Reduced number of hydrophobic contacts from %i to %i.\n' % (before, reduced), indent=True)
         return hydroph_final
 
     def refine_hbonds_ldon(self, all_hbonds, salt_lneg, salt_pneg):
@@ -483,7 +484,6 @@ class BindingSite(Mol):
         return a_set
 
 
-
 class Ligand(Mol):
     def __init__(self, cclass, ligand):
         altconf = cclass.altconf
@@ -494,15 +494,23 @@ class Ligand(Mol):
         self.longname = ligand.longname
         self.type = ligand.type
         self.complex = cclass
-        self.molecule = ligand.mol
+        self.molecule = ligand.mol  # Pybel Molecule
+        self.smile = self.molecule.write(format='smi')
+        if not len(self.smile) == 0:
+            self.smile = self.smile.split()[0]
+        else:
+            message('[Warning] Could not write smile for this ligand.\n', indent=True)
+            self.smile = ''
+        self.heavy_atoms = self.molecule.OBMol.NumHvyAtoms()  # Heavy atoms count
         self.name = self.molecule.title
         self.all_atoms = self.molecule.atoms
         self.atmdict = {l.idx: l for l in self.all_atoms}
         self.rings = self.find_rings(self.molecule, self.all_atoms)
         self.hydroph_atoms = self.hydrophobic_atoms(self.all_atoms)
         self.hbond_acc_atoms = self.find_hba(self.all_atoms)
-        if config.VERBOSE and not len(self.rings) == 0:
-            sys.stdout.write('  Contains %i aromatic ring(s).\n' % len(self.rings))
+        num_rings = len(self.rings)
+        if num_rings != 0:
+            message('Contains %i aromatic ring(s).\n' % num_rings, indent=True)
 
         ##########################################################
         # Special Case for hydrogen bond acceptor identification #
@@ -596,8 +604,8 @@ class Ligand(Mol):
             if self.is_functional_group(a, 'halocarbon'):
                 n_atoms = [na for na in pybel.ob.OBAtomAtomIter(a.OBAtom) if na.GetAtomicNum() == 6]
                 a_set.append(data(x=a, c=pybel.Atom(n_atoms[0])))
-        if config.VERBOSE and len(a_set) != 0:
-            sys.stdout.write('  Ligand contains %i halogen atom(s).\n' % len(a_set))
+        if len(a_set) != 0:
+            message('Ligand contains %i halogen atom(s).\n' % len(a_set), indent=True)
         return a_set
 
     def find_charged(self, all_atoms):
@@ -703,6 +711,7 @@ class PDBComplex:
     def __init__(self):
         self.interaction_sets = {}  # Dictionary with site identifiers as keys and object as value
         self.protcomplex = None
+        self.filetype = None
         self.atoms = {}  # Dictionary of Pybel atoms, accessible by their idx
         self.sourcefiles = {}
         self.output_path = '/tmp'
@@ -716,9 +725,8 @@ class PDBComplex:
     def load_pdb(self, pdbpath):
         """Loads a pdb file with protein AND ligand(s), separates and prepares them."""
         self.sourcefiles['pdbcomplex'] = pdbpath
-        self.protcomplex = read_pdb(pdbpath)
-        if config.VERBOSE:
-            sys.stdout.write('PDB structure successfully read.\n')
+        self.protcomplex, self.filetype = read_pdb(pdbpath)
+        message('PDB structure successfully read.\n')
 
         # Counting is different from PDB if TER records present
         self.idx_to_pdb_mapping, self.modres, self.covalent = parse_pdb(open(pdbpath).readlines())
@@ -735,36 +743,33 @@ class PDBComplex:
         # Extract and prepare ligands
         ligands, excluded = getligs(self.protcomplex, self.altconf, self.idx_to_pdb_mapping, self.modres, self.covalent)
         self.excluded = excluded
-        if config.VERBOSE:
-            if len(excluded) != 0:
-                sys.stdout.write("Excluded molecules as ligands: %s\n" % ','.join([lig for lig in excluded]))
+        if len(excluded) != 0:
+            message("Excluded molecules as ligands: %s\n" % ','.join([lig for lig in excluded]))
 
         resis = [obres for obres in pybel.ob.OBResidueIter(self.protcomplex.OBMol) if obres.GetResidueProperty(0)]
 
-        if config.VERBOSE:
-            num_ligs = len(ligands)
-            if num_ligs == 1:
-                sys.stdout.write("Analyzing one ligand...\n")
-            elif num_ligs > 1:
-                sys.stdout.write("Analyzing %i ligands...\n" % num_ligs)
-            else:
-                sys.stdout.write("Structure contains no ligands.\n")
+        num_ligs = len(ligands)
+        if num_ligs == 1:
+            message("Analyzing one ligand...\n")
+        elif num_ligs > 1:
+            message("Analyzing %i ligands...\n" % num_ligs)
+        else:
+            message("Structure contains no ligands.\n")
 
         for ligand in ligands:
-            if config.VERBOSE:
-                single_sites = []
-                for member in ligand.members:
-                    single_sites.append('-'.join([str(x) for x in member]))
-                site = ' : '.join(single_sites)
-                site = site if not len(site) > 20 else site[:20] + '...'
-                longname = ligand.longname if not len(ligand.longname) > 20 else ligand.longname[:20] + '...'
-                ligtype = 'Unspecified type' if ligand.type == 'UNSPECIFIED' else ligand.type
-                ligtext = "\n%s [%s] -- %s" % (longname, ligtype, site)
-                any_in_biolip = len(set([x[0] for x in ligand.members]).intersection(config.biolip_list)) != 0
-                if ligtype != 'POLYMER' and any_in_biolip:
-                    ligtext += ' (possible artifact/unspecific binder)'
-                sys.stdout.write(ligtext)
-                sys.stdout.write('\n' + '-' * len(ligtext) + '\n')
+            single_sites = []
+            for member in ligand.members:
+                single_sites.append('-'.join([str(x) for x in member]))
+            site = ' : '.join(single_sites)
+            site = site if not len(site) > 20 else site[:20] + '...'
+            longname = ligand.longname if not len(ligand.longname) > 20 else ligand.longname[:20] + '...'
+            ligtype = 'Unspecified type' if ligand.type == 'UNSPECIFIED' else ligand.type
+            ligtext = "\n%s [%s] -- %s" % (longname, ligtype, site)
+            any_in_biolip = len(set([x[0] for x in ligand.members]).intersection(config.biolip_list)) != 0
+            if ligtype not in ['POLYMER', 'DNA', 'ION', 'DNA+ION', 'RNA+ION', 'SMALLMOLECULE+ION'] and any_in_biolip:
+                ligtext += ' (possible artifact/unspecific binder)'
+            message(ligtext)
+            message('\n' + '-' * len(ligtext) + '\n')
 
             lig_obj = Ligand(self, ligand)
             cutoff = lig_obj.max_dist_to_center + config.BS_DIST
@@ -788,9 +793,8 @@ class PDBComplex:
                         min_dist[bs_res_id] = (distance, whichrestype(r))
                     if distance <= config.BS_DIST and r not in bs_atoms_refined:
                         bs_atoms_refined.append(r)
-            if config.VERBOSE:
-                num_bs_atoms = len(bs_atoms_refined)
-                sys.stdout.write('  Binding site atoms in vicinity (%.1f A max. dist: %i).\n' % (config.BS_DIST, num_bs_atoms))
+            num_bs_atoms = len(bs_atoms_refined)
+            message('Binding site atoms in vicinity (%.1f A max. dist: %i).\n' % (config.BS_DIST, num_bs_atoms), indent=True)
 
             bs_obj = BindingSite(bs_atoms_refined, self.protcomplex, self, self.altconf, min_dist)
             pli_obj = PLInteraction(lig_obj, bs_obj, self)

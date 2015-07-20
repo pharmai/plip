@@ -356,9 +356,8 @@ def metal_complexation(metals, metal_binding_lig, metal_binding_bs):
         # Record all contact pairing, excluding those with targets superfluous for chosen geometry
         only_water = set([x[0].location for x in contact_pairs]) == {'water'}
         if not only_water:  # No complex if just with water as targets
-            if config.VERBOSE:
-                # #@todo Geometry prediction in BETA
-                print "  [BETA] Metal ion %s complexed with %s geometry (coo. number %r/ %i observed)." % (metal.type, final_geom, final_coo, num_targets)
+            # #@todo Geometry prediction in BETA
+            message("[BETA] Metal ion %s complexed with %s geometry (coo. number %r/ %i observed).\n" % (metal.type, final_geom, final_coo, num_targets), indent=True)
             for contact_pair in contact_pairs:
                 target, distance = contact_pair
                 if target.atom.idx not in excluded:

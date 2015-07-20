@@ -48,7 +48,7 @@ descript = "Protein-Ligand Interaction Profiler (PLIP) v%s " \
            "is a command-line based tool to analyze interactions in a protein-ligand complex. " \
            "If you are using PLIP in your work, please cite: " \
            "Salentin,S. et al. PLIP: fully automated protein-ligand interaction profiler. " \
-           "Nucl. Acids Res. first published online April 14, 2015 doi:10.1093/nar/gkv315" % __version__
+           "Nucl. Acids Res. (1 July 2015) 43 (W1): W443-W447. doi: 10.1093/nar/gkv315" % __version__
 
 
 def threshold_limiter(aparser, arg):
@@ -56,12 +56,6 @@ def threshold_limiter(aparser, arg):
     if arg <= 0:
         aparser.error("All thresholds have to be values larger than zero.")
     return arg
-
-
-def sysexit(code, msg):
-    """Exit using an custom error message and error code."""
-    sys.stderr.write(msg)
-    sys.exit(code)
 
 
 def check_pdb_status(pdbid):
@@ -82,19 +76,16 @@ def check_pdb_status(pdbid):
 def fetch_pdb(pdbid):
     """Get the newest entry from the RCSB server for the given PDB ID. Exits with '1' if PDB ID is invalid."""
     pdbid = pdbid.lower()
-    if config.VERBOSE:
-        sys.stdout.write('Checking status of PDB ID %s ... ' % pdbid)
+    message('Checking status of PDB ID %s ... ' % pdbid)
     state, current_entry = check_pdb_status(pdbid)  # Get state and current PDB ID
 
-    if config.VERBOSE:
-        if state == 'OBSOLETE':
-            sys.stdout.write('entry is obsolete, getting %s instead.\n' % current_entry)
-        elif state == 'CURRENT':
-            sys.stdout.write('entry is up to date.\n')
-    if state == 'UNKNOWN':
+    if state == 'OBSOLETE':
+        message('entry is obsolete, getting %s instead.\n' % current_entry)
+    elif state == 'CURRENT':
+        message('entry is up to date.\n')
+    elif state == 'UNKNOWN':
         sysexit(3, 'Invalid PDB ID')
-    if config.VERBOSE:
-        sys.stdout.write('Downloading file from PDB ... ')
+    message('Downloading file from PDB ... ')
     pdburl = 'http://www.rcsb.org/pdb/files/%s.pdb' % current_entry  # Get URL for current entry
     pdbfile = None
     try:
@@ -106,8 +97,7 @@ def fetch_pdb(pdbid):
 
 def process_pdb(pdbfile, outpath):
     """Analysis of a single PDB file. Can generate textual reports XML, PyMOL session files and images as output."""
-    if config.VERBOSE:
-        sys.stdout.write('Starting analysis of structure...\n')
+    message('Starting analysis of structure...\n')
     mol = PDBComplex()
     mol.output_path = outpath
     mol.load_pdb(pdbfile)
@@ -119,6 +109,8 @@ def process_pdb(pdbfile, outpath):
     plipversion.text = __version__
     pdbid = et.SubElement(report, 'pdbid')
     pdbid.text = mol.pymol_name.upper()
+    filetype = et.SubElement(report, 'filetype')
+    filetype.text = mol.filetype.upper()
     exligs = et.SubElement(report, 'excluded_ligands')
     for i, exlig in enumerate(excluded):
         e = et.SubElement(exligs, 'excluded_ligand', id=str(i + 1))
@@ -137,14 +129,13 @@ def process_pdb(pdbfile, outpath):
 
     threads = []
     running_threads = []
-
     for i, site in enumerate(sorted(mol.interaction_sets)):
         s = mol.interaction_sets[site]
         bindingsite = TextOutput(s).generate_xml()
         bindingsite.set('id', str(i + 1))
         bindingsite.set('has_interactions', 'False')
         report.insert(i + 1, bindingsite)
-        for itype in TextOutput(s).generate_rst():
+        for itype in TextOutput(s).generate_txt():
             textlines.append(itype)
         if not s.no_interactions:
             bindingsite.set('has_interactions', 'True')
@@ -184,16 +175,17 @@ def process_pdb(pdbfile, outpath):
                 running_threads.pop(j)
 
     ###########################################
-    # Write final rST and XML to output files #
+    # Write final TXT and XML to output files #
     ###########################################
 
     tree = et.ElementTree(report)
     create_folder_if_not_exists(outpath)
-    if config.XML:
+    if config.XML:  # Generate report in xml format
         tree.write('%s/report.xml' % outpath, pretty_print=True, xml_declaration=True)
 
-    with open('%s/report.rst.txt' % outpath, 'w') as f:
-        [f.write(textline + '\n') for textline in textlines]
+    if config.TXT:  # Generate report in txt (rst) format
+        with open('%s/report.txt' % outpath, 'w') as f:
+            [f.write(textline + '\n') for textline in textlines]
 
 
 def main(inputstruct, inputpdbid):
@@ -201,12 +193,11 @@ def main(inputstruct, inputpdbid):
     pdbid, outp, pdbpath = None, None, None
     outp = tilde_expansion("".join([config.OUTPATH, '/']) if not config.OUTPATH.endswith('/') else config.OUTPATH)
 
-    if config.VERBOSE:
-        # Print title and version
-        title = "* Protein-Ligand Interaction Profiler v%s *" % __version__
-        sys.stdout.write('\n' + '*' * len(title) + '\n')
-        sys.stdout.write(title)
-        sys.stdout.write('\n' + '*' * len(title) + '\n\n')
+    # Print title and version
+    title = "* Protein-Ligand Interaction Profiler v%s *" % __version__
+    message('\n' + '*' * len(title) + '\n')
+    message(title)
+    message('\n' + '*' * len(title) + '\n\n')
 
     if inputstruct is not None:  # Process PDB file
         if os.path.getsize(inputstruct) == 0:
@@ -219,8 +210,7 @@ def main(inputstruct, inputpdbid):
             create_folder_if_not_exists(config.OUTPATH)
             with open(pdbpath, 'w') as g:
                 g.write(pdbfile)
-            if config.VERBOSE:
-                sys.stdout.write('file downloaded as %s\n\n' % pdbpath)
+            message('file downloaded as %s\n\n' % pdbpath)
         except ValueError:  # Invalid PDB ID, cannot fetch from RCBS server
             sysexit(3, 'Error: Invalid PDB ID')
 
@@ -229,8 +219,7 @@ def main(inputstruct, inputpdbid):
     if pdbid is not None and outp is not None:
         if outp in ['.', './']:
             outp = 'the working directory.'
-        if config.VERBOSE:
-            sys.stdout.write('\nNearly finished with analysis of %s. Find the result files in %s\n\n' % (pdbid, outp))
+        message('\nNearly finished with analysis of %s. Find the result files in %s\n\n' % (pdbid, outp))
 
 if __name__ == '__main__':
 
@@ -245,7 +234,9 @@ if __name__ == '__main__':
     parser.add_argument("-o", "--out", dest="outpath", default="./")
     parser.add_argument("-v", "--verbose", dest="verbose", default=False, help="Set verbose mode", action="store_true")
     parser.add_argument("-p", "--pics", dest="pics", default=False, help="Additional pictures", action="store_true")
-    parser.add_argument("-x", "--xml", dest="xml", default=False, help="Additional XML output for reports",
+    parser.add_argument("-x", "--xml", dest="xml", default=False, help="Generate report file in XML format",
+                        action="store_true")
+    parser.add_argument("-t", "--txt", dest="txt", default=False, help="Generate report file in TXT (RST) format",
                         action="store_true")
     parser.add_argument("-y", "--pymol", dest="pymol", default=False, help="Additional PyMOL session files",
                         action="store_true")
@@ -271,7 +262,7 @@ if __name__ == '__main__':
     arguments = parser.parse_args()
     config.VERBOSE = True if arguments.verbose else False
     config.MAXTHREADS = arguments.maxthreads
-    config.XML, config.PICS, config.PYMOL = arguments.xml, arguments.pics, arguments.pymol
+    config.XML, config.TXT, config.PICS, config.PYMOL = arguments.xml, arguments.txt, arguments.pics, arguments.pymol
     config.OUTPATH = arguments.outpath
     # Assign values to global thresholds
     for t in thresholds:
