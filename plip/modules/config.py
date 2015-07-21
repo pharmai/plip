@@ -49,7 +49,7 @@ WATER_BRIDGE_MAXDIST = 4.0  # Max. distance between water oxygen and polar atom 
 WATER_BRIDGE_OMEGA_MIN = 75  # Min. angle between acceptor, water oxygen and donor hydrogen (Jiang et al., 2005) - 5
 WATER_BRIDGE_OMEGA_MAX = 140  # Max. angle between acceptor, water oxygen and donor hydrogen (Jiang et al., 2005)
 WATER_BRIDGE_THETA_MIN = 100  # Min. angle between water oxygen, donor hydrogen and donor atom (Jiang et al., 2005)
-METAL_DIST_MAX = 3.2  # Max. distance between metal ion and interacting atom (Harding, 2001)
+METAL_DIST_MAX = 3.0  # Max. distance between metal ion and interacting atom (Harding, 2001)
 
 #############
 # Whitelist #
@@ -103,6 +103,3 @@ biolip_list = ['ACE', 'HEX', 'TMA', 'SOH', 'P25', 'CCN', 'PR', 'PTN', 'NO3', 'TC
                'L2C', '4AG', 'B3H', '1EM', 'DDR', 'I42', 'CNS', 'PC7', 'HGP', 'PC8', 'HGX', 'LIO', 'PLD', 'PC2', 'PCF',
                'MC3', 'P1O', 'PLC', 'PC6', 'HSH', 'BXC', 'HSG', 'DPG', '2DP', 'POV', 'PCW', 'GVT', 'CE9', 'CXE', 'C10',
                'CE1', 'SPJ', 'SPZ', 'SPK', 'SPW', 'HT3', 'HTH', '2OP', '3NI', 'BO3', 'DET', 'D1D', 'SWE', 'SOG']
-
-
-

@@ -25,13 +25,13 @@ from detection import *
 from supplemental import *
 import config
 
+
 ################
 # MAIN CLASSES #
 ################
 
 
 class Mol:
-
     def __init__(self, altconf):
         self.rings = None
         self.hydroph_atoms = None
@@ -44,7 +44,8 @@ class Mol:
         """Select all carbon atoms which have only carbons and/or hydrogens as direct neighbors."""
         data = namedtuple('hydrophobic', 'atoms')
         atm = [a for a in all_atoms if a.atomicnum == 6 and set([natom.GetAtomicNum() for natom
-                                                                in pybel.ob.OBAtomAtomIter(a.OBAtom)]).issubset({1, 6})]
+                                                                 in pybel.ob.OBAtomAtomIter(a.OBAtom)]).issubset(
+            {1, 6})]
         atm = [a for a in atm if a.idx not in self.altconf]
         return data(atoms=atm)
 
@@ -138,6 +139,7 @@ class Mol:
 
 class PLInteraction:
     """Class to store a ligand, a protein and their interactions."""
+
     def __init__(self, lig_obj, bs_obj, protcomplex):
         """Detect all interactions when initializing"""
         self.ligand = lig_obj
@@ -184,14 +186,17 @@ class PLInteraction:
         self.metal_complexes = metal_complexation(self.ligand.metals, self.ligand.metal_binding,
                                                   self.bindingsite.metal_binding)
 
-        self.all_itypes = self.saltbridge_lneg + self.saltbridge_pneg + self.hbonds_pdon + self.hbonds_ldon \
-                          + self.pistacking + self.pication_laro + self.pication_paro + self.hydrophobic_contacts \
-                          + self.halogen_bonds + self.water_bridges + self.metal_complexes
+        self.all_itypes = self.saltbridge_lneg + self.saltbridge_pneg + self.hbonds_pdon
+        self.all_itypes = self.all_itypes + self.hbonds_ldon + self.pistacking + self.pication_laro + self.pication_paro
+        self.all_itypes = self.all_itypes + self.hydrophobic_contacts + self.halogen_bonds + self.water_bridges
+        self.all_itypes = self.all_itypes + self.metal_complexes
 
         self.no_interactions = all(len(i) == 0 for i in self.all_itypes)
+        self.unpaired_hba, self.unpaired_hbd, self.unpaired_hal, self.unpaired_rings = self.find_unpaired_ligand()
 
         # Exclude empty chains (coming from ligand as a target, from metal complexes)
-        self.interacting_chains = sorted(list(set([i.reschain for i in self.all_itypes if not i.reschain == ' '])))
+        self.interacting_chains = sorted(list(set([i.reschain for i in self.all_itypes
+                                                   if i.reschain not in [' ', None]])))
 
         self.interacting_res = list(set([''.join([str(i.resnr), str(i.reschain)]) for i in self.all_itypes]))
         if len(self.interacting_res) != 0:
@@ -220,6 +225,39 @@ class PLInteraction:
                 message('Complex uses %s.\n' % ', '.join(interactions_list), indent=True)
         else:
             message('No interactions for this ligand.\n', indent=True)
+
+    def mapper(self, idx, part=None):
+        """Maps internal atom ids to original atom ids in PDB file"""
+        # #@todo Mapper function for idx to pdb mapping!
+        pass
+
+    def find_unpaired_ligand(self):
+        """Identify unpaired functional in groups in ligands, involving H-Bond donors, acceptors, halogen bond donors.
+        """
+        unpaired_hba, unpaired_hbd, unpaired_hal = [], [], []
+        # #@todo Is mapping correct for different cases: metal and other?
+        # Unpaired hydrogen bond acceptors/donors in ligand (not used for hydrogen bonds/water, salt bridges/mcomplex)
+        involved_atoms = [hbond.a.idx for hbond in self.hbonds_pdon] + [hbond.d.idx for hbond in self.hbonds_ldon]
+        [[involved_atoms.append(atom.idx) for atom in sb.negative.atoms] for sb in self.saltbridge_lneg]
+        [[involved_atoms.append(atom.idx) for atom in sb.positive.atoms] for sb in self.saltbridge_pneg]
+        [involved_atoms.append(wb.a.idx) for wb in self.water_bridges if wb.protisdon]
+        [involved_atoms.append(wb.d.idx) for wb in self.water_bridges if not wb.protisdon]
+        [involved_atoms.append(mcomplex.target.atom.idx) for mcomplex in self.metal_complexes
+         if mcomplex.location == 'ligand']
+        for atom in [hba.a for hba in self.ligand.get_hba()]:
+            if atom.idx not in involved_atoms:
+                unpaired_hba.append(atom)
+        for atom in [hbd.d for hbd in self.ligand.get_hbd()]:
+            if atom.idx not in involved_atoms:
+                unpaired_hbd.append(atom)
+
+        # unpaired halogen bond donors in ligand (not used for the previous + halogen bonds)
+        [involved_atoms.append(atom.don.x) for atom in self.halogen_bonds]
+        for atom in [haldon.x for haldon in self.ligand.halogenbond_don]:
+            if atom.idx not in involved_atoms:
+                unpaired_hal.append(atom)
+
+        return unpaired_hba, unpaired_hbd, unpaired_hal
 
     def refine_hydrophobic(self, all_h, pistacks):
         """Apply several rules to reduce the number of hydrophobic interactions."""
@@ -394,7 +432,7 @@ class BindingSite(Mol):
         self.complex = cclass
         self.full_mol = protcomplex
         self.all_atoms = atoms
-        self.min_dist = min_dist # Minimum distance of bs res to ligand
+        self.min_dist = min_dist  # Minimum distance of bs res to ligand
         self.bs_res = list(set([''.join([str(whichresnumber(a)), whichchain(a)]) for a in self.all_atoms]))  # e.g. 47A
         self.rings = self.find_rings(self.full_mol, self.all_atoms)
         self.hydroph_atoms = self.hydrophobic_atoms(self.all_atoms)
@@ -458,26 +496,26 @@ class BindingSite(Mol):
                 for a in pybel.ob.OBResidueAtomIter(res):
                     if a.GetType().startswith('O') and res.GetAtomProperty(a, 8) \
                             and not self.complex.idx_to_pdb_mapping[a.GetIdx()] in self.altconf:
-                                a_set.append(data(atom=pybel.Atom(a), type='O', restype=restype,
-                                                  resnr=resnr, reschain=reschain,
-                                                  location='protein.sidechain'))
+                        a_set.append(data(atom=pybel.Atom(a), type='O', restype=restype,
+                                          resnr=resnr, reschain=reschain,
+                                          location='protein.sidechain'))
             if restype == 'HIS':  # Look for nitrogen here
                 for a in pybel.ob.OBResidueAtomIter(res):
                     if a.GetType().startswith('N') and res.GetAtomProperty(a, 8) \
                             and not self.complex.idx_to_pdb_mapping[a.GetIdx()] in self.altconf:
-                                a_set.append(data(atom=pybel.Atom(a), type='N', restype=restype,
-                                                  resnr=resnr, reschain=reschain,
-                                                  location='protein.sidechain'))
+                        a_set.append(data(atom=pybel.Atom(a), type='N', restype=restype,
+                                          resnr=resnr, reschain=reschain,
+                                          location='protein.sidechain'))
             if restype == 'CYS':  # Look for sulfur here
                 for a in pybel.ob.OBResidueAtomIter(res):
                     if a.GetType().startswith('S') and res.GetAtomProperty(a, 8) \
                             and not self.complex.idx_to_pdb_mapping[a.GetIdx()] in self.altconf:
-                                a_set.append(data(atom=pybel.Atom(a), type='S', restype=restype,
-                                                  resnr=resnr, reschain=reschain,
-                                                  location='protein.sidechain'))
+                        a_set.append(data(atom=pybel.Atom(a), type='S', restype=restype,
+                                          resnr=resnr, reschain=reschain,
+                                          location='protein.sidechain'))
             for a in pybel.ob.OBResidueAtomIter(res):  # All main chain oxygens
                 if a.GetType().startswith('O') and res.GetAtomProperty(a, 2) \
-                and not self.complex.idx_to_pdb_mapping[a.GetIdx()] in self.altconf and restype != 'HOH':
+                        and not self.complex.idx_to_pdb_mapping[a.GetIdx()] in self.altconf and restype != 'HOH':
                     a_set.append(data(atom=pybel.Atom(a), type='O', restype=res.GetName(),
                                       resnr=res.GetNum(), reschain=res.GetChain(),
                                       location='protein.mainchain'))
@@ -673,13 +711,15 @@ class Ligand(Mol):
             if a.atomicnum == 6:  # It's a carbon atom
                 if n_atoms_atomicnum.count(8) == 2 and n_atoms_atomicnum.count(6) == 1:  # It's a carboxylate group
                     for neighbor in [n for n in n_atoms if n.GetAtomicNum() == 8]:
-                        a_set.append(data(atom=pybel.Atom(neighbor), type='O', fgroup='carboxylate', restype=whichrestype(neighbor),
+                        a_set.append(data(atom=pybel.Atom(neighbor), type='O', fgroup='carboxylate',
+                                          restype=whichrestype(neighbor),
                                           resnr=whichresnumber(neighbor), reschain=whichchain(neighbor),
                                           location='ligand'))
             if a.atomicnum == 15:  # It's a phosphor atom
                 if n_atoms_atomicnum.count(8) >= 3:  # It's a phosphoryl
                     for neighbor in [n for n in n_atoms if n.GetAtomicNum() == 8]:
-                        a_set.append(data(atom=pybel.Atom(neighbor), type='O', fgroup='phosphoryl', restype=whichrestype(neighbor),
+                        a_set.append(data(atom=pybel.Atom(neighbor), type='O', fgroup='phosphoryl',
+                                          restype=whichrestype(neighbor),
                                           resnr=whichresnumber(neighbor), reschain=whichchain(neighbor),
                                           location='ligand'))
                 if n_atoms_atomicnum.count(8) == 2:  # It's another phosphor-containing group #@todo (correct name?)
@@ -792,7 +832,8 @@ class PDBComplex:
                     if distance <= config.BS_DIST and r not in bs_atoms_refined:
                         bs_atoms_refined.append(r)
             num_bs_atoms = len(bs_atoms_refined)
-            message('Binding site atoms in vicinity (%.1f A max. dist: %i).\n' % (config.BS_DIST, num_bs_atoms), indent=True)
+            message('Binding site atoms in vicinity (%.1f A max. dist: %i).\n' % (config.BS_DIST, num_bs_atoms),
+                    indent=True)
 
             bs_obj = BindingSite(bs_atoms_refined, self.protcomplex, self, self.altconf, min_dist)
             pli_obj = PLInteraction(lig_obj, bs_obj, self)

@@ -39,5 +39,6 @@ setup(name='plip',
           'openbabel',
           'numpy',
           'lxml',
+          'pymol',
       ],
       zip_safe=False)

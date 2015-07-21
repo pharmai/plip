@@ -38,4 +38,4 @@ Citation Information
 --------------------
 If you are using PLIP in your work, please cite
 > Salentin,S. et al. PLIP: fully automated protein-ligand interaction profiler.
-> Nucl. Acids Res. first published online April 14, 2015 doi:10.1093/nar/gkv315
+> Nucl. Acids Res. (1 July 2015) 43 (W1): W443-W447. doi: 10.1093/nar/gkv315

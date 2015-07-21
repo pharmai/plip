@@ -29,20 +29,93 @@ class MetalCoordinationTest(unittest.TestCase):
     # Literature-validated cases from publication #
     ###############################################
 
-    def test_test(self):
-        """Binding of anti-Alzheimer drug E2020 to acetylcholinesterase from Torpedo californica (1eve)
-        Reference: Chakrabarti et al. Geometry of nonbonded interactions involving planar groups in proteins. (2007)
+    def test_1rmd(self):
+        """Zinc binding sites in RAG1 dimerization domain (1rmd)
+        Reference: Harding. The architecture of metal coordination groups in proteins. (2004), Fig. 1a
         """
-        # #@todo Modify this test and implement other unit tests
-        # #@todo Add tests for coordination numbers and geometry
-        # #@todo E.g. 1GMW (Cu)
-        # #@todo e.g. 101M (Heme, Fe); 4HRO, 1A01 (both Fe)
+
         tmpmol = PDBComplex()
-        tmpmol.load_pdb('./pdb/1eve.pdb')
-        s = tmpmol.interaction_sets['E20-A-2001']
-        # Aromatic stacking with Trp84 and Trp279
-        pistackres = {pistack.resnr for pistack in s.pistacking}
-        self.assertTrue({84, 279}.issubset(pistackres))
-        # Pi-Cation interaction of Phe330 with ligand
-        pication = {pication.resnr for pication in s.pication_paro}
-        self.assertTrue({330}.issubset(pication))
+        tmpmol.load_pdb('./pdb/1rmd.pdb')
+        s = tmpmol.interaction_sets['ZN-A-119']
+        # Coordination by three cysteines and one histidine of the protein
+        metalres = [mres.restype for mres in s.metal_complexes]
+        self.assertEqual(metalres.count('CYS'), 3)
+        self.assertEqual(metalres.count('HIS'), 1)
+        # Zn atom with tetrahedral geometry (coordination number 4)
+        self.assertEqual(s.metal_complexes[0].coordination_num, 4)
+        self.assertEqual(s.metal_complexes[0].geometry, 'tetrahedral')
+
+    def test_1rla(self):
+        """Rat liver arginase, a binuclear manganese metalloenzyme (1rmd)
+        Reference: Harding. The architecture of metal coordination groups in proteins. (2004), Fig. 1b
+        """
+
+        tmpmol = PDBComplex()
+        tmpmol.load_pdb('./pdb/1rla.pdb')
+        s = tmpmol.interaction_sets['MN-A-500']
+        # Coordination by one histidine, three aspartic acid residues, and one water molecule
+        metalres = [mres.restype for mres in s.metal_complexes]
+        self.assertEqual(metalres.count('HIS'), 1)
+        self.assertEqual(metalres.count('ASP'), 3)
+        self.assertEqual(metalres.count('HOH'), 1)
+        # Mn atom with square pyramidal geometry (coordination number 5)
+        self.assertEqual(s.metal_complexes[0].coordination_num, 5)
+        self.assertEqual(s.metal_complexes[0].geometry, 'square.pyramidal')
+
+    def test_1het(self):
+        """Liver alcohol deshydrogenase (1het)
+        Reference: Harding. The architecture of metal coordination groups in proteins. (2004), Fig. 2
+        """
+
+        tmpmol = PDBComplex()
+        tmpmol.load_pdb('./pdb/1het.pdb')
+        s = tmpmol.interaction_sets['ZN-A-401']
+        # Coordination by four cysteines
+        metalres = [mres.restype + str(mres.resnr) for mres in s.metal_complexes]
+        self.assertEqual(set(metalres), {'CYS97', 'CYS100', 'CYS103', 'CYS111'})
+        # Zn atom with tetrahedral geometry (coordination number 4)
+        self.assertEqual(s.metal_complexes[0].coordination_num, 4)
+        self.assertEqual(s.metal_complexes[0].geometry, 'tetrahedral')
+
+    def test_1vfy(self):
+        """Phosphatidylinositol-3-phosphate binding FYVE domain of VPS27P protein (1vfy)
+        Reference: Harding. The architecture of metal coordination groups in proteins. (2004), Fig. 5
+        """
+
+        tmpmol = PDBComplex()
+        tmpmol.load_pdb('./pdb/1vfy.pdb')
+        s = tmpmol.interaction_sets['ZN-A-300']
+        # Coordination by four cysteines
+        metalres = [mres.restype for mres in s.metal_complexes]
+        self.assertEqual(set(metalres), {'CYS'})
+        # Zn atom with tetrahedral geometry (coordination number 4)
+        self.assertEqual(s.metal_complexes[0].coordination_num, 4)
+        self.assertEqual(s.metal_complexes[0].geometry, 'tetrahedral')
+
+    def test_2pvb(self):
+        """Pike parvalbumin binding calcium (2pvb)
+        Reference: Harding. The architecture of metal coordination groups in proteins. (2004), Fig. 6
+        """
+
+        tmpmol = PDBComplex()
+        tmpmol.load_pdb('./pdb/2pvb.pdb')
+        s = tmpmol.interaction_sets['CA-A-110']
+        # Ca atom with square pyramidal geometry (coordination number 5)
+        self.assertEqual(s.metal_complexes[0].coordination_num, 5)
+        self.assertEqual(s.metal_complexes[0].geometry, 'square.pyramidal')
+
+    def test_2q8q(self):
+        """Crystal Structure of S. aureus IsdE complexed with heme (2q8q)
+        Reference: Grigg et al. Heme coordination by Staphylococcus aureus IsdE. (2007)
+        """
+
+        tmpmol = PDBComplex()
+        tmpmol.load_pdb('./pdb/2q8q.pdb')
+        s = tmpmol.interaction_sets['HEM-A-300']
+        # Coordination by four nitrogens of heme itself and one additional histidine from the protein
+        metalres = [mres.restype for mres in s.metal_complexes]
+        self.assertEqual(metalres.count('LIG'), 4)
+        self.assertEqual(metalres.count('HIS'), 1)
+        # Fe atom with square pyramidal geometry (coordination number 5)
+        self.assertEqual(s.metal_complexes[0].coordination_num, 5)
+        self.assertEqual(s.metal_complexes[0].geometry, 'square.pyramidal')

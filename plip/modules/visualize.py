@@ -127,7 +127,6 @@ def visualize_in_pymol(protcomplex_class, pli_site):
     for member in lig_members:
         resid, chain, resnr = member[0], member[1], str(member[2])
         cmd.select(ligname, '%s or (resn %s and chain %s and resi %s)' % (ligname, resid, chain, resnr))
-    # #@todo Does not work if no bonds are available (e.g.
     cmd.show('sticks', ligname)
     cmd.color('myblue')
     cmd.color('myorange', ligname)
@@ -145,7 +144,7 @@ def visualize_in_pymol(protcomplex_class, pli_site):
     for group in ['Hydrophobic-P', 'Hydrophobic-L', 'HBondDonor-P', 'HBondDonor-L', 'HBondAccept-P', 'HBondAccept-L',
                   'HalogenAccept', 'HalogenDonor', 'Water', 'MetalIons', 'StackRings-P', 'PosCharge-P', 'PosCharge-L',
                   'NegCharge-P', 'NegCharge-L', 'PiCatRing-P', 'StackRings-L', 'PiCatRing-L', 'Metal-M', 'Metal-P',
-                  'Metal-W', 'Metal-L']:
+                  'Metal-W', 'Metal-L', 'Unpaired-HBA', 'Unpaired-HBD', 'Unpaired-HAL', 'Unpaired-RINGS']:
         cmd.select(group, 'None')
 
     ######################################
@@ -410,6 +409,16 @@ def visualize_in_pymol(protcomplex_class, pli_site):
     if ligname == 'SF4':  # Special case for iron-sulfur clusters, can't be visualized with sticks
         cmd.show('spheres', '%s' % ligname)
 
+    ##################################
+    # Selections for unpaired groups #
+    ##################################
+    if not len(pli.unpaired_hba) == 0:
+        cmd.select('Unpaired-HBA', 'Unpaired-HBA or id %s' % '+'.join([str(lig_to_pdb[a.idx]) for a in pli.unpaired_hba]))
+    if not len(pli.unpaired_hbd) == 0:
+        cmd.select('Unpaired-HBD', 'Unpaired-HBD or id %s' % '+'.join([str(lig_to_pdb[a.idx]) for a in pli.unpaired_hbd]))
+    if not len(pli.unpaired_hal) == 0:
+        cmd.select('Unpaired-HAL', 'Unpaired-HAL or id %s' % '+'.join([str(lig_to_pdb[a.idx]) for a in pli.unpaired_hal]))
+
     ##############################
     # Organization of selections #
     ##############################
@@ -431,7 +440,8 @@ def visualize_in_pymol(protcomplex_class, pli_site):
     cmd.group('Atoms.Protein', 'Hydrophobic-P HBondAccept-P HBondDonor-P HalogenAccept Centroids-P PiCatRing-P '
                                'StackRings-P PosCharge-P NegCharge-P AllBSRes Chargecenter-P  Metal-P')
     cmd.group('Atoms.Ligand', 'Hydrophobic-L HBondAccept-L HBondDonor-L HalogenDonor Centroids-L NegCharge-L '
-                              'PosCharge-L NegCharge-L ChargeCenter-L StackRings-L PiCatRing-L Metal-L Metal-M')
+                              'PosCharge-L NegCharge-L ChargeCenter-L StackRings-L PiCatRing-L Metal-L Metal-M '
+                              'Unpaired-HBA Unpaired-HBD Unpaired-HAL Unpaired-RINGS')
     cmd.group('Atoms.Other', 'Water Metal-W')
     cmd.order('*', 'y')
 

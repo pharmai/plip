@@ -41,6 +41,9 @@ import numpy as np
 from pymol import cmd
 from pymol import finish_launching
 
+# Settings
+np.seterr(all='ignore')  # No runtime warnings
+
 
 def is_lig(hetid):
     """Checks if a PDB compound can be excluded as a small molecule ligand"""
@@ -345,8 +348,8 @@ def getligs(mol, altconf, idx_to_pdb, modres, covalent):
     # Filtering using lists #
     #########################
 
-    all_res1 = [o for o in pybel.ob.OBResidueIter(mol.OBMol)
-               if not (o.GetResidueProperty(9) or o.GetResidueProperty(0))]
+    all_res1 = [o for o in pybel.ob.OBResidueIter(mol.OBMol) if not (o.GetResidueProperty(9)
+                                                                     or o.GetResidueProperty(0))]
     all_lignames = set([a.GetName() for a in all_res1])
 
     water = [o for o in pybel.ob.OBResidueIter(mol.OBMol) if o.GetResidueProperty(9)]
@@ -449,9 +452,9 @@ def getligs(mol, altconf, idx_to_pdb, modres, covalent):
         hetatoms = set()
         for obresidue in kmer:
             hetatoms_res = set([(obatom.GetIdx(), obatom) for obatom in pybel.ob.OBResidueAtomIter(obresidue)
-                        if not obatom.IsHydrogen()])
+                                if not obatom.IsHydrogen()])
 
-            hetatoms_res = set([atm for atm in hetatoms_res if not idx_to_pdb[atm[0]] in altconf])  # Remove alt. conformations
+            hetatoms_res = set([atm for atm in hetatoms_res if not idx_to_pdb[atm[0]] in altconf])  # Remove alt. conf.
             hetatoms.update(hetatoms_res)
         if len(hetatoms) == 0:
             continue

@@ -50,7 +50,8 @@ def hbonds(acceptors, donor_pairs, protisdon, typ):
     donor hydrogens and acceptor showing a distance within HBOND DIST MIN and HBOND DIST MAX
     and donor angles above HBOND_DON_ANGLE_MIN
     """
-    data = namedtuple('hbond', 'a d h distance_ah distance_ad angle type protisdon resnr restype reschain sidechain atype dtype')
+    data = namedtuple('hbond', 'a d h distance_ah distance_ad angle type protisdon resnr '
+                               'restype reschain sidechain atype dtype')
     pairings = []
     for acc, don in itertools.product(acceptors, donor_pairs):
         if typ == 'strong':  # Regular (strong) hydrogen bonds
@@ -96,7 +97,7 @@ def pistacking(rings_bs, rings_lig):
                 contact = data(proteinring=r, ligandring=l, distance=d, angle=a, offset=offset,
                                type='P', resnr=resnr, restype=restype, reschain=reschain)
                 pairings.append(contact)
-            if 90-config.PISTACK_ANG_DEV < a < 90+config.PISTACK_ANG_DEV and offset < config.PISTACK_OFFSET_MAX:
+            if 90 - config.PISTACK_ANG_DEV < a < 90 + config.PISTACK_ANG_DEV and offset < config.PISTACK_OFFSET_MAX:
                 contact = data(proteinring=r, ligandring=l, distance=d, angle=a, offset=offset,
                                type='T', resnr=resnr, restype=restype, reschain=reschain)
                 pairings.append(contact)
@@ -162,7 +163,8 @@ def saltbridge(poscenter, negcenter, protispos):
 
 def halogen(acceptor, donor):
     """Detect all halogen bonds of the type Y-O...X-C"""
-    data = namedtuple('halogenbond', 'acc don distance don_angle acc_angle restype resnr reschain donortype acctype sidechain')
+    data = namedtuple('halogenbond', 'acc don distance don_angle acc_angle restype '
+                                     'resnr reschain donortype acctype sidechain')
     pairings = []
     for acc, don in itertools.product(acceptor, donor):
         dist = euclidean3d(acc.o.coords, don.x.coords)
@@ -171,8 +173,10 @@ def halogen(acceptor, donor):
             vec3, vec4 = vector(don.x.coords, acc.o.coords), vector(don.x.coords, don.c.coords)
             acc_angle, don_angle = vecangle(vec1, vec2), vecangle(vec3, vec4)
             is_sidechain_hal = acc.o.OBAtom.GetResidue().GetAtomProperty(acc.o.OBAtom, 8)  # Check if sidechain atom
-            if config.HALOGEN_ACC_ANGLE-config.HALOGEN_ANGLE_DEV < acc_angle < config.HALOGEN_ACC_ANGLE+config.HALOGEN_ANGLE_DEV:
-                if config.HALOGEN_DON_ANGLE-config.HALOGEN_ANGLE_DEV < don_angle < config.HALOGEN_DON_ANGLE+config.HALOGEN_ANGLE_DEV:
+            if config.HALOGEN_ACC_ANGLE - config.HALOGEN_ANGLE_DEV < acc_angle \
+                    < config.HALOGEN_ACC_ANGLE + config.HALOGEN_ANGLE_DEV:
+                if config.HALOGEN_DON_ANGLE - config.HALOGEN_ANGLE_DEV < don_angle \
+                        < config.HALOGEN_DON_ANGLE + config.HALOGEN_ANGLE_DEV:
                     contact = data(acc=acc, don=don, distance=dist, don_angle=don_angle, acc_angle=acc_angle,
                                    restype=whichrestype(acc.o), resnr=whichresnumber(acc.o),
                                    reschain=whichchain(acc.o), donortype=don.x.OBAtom.GetType(), acctype=acc.o.type,
@@ -183,7 +187,8 @@ def halogen(acceptor, donor):
 
 def water_bridges(bs_hba, lig_hba, bs_hbd, lig_hbd, water):
     """Find water-bridged hydrogen bonds between ligand and protein. For now only considers bridged of first degree."""
-    data = namedtuple('waterbridge', 'a atype d dtype h water distance_aw distance_dw d_angle w_angle type resnr restype reschain protisdon')
+    data = namedtuple('waterbridge', 'a atype d dtype h water distance_aw distance_dw d_angle w_angle type '
+                                     'resnr restype reschain protisdon')
     pairings = []
     # First find all acceptor-water pairs with distance within d
     # and all donor-water pairs with distance within d and angle greater theta
@@ -200,12 +205,14 @@ def water_bridges(bs_hba, lig_hba, bs_hbd, lig_hbd, water):
         for don1 in lig_hbd:
             dist = euclidean3d(don1.d.coords, w.coords)
             d_angle = vecangle(vector(don1.h.coords, don1.d.coords), vector(don1.h.coords, w.coords))
-            if config.WATER_BRIDGE_MINDIST <= dist <= config.WATER_BRIDGE_MAXDIST and d_angle > config.WATER_BRIDGE_THETA_MIN:
+            if config.WATER_BRIDGE_MINDIST <= dist <= config.WATER_BRIDGE_MAXDIST \
+                    and d_angle > config.WATER_BRIDGE_THETA_MIN:
                 lig_dw.append((don1, w, dist, d_angle))
         for don2 in bs_hbd:
             dist = euclidean3d(don2.d.coords, w.coords)
             d_angle = vecangle(vector(don2.h.coords, don2.d.coords), vector(don2.h.coords, w.coords))
-            if config.WATER_BRIDGE_MINDIST <= dist <= config.WATER_BRIDGE_MAXDIST and d_angle > config.WATER_BRIDGE_THETA_MIN:
+            if config.WATER_BRIDGE_MINDIST <= dist <= config.WATER_BRIDGE_MAXDIST \
+                    and d_angle > config.WATER_BRIDGE_THETA_MIN:
                 prot_hw.append((don2, w, dist, d_angle))
 
     for l, p in itertools.product(lig_aw, prot_hw):
@@ -232,6 +239,7 @@ def water_bridges(bs_hba, lig_hba, bs_hbd, lig_hbd, water):
                 pairings.append(contact)
     return pairings
 
+
 def metal_complexation(metals, metal_binding_lig, metal_binding_bs):
     """Find all metal complexes between metals and appropriate groups in both protein and ligand, as well as water"""
     data = namedtuple('metal_complex', 'metal metal_type target target_type coordination_num distance resnr restype '
@@ -247,6 +255,7 @@ def metal_complexation(metals, metal_binding_lig, metal_binding_bs):
                 pairings_dict[metal].append((target, distance))
     for cnum, metal in enumerate(pairings_dict):
         rms = 0.0
+        excluded = []
         # cnum +1 being the complex number
         contact_pairs = pairings_dict[metal]
         num_targets = len(contact_pairs)
@@ -263,7 +272,6 @@ def metal_complexation(metals, metal_binding_lig, metal_binding_bs):
                    6: ['octahedral', ]}
 
         # Angle signatures for each geometry (as seen from each target atom)
-        # #@todo Use edge angles for more specificity?
         ideal_angles = {'linear': [[180.0]] * 2,
                         'trigonal.planar': [[120.0, 120.0]] * 3,
                         'trigonal.pyramidal': [[109.5, 109.5]] * 3,
@@ -285,9 +293,11 @@ def metal_complexation(metals, metal_binding_lig, metal_binding_bs):
 
         all_total = []  # Record fit information for each geometry tested
         gdata = namedtuple('gdata', 'geometry rms coordination excluded diff_targets')  # Geometry Data
+        # Can't specify geometry with only one target
         if num_targets == 1:
-            geometry = 'NA'
-            coo_num = 'NA'
+            final_geom = 'NA'
+            final_coo = 1
+            excluded = []
             rms = 0.0
         else:
             for coo in sorted(configs, reverse=True):  # Start with highest coordination number
@@ -320,8 +330,9 @@ def metal_complexation(metals, metal_binding_lig, metal_binding_bs):
                                             if diff < best_match_diff:
                                                 best_match_diff = diff
                                                 best_match = j
-                                    used_up_observed_angles.append(best_match)
-                                    single_target_scores.append(best_match_diff)
+                                    if best_match is not None:
+                                        used_up_observed_angles.append(best_match)
+                                        single_target_scores.append(best_match_diff)
                                 # Calculate RMS for target angles
                                 target_total = sum([x ** 2 for x in single_target_scores]) ** 0.5  # Tot. score targ/sig
                                 if target_total < best_target_score:
@@ -339,7 +350,6 @@ def metal_complexation(metals, metal_binding_lig, metal_binding_bs):
 
         # Make a decision here. Starting with the geometry with lowest difference in ideal and observed partners ...
         # Check if the difference between the RMS to the next best solution is not larger than 0.5
-        final_geom, final_coo, excluded = None, None, []
         if not num_targets == 1:  # Can't decide for any geoemtry in that case
             all_total = sorted(all_total, key=lambda x: abs(x.diff_targets))
             for i, total in enumerate(all_total):
@@ -350,16 +360,17 @@ def metal_complexation(metals, metal_binding_lig, metal_binding_bs):
                     final_geom, final_coo, rms, excluded = total.geometry, total.coordination, total.rms, total.excluded
                     break
                 elif next_total.rms < 3.5:
-                    final_geom, final_coo, rms, excluded = next_total.geometry, next_total.coordination, next_total.rms, next_total.excluded
+                    final_geom, final_coo, = next_total.geometry, next_total.coordination
+                    rms, excluded = next_total.rms, next_total.excluded
                     break
-                else:
+                elif i == len(all_total) - 1:
                     final_geom, final_coo, rms, excluded = "NA", "NA", 0.0, []
 
         # Record all contact pairing, excluding those with targets superfluous for chosen geometry
         only_water = set([x[0].location for x in contact_pairs]) == {'water'}
         if not only_water:  # No complex if just with water as targets
-            # #@todo Geometry prediction in BETA
-            message("[BETA] Metal ion %s complexed with %s geometry (coo. number %r/ %i observed).\n" % (metal.type, final_geom, final_coo, num_targets), indent=True)
+            message("Metal ion %s complexed with %s geometry (coo. number %r/ %i observed).\n"
+                    % (metal.type, final_geom, final_coo, num_targets), indent=True)
             for contact_pair in contact_pairs:
                 target, distance = contact_pair
                 if target.atom.idx not in excluded:
@@ -369,4 +380,3 @@ def metal_complexation(metals, metal_binding_lig, metal_binding_bs):
                                    rms=rms, geometry=final_geom, num_partners=num_targets, complexnum=cnum + 1)
                     pairings.append(contact)
     return pairings
-

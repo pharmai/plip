@@ -43,7 +43,7 @@ class TextOutput:
         self.pdbid = pli_class.pdbid.upper()
         self.lig_members = pli_class.lig_members
         self.interacting_chains = pli_class.interacting_chains
-        self.smile = pli_class.ligand.smile
+        self.smiles = pli_class.ligand.smile
         self.num_heavy_atoms = pli_class.ligand.heavy_atoms
         mapping = pli_class.idx_to_pdb
         lig_to_pdb = {key: mapping[pli_class.lig_to_pdb[key]] for key in pli_class.lig_to_pdb}  # Atom mapping ligand
@@ -59,8 +59,8 @@ class TextOutput:
         self.hydrophobic_info = []
         for hydroph in pli_class.hydrophobic_contacts:
             self.hydrophobic_info.append((hydroph.resnr, hydroph.restype, hydroph.reschain, '%.2f' % hydroph.distance,
-                                          lig_to_pdb[hydroph.ligatom.idx], mapping[hydroph.bsatom.idx]
-                                          , hydroph.ligatom.coords, hydroph.bsatom.coords))
+                                          lig_to_pdb[hydroph.ligatom.idx], mapping[hydroph.bsatom.idx],
+                                          hydroph.ligatom.coords, hydroph.bsatom.coords))
 
         ##################
         # HYDROGEN BONDS #
@@ -69,7 +69,7 @@ class TextOutput:
         self.hbond_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'SIDECHAIN', 'DIST_H-A', 'DIST_D-A', 'DON_ANGLE',
                                'PROTISDON', 'DONORIDX', 'DONORTYPE', 'ACCEPTORIDX', 'ACCEPTORTYPE', 'LIGCOO', 'PROTCOO')
         self.hbond_info = []
-        for hbond in pli_class.hbonds_pdon+pli_class.hbonds_ldon:
+        for hbond in pli_class.hbonds_pdon + pli_class.hbonds_ldon:
             if hbond.protisdon:
                 donidx, accidx = mapping[hbond.d.idx], lig_to_pdb[hbond.a.idx]
                 self.hbond_info.append((hbond.resnr, hbond.restype, hbond.reschain, hbond.sidechain,
@@ -107,7 +107,7 @@ class TextOutput:
         self.saltbridge_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'DIST', 'PROTISPOS', 'LIG_GROUP', 'LIG_IDX_LIST',
                                     'LIGCOO', 'PROTCOO')
         self.saltbridge_info = []
-        for sb in pli_class.saltbridge_lneg+pli_class.saltbridge_pneg:
+        for sb in pli_class.saltbridge_lneg + pli_class.saltbridge_pneg:
             if sb.protispos:
                 group, ids = sb.negative.fgroup, [str(lig_to_pdb[x.idx]) for x in sb.negative.atoms]
                 self.saltbridge_info.append((sb.resnr, sb.restype, sb.reschain, '%.2f' % sb.distance, sb.protispos,
@@ -129,8 +129,8 @@ class TextOutput:
         for stack in pli_class.pistacking:
             ids = [str(lig_to_pdb[x.idx]) for x in stack.ligandring.atoms]
             self.pistacking_info.append((stack.resnr, stack.restype, stack.reschain, '%.2f' % stack.distance,
-                                         '%.2f' % stack.angle, '%.2f' % stack.offset, stack.type, ",".join(ids)
-                                         , tuple(stack.ligandring.center), tuple(stack.proteinring.center)))
+                                         '%.2f' % stack.angle, '%.2f' % stack.offset, stack.type, ",".join(ids),
+                                         tuple(stack.ligandring.center), tuple(stack.proteinring.center)))
 
         ##########################
         # PI-CATION INTERACTIONS #
@@ -139,7 +139,7 @@ class TextOutput:
         self.pication_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'DIST', 'OFFSET', 'PROTCHARGED', 'LIG_GROUP',
                                   'LIG_IDX_LIST', 'LIGCOO', 'PROTCOO')
         self.pication_info = []
-        for picat in pli_class.pication_laro+pli_class.pication_paro:
+        for picat in pli_class.pication_laro + pli_class.pication_paro:
             if picat.protcharged:
                 ids = [str(lig_to_pdb[x.idx]) for x in picat.ring.atoms]
                 group = 'Aromatic'
@@ -157,8 +157,8 @@ class TextOutput:
         # HALOGEN BONDS #
         #################
 
-        self.halogen_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'SIDECHAIN', 'DIST', 'DON_ANGLE', 'ACC_ANGLE', 'DON_IDX',
-                                 'DONORTYPE', 'ACC_IDX', 'ACCEPTORTYPE', 'LIGCOO', 'PROTCOO')
+        self.halogen_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'SIDECHAIN', 'DIST', 'DON_ANGLE', 'ACC_ANGLE',
+                                 'DON_IDX', 'DONORTYPE', 'ACC_IDX', 'ACCEPTORTYPE', 'LIGCOO', 'PROTCOO')
         self.halogen_info = []
         for halogen in pli_class.halogen_bonds:
             self.halogen_info.append((halogen.resnr, halogen.restype, halogen.reschain, halogen.sidechain,
@@ -204,7 +204,7 @@ class TextOutput:
         num_cols = len(array[0])
         form = '+'
         for col in range(num_cols):
-            form += (cell_dict[col]+1)*'-'
+            form += (cell_dict[col] + 1) * '-'
             form += '+'
         form += '\n'
 
@@ -295,7 +295,7 @@ class TextOutput:
         composite.text = 'True' if len(self.lig_members) > 1 else 'False'
         longname.text = self.longname
         ligtype.text = self.ligtype
-        smiles.text = self.smile
+        smiles.text = self.smiles
         num_heavy_atoms.text = str(self.num_heavy_atoms)  # Number of heavy atoms in ligand
         for i, member in enumerate(sorted(self.lig_members)):
             bsid = "-".join(str(element) for element in member)

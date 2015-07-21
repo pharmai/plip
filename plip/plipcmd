@@ -190,8 +190,7 @@ def process_pdb(pdbfile, outpath):
 
 def main(inputstruct, inputpdbid):
     """Main function. Calls functions for processing, report generation and visualization."""
-    pdbid, outp, pdbpath = None, None, None
-    outp = tilde_expansion("".join([config.OUTPATH, '/']) if not config.OUTPATH.endswith('/') else config.OUTPATH)
+    pdbid, pdbpath = None, None
 
     # Print title and version
     title = "* Protein-Ligand Interaction Profiler v%s *" % __version__
@@ -202,7 +201,7 @@ def main(inputstruct, inputpdbid):
     if inputstruct is not None:  # Process PDB file
         if os.path.getsize(inputstruct) == 0:
             sysexit(2, 'Error: Empty PDB file')  # Exit if input file is empty
-        process_pdb(inputstruct, outp)
+        process_pdb(inputstruct, config.OUTPATH)
     else:  # Try to fetch the current PDB structure directly from the RCBS server
         try:
             if len(inputpdbid) != 4 or extract_pdbid(inputpdbid.lower()) == 'UnknownProtein':
@@ -216,12 +215,14 @@ def main(inputstruct, inputpdbid):
         except ValueError:  # Invalid PDB ID, cannot fetch from RCBS server
             sysexit(3, 'Error: Invalid PDB ID (Entry does not exist)')
 
-        process_pdb(pdbpath, outp)
+        process_pdb(pdbpath, config.OUTPATH)
 
-    if pdbid is not None and outp is not None:
-        if outp in ['.', './']:
-            outp = 'the working directory.'
-        message('\nNearly finished with analysis of %s. Find the result files in %s\n\n' % (pdbid, outp))
+    if pdbid is not None and config.OUTPATH is not None:
+        if config.OUTPATH in ['.', './']:
+            message('\nNearly finished with analysis of %s. Find the result files in the working directory.\n\n'
+                    % pdbid)
+        else:
+            message('\nNearly finished with analysis of %s. Find the result files in %s\n\n' % (pdbid, config.OUTPATH))
 
 if __name__ == '__main__':
 
@@ -266,6 +267,8 @@ if __name__ == '__main__':
     config.MAXTHREADS = arguments.maxthreads
     config.XML, config.TXT, config.PICS, config.PYMOL = arguments.xml, arguments.txt, arguments.pics, arguments.pymol
     config.OUTPATH = arguments.outpath
+    config.OUTPATH = tilde_expansion("".join([config.OUTPATH, '/'])
+                                     if not config.OUTPATH.endswith('/') else config.OUTPATH)
     # Assign values to global thresholds
     for t in thresholds:
         tvalue = getattr(arguments, t.name)
