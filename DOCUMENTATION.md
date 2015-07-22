@@ -7,14 +7,16 @@ The Protein-Ligand Interaction Profiler (PLIP) is a tool to analyze and visualiz
 
 Features
 ========
-* Detection of eight different types of noncovalent interactions
-* Automatic detection of relevant ligands in a PDB file
+* Detection of eight different types of noncovalent interactions, including metal complexes
+* Works for complexes of protein with small molecules, ions, polymers, or DNA/RNA (and all combinations)
+* Automatic detection and grouping of relevant ligands in a PDB file
+* Rich additional information on binding, e.g. unpaired functional groups
 * Direct download of PDB structures from wwPDB server if valid PDB ID is given
 * Processing of custom PDB files containing protein-ligand complexes (e.g. from docking)
 * No need for special preparation of a PDB file, works out of the box
-* Atom-level interaction reports in rST and XML formats for easy parsing
-* Generation of PyMOL session files (.pse) for each pairing, enabling easy preparation of images for publications and talks
-* Rendering of preview image for each ligand and its interactions with the protein
+* Atom-level interaction reports in TXT and XML formats for easy parsing
+* Generation of PyMOL session files (.pse), enabling easy preparation of images for publications and talks
+* Rendering of 3D interaction diagram for each ligand and its interactions with the protein
 
 Quickstart
 ==========
@@ -23,6 +25,12 @@ To analyze a protein-ligand complex from a Protein Data Bank entry -- e.g. 1vsn 
     `plipcmd -i 1vsn`.
 To analyze a PDB file from your workstation, run
     `plipcmd -f path_to_pdbfile.pdb`.
+The output format(s) can be chosen freely, ranging from ...
+* XML report files (`-x`, highest level of detail)
+* Text report files (`-t`, medium level of detail)
+* PyMOL session files (`-y`)
+* Ray-traced images (`-p`)
+* Verbose output on command line (`-v`)
 
 Threshold settings
 ==================
@@ -53,7 +61,7 @@ Exit codes
 ----------
 1 : Unspecified Error
 2 : Empty PDB file as input
-3 : Invalid PDB ID
+3 : Invalid PDB ID (wrong format)
 4 : PDB file can't be read by OpenBabel (due to invalid input files)
 5 : PDB ID is valid, but wwPDB offers no file in PDB format for download.
 
@@ -69,6 +77,7 @@ Ligand - [253, 174, 97] - myorange (custom) - sticks
 Water - [191, 191, 255] - lightblue - nb_spheres
 Charge Center - [255, 255, 0] - yellow - spheres
 Aromatic Ring Center - [230, 230, 230] -  grey90 - spheres
+Ions - [255, 255, 128] - hotpink - spheres
 
 Interactions
 """"""""""""
@@ -80,6 +89,7 @@ pi-Stacking (perpendicular) - [140, 179, 102] - smudge - dashed Line
 pi-Cation Interaction - [255, 128, 0] - orange - dashed Line
 Halogen Bond - [64, 255, 191] - greencyan - solid Line
 Salt Bridge - [255, 255, 0] - yellow - dashed Line
+Metal Complexation - [140, 64, 153] - violetpurple - dashed Line
 
 Output Files
 ------------
@@ -88,47 +98,99 @@ All output files contain information on non-covalent interactions between the pr
 XML/RST Result Files
 """"""""""""""""""""
 
-<pdbid>
-Unique identifier for the corresponding entry of the protein structure in Protein Data Bank.
+**report**
+Contains all binding site information
 
-<hetid>
-Unique identifier for ligand molecule in Protein Data Bank (PDB).
+**plipversion**
+Version of PLIP used for generating the output file
 
-<chain>
-One protein can consist of multiple separate amino acids chains which are named alphabetically
+**bindingsite**
+Information for one bindingsite. Has a unique ID and attribute `has_interactions`
 
-<position>
-Position of ligand in PDB numbering. Combination of pdbid, hetid, chain and position gives a unique identifier for
-each protein-ligand complex. Same numbering as <resnr>
+**identifiers**
+Ligand/bindingsite identifiers
 
-<interactions>
-Contains interaction for protein-ligand complex, organized by interaction type, e.g. hydrophobic interactions
+**longname**
+Long name of ligand, contains all het ids of ligands in one composite cluster
 
-<resnr>
-Position of amino acid in protein chain according to PDB numbering
+**ligtype**
+Classification of ligand, can be SMALLMOLECULE/POLYMER/DNA/RNA/ION or combinations of the first four with ION
 
-<restype>
-Amino acid type in three-letter code
+**hetid**
+PDB hetero ID of the ligand
 
-<dist*>
-Distance of interacting atoms
+**chain**
+Chain assigned to the ligand in the PDB file
 
-<*idx>
-Atom ID in original PDB structure
+**position**
+Position in chain of the ligand in the PDB file
 
-<lig_idx_list>
-Atom IDs if several ligand atoms are relevant for a single interaction (e.g. when forming a charge center)
+**composite**
+Can be True or False depending on whether the ligand consists of several separate subunits or not
 
-<*angle>
-Angle between interacting groups
+**members**
+Lists the members of a composite ligand cluster
 
-<protispos>, <protisdon>, <protischarged>
-Determines if the protein is positively charged, provides a donor or a charge.
-Important for interactions with directionality.
+**smiles**
+The SMILES string of the complete (composite) ligand
 
-<sidechain>
-Is true if a hydrogen bond is formed with the sidechain of the protein and false if it is formed with the backbone.
+**lig_properties**
+Additional information on the ligand, i.e. number of functional atoms
 
-<ligcoo>, <protcoo>
-Coordinates of protein and ligand interacting atoms or interaction centers (e.g. charge centers)
+**num_heavy_atoms**
+Number of heavy atoms in the ligand
+
+**num_hbd**
+Number of hydrogen bond donors in the ligand
+
+**num_unpaired_hbd**
+Number of unpaired hydrogen bond donors in the ligand (not involved as acceptor/donor in hydrogen bonds, salt bridges,
+water bridges, metal complexes)
+
+**num_hba**
+Number of hydrogen bond acceptors in the ligand
+
+**num_unpaired_hba**
+Number of unpaired hydrogen bond acceptors in the ligand (not involved as acceptor/donor in hydrogen bonds, salt bridges,
+water bridges, metal complexes)
+
+**num_hal**
+Number of halogen bond donors in the ligand
+
+**num_unpaired_hal**
+Number of unpaired halogen bond donors in the ligand
+
+**num_aromatic_rings**
+Number of aromatic rings in the ligand
+
+**interacting chains**
+Lists the chains the ligand interacts with
+
+**bs_residues**
+Listing of binding site residues the ligand is near to or interacts with. Contains the type of amino acid, information
+on contact, a unique id and the minimal distance to the ligand in Angstrom
+
+**interactions**
+Detailed information on all interactions (general attributes documented below)
+
+**resnr**
+Residue number of interacting amino acid
+
+**restype**
+Residue type of interacting amino acid
+
+**reschain**
+Residue chain of interacting amino acid
+
+**dist**
+Distance of interacting atoms or groups in Angstrom
+
+**ligcoo**
+Coordinates of interacting ligand atom or interaction center in ligand
+
+**protcoo**
+Coordinates of interacting protein atom or interaction center in ligand
+
+
+
 

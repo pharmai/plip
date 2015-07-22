@@ -431,6 +431,7 @@ def getligs(mol, altconf, idx_to_pdb, modres, covalent):
         rname, rchain, rnum = sorted(members)[0]  # representative name, chain, and number
         ordered_members = sorted(members, key=lambda x: (x[1], x[2]))
         names = [x[0] for x in ordered_members]
+        # #@todo Change this ID to ':' format
         longname = '-'.join([x[0] for x in ordered_members])
         if len(names) > 3:  # Polymer
             if len({'U', 'A', 'C', 'G'}.intersection(set(names))) != 0:

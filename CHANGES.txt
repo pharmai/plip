@@ -2,7 +2,25 @@ Changelog
 ---------
 
 ### 1.2.0
-* ...
+* __Support for DNA and RNA as ligands__
+* __Detection of metal complexes with proteins/ligands, including prediction of geometry__
+* __Extended result files with detailed information on binding site residues and unpaired atoms__
+*__Support for zipped and gzipped files__
+* Rich verbose mode in command line with information on detected functional groups and interactions
+* Refined binding site selection
+* Better overall performance
+* Initial test suite for metal coordination
+* Classification of ligands
+* Improves detection of aromatic rings and interactions involving aromatic rings
+* Single nucleotides and ions not excluded anymore as ligands
+* Generation of canonical smiles for complete (composite) ligands
+* Generation of txt files is now optional
+* Basic support for PDBQT files
+* Correct handling of negative chain positions of ligands
+* Improved check for valid PDB IDs
+* Fixes several bugs
+
+
 
 ### 1.1.1
 * __Detailed information on binding site residues in XML files__
