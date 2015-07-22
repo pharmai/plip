@@ -364,6 +364,7 @@ def getligs(mol, altconf, idx_to_pdb, modres, covalent):
         # Discard if appearing 15 times or more and is possible artifact
         if ulig in config.biolip_list and [a.GetName() for a in all_res2].count(ulig) >= 15:
             artifacts.append(ulig)
+
     all_res3 = [a for a in all_res2 if a.GetName() not in artifacts]
     all_res_dict = {(a.GetName(), a.GetChain(), a.GetNum()): a for a in all_res3}
 
@@ -426,7 +427,7 @@ def getligs(mol, altconf, idx_to_pdb, modres, covalent):
     ###################
 
     for kmer in res_kmers:  # iterate over all ligands
-        members = [(res.GetName(), res.GetChain(), res.GetNum()) for res in kmer]
+        members = [(res.GetName(), res.GetChain(), int32_to_negative(res.GetNum())) for res in kmer]
         rname, rchain, rnum = sorted(members)[0]  # representative name, chain, and number
         ordered_members = sorted(members, key=lambda x: (x[1], x[2]))
         names = [x[0] for x in ordered_members]
@@ -484,10 +485,29 @@ def getligs(mol, altconf, idx_to_pdb, modres, covalent):
         lig.data.update({'Name': rname,
                          'Chain': rchain,
                          'ResNr': rnum})
-        lig.title = '-'.join((rname, rchain, str(rnum)))
+
+        # Check if a negative residue number is represented as a 32 bit integer
+        if rnum > 10 ** 5:
+            rnum = int32_to_negative(rnum)
+
+        lig.title = ':'.join((rname, rchain, str(rnum)))
         ligands.append(data(mol=lig, mapping=mapold, water=water, members=members, longname=longname, type=ligtype))
     excluded = sorted(list(all_lignames.difference(set(lignames))))
     return ligands, excluded
+
+
+def int32_to_negative(int32):
+    """Checks if a suspicious number (e.g. ligand position) is in fact a negative number represented as a
+    32 bit integer and returns the actual number.
+    """
+    dct = {}
+    for i in range(-100, -1):
+        dct[np.uint32(i)] = i
+    if int32 in dct:
+        return dct[int32]
+    else:
+        return int32
+
 
 
 def read_pdb(pdbfname):

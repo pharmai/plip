@@ -459,6 +459,7 @@ def visualize_in_pymol(protcomplex_class, pli_site):
     cmd.disable('%sCartoon' % pdbid)
     cmd.hide('everything', 'hydrogens')
 
+    # #@todo Change hyphen to underscore to account for negative residue numbers
     filename = '%s-%s' % (pdbid.upper(), "-".join(ligdata.bs_id).upper())
     if config.PYMOL:
         cmd.save("".join([save_to, "%s.pse" % filename]))

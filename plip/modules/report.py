@@ -33,10 +33,12 @@ class TextOutput:
         # GENERAL DATA #
         ################
 
+        self.pli = pli_class
         self.output_path = pli_class.output_path
         self.name = pli_class.name
         self.longname = pli_class.ligand.longname
         self.ligtype = pli_class.ligand.type
+        self.ligand = pli_class.ligand
         self.bs_res = pli_class.bindingsite.bs_res
         self.min_dist = pli_class.bindingsite.min_dist
         self.bs_res_interacting = pli_class.interacting_res
@@ -279,7 +281,25 @@ class TextOutput:
         composite = et.SubElement(identifiers, 'composite')
         members = et.SubElement(identifiers, 'members')
         smiles = et.SubElement(identifiers, 'smiles')
-        num_heavy_atoms = et.SubElement(report, 'num_heavy_atoms')
+
+        # Ligand properties. Number of (unpaired) functional atoms and rings.
+        lig_properties = et.SubElement(report, 'lig_properties')
+        num_heavy_atoms = et.SubElement(lig_properties, 'num_heavy_atoms')
+        num_hbd = et.SubElement(lig_properties, 'num_hbd')
+        num_hbd.text = str(self.ligand.num_hbd)
+        num_unpaired_hbd = et.SubElement(lig_properties, 'num_unpaired_hbd')
+        num_unpaired_hbd.text = str(self.pli.num_unpaired_hbd)
+        num_hba = et.SubElement(lig_properties, 'num_hba')
+        num_hba.text = str(self.ligand.num_hba)
+        num_unpaired_hba = et.SubElement(lig_properties, 'num_unpaired_hba')
+        num_unpaired_hba.text = str(self.pli.num_unpaired_hba)
+        num_hal = et.SubElement(lig_properties, 'num_hal')
+        num_hal.text = str(self.ligand.num_hal)
+        num_unpaired_hal = et.SubElement(lig_properties, 'num_unpaired_hal')
+        num_unpaired_hal.text = str(self.pli.num_unpaired_hal)
+        num_aromatic_rings = et.SubElement(lig_properties, 'num_aromatic_rings')
+        num_aromatic_rings.text = str(self.ligand.num_rings)
+
         ichains = et.SubElement(report, 'interacting_chains')
         bsresidues = et.SubElement(report, 'bs_residues')
         for i, ichain in enumerate(self.interacting_chains):
@@ -291,7 +311,7 @@ class TextOutput:
             aatype = self.min_dist[bsres][1]
             c = et.SubElement(bsresidues, 'bs_residue', id=str(i + 1), contact=contact, min_dist=distance, aa=aatype)
             c.text = bsres
-        hetid.text, chain.text, position.text = self.name.split('-')
+        hetid.text, chain.text, position.text = self.name.split(':')
         composite.text = 'True' if len(self.lig_members) > 1 else 'False'
         longname.text = self.longname
         ligtype.text = self.ligtype

@@ -192,7 +192,9 @@ class PLInteraction:
         self.all_itypes = self.all_itypes + self.metal_complexes
 
         self.no_interactions = all(len(i) == 0 for i in self.all_itypes)
-        self.unpaired_hba, self.unpaired_hbd, self.unpaired_hal, self.unpaired_rings = self.find_unpaired_ligand()
+        self.unpaired_hba, self.unpaired_hbd, self.unpaired_hal = self.find_unpaired_ligand()
+        self.num_unpaired_hba, self.num_unpaired_hbd = len(self.unpaired_hba), len(self.unpaired_hbd)
+        self.num_unpaired_hal = len(self.unpaired_hal)
 
         # Exclude empty chains (coming from ligand as a target, from metal complexes)
         self.interacting_chains = sorted(list(set([i.reschain for i in self.all_itypes
@@ -262,7 +264,7 @@ class PLInteraction:
     def refine_hydrophobic(self, all_h, pistacks):
         """Apply several rules to reduce the number of hydrophobic interactions."""
         sel = {}
-        #  1. Rings interacting via stacking can't have additional hydrophobic pliprofiler between each other.
+        #  1. Rings interacting via stacking can't have additional hydrophobic contacts between each other.
         for pistack, h in itertools.product(pistacks, all_h):
             h1, h2 = h.bsatom.idx, h.ligatom.idx
             brs, lrs = [p1.idx for p1 in pistack.proteinring.atoms], [p2.idx for p2 in pistack.ligandring.atoms]
@@ -546,9 +548,9 @@ class Ligand(Mol):
         self.rings = self.find_rings(self.molecule, self.all_atoms)
         self.hydroph_atoms = self.hydrophobic_atoms(self.all_atoms)
         self.hbond_acc_atoms = self.find_hba(self.all_atoms)
-        num_rings = len(self.rings)
-        if num_rings != 0:
-            message('Contains %i aromatic ring(s).\n' % num_rings, indent=True)
+        self.num_rings = len(self.rings)
+        if self.num_rings != 0:
+            message('Contains %i aromatic ring(s).\n' % self.num_rings, indent=True)
 
         ##########################################################
         # Special Case for hydrogen bond acceptor identification #
@@ -584,13 +586,15 @@ class Ligand(Mol):
             if not set([at.GetAtomicNum() for at in pybel.ob.OBResidueAtomIter(hoh)]) == {1} and oxy is not None:
                 if euclidean3d(self.centroid, oxy.coords) < self.max_dist_to_center + config.BS_DIST:
                     self.water.append(oxy)
-        s = self.name.split('-')
+        s = self.name.split(':')
         data = namedtuple('pymol_data', 'hetid chain resid maptopdb bs_id')
         self.pymol_data = data(hetid=s[0], chain=s[1], resid=s[2], maptopdb=mapping, bs_id=s)
         self.halogenbond_don = self.find_hal(self.all_atoms)
         self.metal_binding = self.find_metal_binding(self.all_atoms, self.water)
         # #@todo Update documentation
         self.metals = [a for a in self.all_atoms if a.type.upper() in config.METAL_IONS]
+        self.num_hbd, self.num_hba = len(self.hbond_acc_atoms), len(self.hbond_don_atom_pairs)
+        self.num_hal = len(self.halogenbond_don)
 
     def is_functional_group(self, atom, group):
         """Given a pybel atom, look up if it belongs to a function group"""
@@ -797,8 +801,8 @@ class PDBComplex:
         for ligand in ligands:
             single_sites = []
             for member in ligand.members:
-                single_sites.append('-'.join([str(x) for x in member]))
-            site = ' : '.join(single_sites)
+                single_sites.append(':'.join([str(x) for x in member]))
+            site = ' + '.join(single_sites)
             site = site if not len(site) > 20 else site[:20] + '...'
             longname = ligand.longname if not len(ligand.longname) > 20 else ligand.longname[:20] + '...'
             ligtype = 'Unspecified type' if ligand.type == 'UNSPECIFIED' else ligand.type
