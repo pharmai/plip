@@ -220,7 +220,7 @@ class TextOutput:
         txt = []
         txt.append('%s (%s) - %s' % (self.bsid, self.longname, self.ligtype))
         for i, member in enumerate(sorted(self.lig_members)[1:]):
-            txt.append('  + %s' % "-".join(str(element) for element in member))
+            txt.append('  + %s' % ":".join(str(element) for element in member))
         txt.append("-" * len(self.bsid))
         txt.append("Interacting chain(s): %s\n" % ','.join([chain for chain in self.interacting_chains]))
         for section in [['Hydrophobic Interactions', self.hydrophobic_features, self.hydrophobic_info],
@@ -301,7 +301,7 @@ class TextOutput:
         smiles.text = self.ligand.smiles
         num_heavy_atoms.text = str(self.ligand.heavy_atoms)  # Number of heavy atoms in ligand
         for i, member in enumerate(sorted(self.lig_members)):
-            bsid = "-".join(str(element) for element in member)
+            bsid = ":".join(str(element) for element in member)
             m = et.SubElement(members, 'member', id=str(i + 1))
             m.text = bsid
         interactions = et.SubElement(report, 'interactions')
