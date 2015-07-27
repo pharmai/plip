@@ -93,14 +93,12 @@ def visualize_in_pymol(protcomplex_class, pli_site):
     pcomp = protcomplex_class
     pdbid = pcomp.pymol_name
     pli = pcomp.interaction_sets[pli_site]  # Select the interaction class corresponding to the selection
-    ligdata = pli.ligand.pymol_data
+    ligand = pli.ligand
     lig_members = sorted(pli.ligand.members)
-    mapping = pcomp.idx_to_pdb_mapping  # Mapping internal -> external for protein atoms
-    lig_to_pdb = {key: mapping[ligdata.maptopdb[key]] for key in ligdata.maptopdb}  # Atom mapping for ligand
     save_to = protcomplex_class.output_path
-    chain = ligdata.chain if not ligdata.chain == "0" else ""
-    ligname = ligdata.hetid
-    metal_ids = [lig_to_pdb[x.idx] for x in pli.ligand.metals]
+    chain = ligand.chain if not ligand.chain == "0" else ""
+    ligname = ligand.hetid
+    metal_ids = [x.m_orig_idx for x in pli.ligand.metals]
     metal_ids_str = '+'.join([str(i) for i in metal_ids])
 
     ########################
@@ -116,7 +114,7 @@ def visualize_in_pymol(protcomplex_class, pli_site):
     current_name = cmd.get_object_list(selection='(all)')[0]
     cmd.set_name(current_name, pdbid)
     cmd.hide('everything', 'all')
-    cmd.select(ligname, 'resn %s and chain %s and resi %s' % (ligdata.hetid, chain, ligdata.resid))
+    cmd.select(ligname, 'resn %s and chain %s and resi %s' % (ligand.hetid, chain, ligand.position))
 
     # Visualize and color metal ions if there are any
     if not len(metal_ids) == 0:
@@ -151,8 +149,10 @@ def visualize_in_pymol(protcomplex_class, pli_site):
     # Visualize hydrophobic interactions #
     ######################################
 
+    # #@todo Dont use indices!
     hydroph = pli.hydrophobic_contacts
-    hydroph_pairs_id = [(mapping[h[0].idx], lig_to_pdb[h[1].idx]) for h in hydroph]
+    print hydroph
+    hydroph_pairs_id = [(h.bsatom_orig_idx, h.ligatom_orig_idx) for h in hydroph]
     hydroph_bs_id, hydroph_lig_id = [hp[0] for hp in hydroph_pairs_id], [hp[1] for hp in hydroph_pairs_id]
     if not len(hydroph_bs_id) == 0:
         for h in [['Hydrophobic-P', hydroph_bs_id], ['Hydrophobic-L', hydroph_lig_id]]:
@@ -172,9 +172,9 @@ def visualize_in_pymol(protcomplex_class, pli_site):
     #####################
 
     hbonds_ldon, hbonds_pdon = pli.hbonds_ldon, pli.hbonds_pdon
-    hbonds_ldon_id = [(mapping[hb.a.idx], lig_to_pdb[hb.d.idx]) for hb in hbonds_ldon]
+    hbonds_ldon_id = [(hb.a_orig_idx, hb.d_orig_idx) for hb in hbonds_ldon]
     hbonds_lig_don_id, hbonds_prot_acc_id = [hb[1] for hb in hbonds_ldon_id], [hb[0] for hb in hbonds_ldon_id]
-    hbonds_pdon_id = [(lig_to_pdb[hb.a.idx], mapping[hb.d.idx]) for hb in hbonds_pdon]
+    hbonds_pdon_id = [(hb.a_orig_idx, hb.d_orig_idx) for hb in hbonds_pdon]
     hbonds_prot_don_id, hbonds_lig_acc_id = [hb[1] for hb in hbonds_pdon_id], [hb[0] for hb in hbonds_pdon_id]
     for group in [['HBondDonor-L', hbonds_lig_don_id], ['HBondDonor-P', hbonds_prot_don_id],
                   ['HBondAccept-L', hbonds_lig_acc_id], ['HBondAccept-P', hbonds_prot_acc_id]]:
@@ -198,11 +198,9 @@ def visualize_in_pymol(protcomplex_class, pli_site):
     halogen = pli.halogen_bonds
     all_don_x, all_acc_o = [], []
     for h in halogen:
-        don_x, don_c = lig_to_pdb[h.don.x.idx], lig_to_pdb[h.don.c.idx]
-        acc_y, acc_o = mapping[h.acc.y.idx], mapping[h.acc.o.idx]
-        all_don_x.append(don_x)
-        all_acc_o.append(acc_o)
-        for group in [['tmp_bs', acc_o], ['tmp_lig', don_x]]:
+        all_don_x.append(h.don_orig_idx)
+        all_acc_o.append(h.acc_orig_idx)
+        for group in [['tmp_bs', h.acc_orig_idx], ['tmp_lig', h.don_orig_idx]]:
             cmd.select(group[0], 'id %i' % group[1])
         cmd.distance('HalogenBonds', 'tmp_bs', 'tmp_lig')
     if not len(all_acc_o) == 0:
@@ -217,8 +215,8 @@ def visualize_in_pymol(protcomplex_class, pli_site):
 
     stacks = pli.pistacking
     for i, stack in enumerate(stacks):
-        pires_ids = '+'.join(map(str, [mapping[atm.idx] for atm in stack.proteinring.atoms]))
-        pilig_ids = '+'.join(map(str, [lig_to_pdb[atm.idx] for atm in stack.ligandring.atoms]))
+        pires_ids = '+'.join(map(str, stack.proteinring.atoms_orig_idx))
+        pilig_ids = '+'.join(map(str, stack.ligandring.atoms_orig_idx))
         cmd.select('StackRings-P', 'StackRings-P or id %s' % pires_ids)
         cmd.select('StackRings-L', 'StackRings-L or id %s' % pilig_ids)
         cmd.select('StackRings-P', 'byres StackRings-P')
@@ -252,16 +250,17 @@ def visualize_in_pymol(protcomplex_class, pli_site):
         if p.protcharged:
             cmd.pseudoatom('Chargecenter-P', pos=p.charge.center)
             cmd.pseudoatom('Centroids-L', pos=p.ring.center)
-            pilig_ids = '+'.join(map(str, [lig_to_pdb[atm.idx] for atm in p.ring.atoms]))
+            pilig_ids = '+'.join(map(str, p.ring.atoms_orig_idx))
             cmd.select('PiCatRing-L', 'PiCatRing-L or id %s' % pilig_ids)
-            for a in p.charge.atoms:
-                cmd.select('PosCharge-P', 'PosCharge-P or id %i' % mapping[a.idx])
+            for a in p.charge.atoms_orig_idx:
+                cmd.select('PosCharge-P', 'PosCharge-P or id %i' % a)
         else:
             cmd.pseudoatom('Chargecenter-L', pos=p.charge.center)
             cmd.pseudoatom('Centroids-P', pos=p.ring.center)
-            pires_ids = '+'.join(map(str, [mapping[atm.idx] for atm in p.ring.atoms]))
+            pires_ids = '+'.join(map(str, p.ring.atoms_orig_idx))
             cmd.select('PiCatRing-P', 'PiCatRing-P or id %s' % pires_ids)
-            cmd.select('PosCharge-L', 'PosCharge-L or id %i' % lig_to_pdb[p.charge.atoms[0].idx])
+            for a in p.charge.atoms_orig_idx:
+                cmd.select('PosCharge-L', 'PosCharge-L or id %i' % a)
         cmd.distance('PiCation', 'ps-picat-1-%i' % i, 'ps-picat-2-%i' % i)
     if object_exists('PiCation'):
         cmd.set('dash_color', 'orange', 'PiCation')
@@ -276,10 +275,10 @@ def visualize_in_pymol(protcomplex_class, pli_site):
     saltbridge_pneg = pli.saltbridge_pneg
 
     for i, saltb in enumerate(saltbridge_lneg):
-        for patom in saltb.positive.atoms:
-            cmd.select('PosCharge-P', 'PosCharge-P or id %i' % mapping[patom.idx])
-        for latom in saltb.negative.atoms:
-            cmd.select('NegCharge-L', 'NegCharge-L or id %i' % lig_to_pdb[latom.idx])
+        for patom in saltb.positive.atoms_orig_idx:
+            cmd.select('PosCharge-P', 'PosCharge-P or id %i' % patom)
+        for latom in saltb.negative.atoms_orig_idx:
+            cmd.select('NegCharge-L', 'NegCharge-L or id %i' % latom)
         for sbgroup in [['ps-sbl-1-%i' % i, 'Chargecenter-P', saltb.positive.center],
                         ['ps-sbl-2-%i' % i, 'Chargecenter-L', saltb.negative.center]]:
             cmd.pseudoatom(sbgroup[0], pos=sbgroup[2])
@@ -287,10 +286,10 @@ def visualize_in_pymol(protcomplex_class, pli_site):
         cmd.distance('Saltbridges', 'ps-sbl-1-%i' % i, 'ps-sbl-2-%i' % i)
 
     for i, saltb in enumerate(saltbridge_pneg):
-        for patom in saltb.negative.atoms:
-            cmd.select('NegCharge-P', 'NegCharge-P or id %i' % mapping[patom.idx])
-        for latom in saltb.positive.atoms:
-            cmd.select('PosCharge-L', 'PosCharge-L or id %i' % lig_to_pdb[latom.idx])
+        for patom in saltb.negative.atoms_orig_idx:
+            cmd.select('NegCharge-P', 'NegCharge-P or id %i' % patom)
+        for latom in saltb.positive.atoms_orig_idx:
+            cmd.select('PosCharge-L', 'PosCharge-L or id %i' % latom)
         for sbgroup in [['ps-sbp-1-%i' % i, 'Chargecenter-P', saltb.negative.center],
                         ['ps-sbp-2-%i' % i, 'Chargecenter-L', saltb.positive.center]]:
             cmd.pseudoatom(sbgroup[0], pos=sbgroup[2])
@@ -307,20 +306,15 @@ def visualize_in_pymol(protcomplex_class, pli_site):
 
     for bridge in pli.water_bridges:
         if bridge.protisdon:
-            a_idx = lig_to_pdb[bridge.a.idx]
-            d_idx = mapping[bridge.d.idx]
-            cmd.select('HBondDonor-P', 'HBondDonor-P or id %i' % d_idx)
-            cmd.select('HBondAccept-L', 'HBondAccept-L or id %i' % a_idx)
+            cmd.select('HBondDonor-P', 'HBondDonor-P or id %i' % bridge.d_orig_idx)
+            cmd.select('HBondAccept-L', 'HBondAccept-L or id %i' % bridge.a_orig_idx)
         else:
-            a_idx = mapping[bridge.a.idx]
-            d_idx = lig_to_pdb[bridge.d.idx]
-            cmd.select('HBondDonor-L', 'HBondDonor-L or id %i' % d_idx)
-            cmd.select('HBondAccept-P', 'HBondAccept-P or id %i' % a_idx)
-        w_idx = mapping[bridge.water.idx]
-        cmd.select('Water', 'Water or id %i' % w_idx)
-        cmd.select('tmp_don', 'id %i' % d_idx)
-        cmd.select('tmp_water', 'id %i' % w_idx)
-        cmd.select('tmp_acc', 'id %i' % a_idx)
+            cmd.select('HBondDonor-L', 'HBondDonor-L or id %i' % bridge.d_orig_idx)
+            cmd.select('HBondAccept-P', 'HBondAccept-P or id %i' % bridge.a_orig_idx)
+        cmd.select('Water', 'Water or id %i' % bridge.water_orig_idx)
+        cmd.select('tmp_don', 'id %i' % bridge.d_orig_idx)
+        cmd.select('tmp_water', 'id %i' % bridge.water_orig_idx)
+        cmd.select('tmp_acc', 'id %i' % bridge.a_orig_idx)
         cmd.distance('WaterBridges', 'tmp_acc', 'tmp_water')
         cmd.distance('WaterBridges', 'tmp_don', 'tmp_water')
     if object_exists('WaterBridges'):
@@ -336,28 +330,16 @@ def visualize_in_pymol(protcomplex_class, pli_site):
     if not len(pli.metal_complexes) == 0:
         cmd.select('Metal-M', 'id %s' % metal_ids_str)
         for metal_complex in pli.metal_complexes:
-            m_idx = lig_to_pdb[metal_complex.metal.idx]
-            # #@todo Check mapping here for correct binding to ligand/water/protein
+            cmd.select('tmp_m', 'id %i' % metal_complex.metal_orig_idx)
+            cmd.select('tmp_t', 'id %i' % metal_complex.target_orig_idx)
             if metal_complex.location == 'water':
-                w_idx = mapping[metal_complex.target.atom.idx]
-                cmd.select('Metal-W', 'Metal-W or id %s' % w_idx)
-                cmd.select('tmp_m', 'id %i' % m_idx)
-                cmd.select('tmp_w', 'id %s' % w_idx)
-                cmd.distance('MetalComplexes', 'tmp_m', 'tmp_w')
+                cmd.select('Metal-W', 'Metal-W or id %s' % metal_complex.target_orig_idx)
             if metal_complex.location.startswith('protein'):
-                t_idx = mapping[metal_complex.target.atom.idx]
-                cmd.select('Metal-P', 'Metal-P or id %s' % t_idx)
-                cmd.select('tmp_m', 'id %i' % m_idx)
-                cmd.select('tmp_t', 'id %s' % t_idx)
-                cmd.distance('MetalComplexes', 'tmp_m', 'tmp_t')
+                cmd.select('Metal-P', 'Metal-P or id %s' % metal_complex.target_orig_idx)
             if metal_complex.location == 'ligand':
-                l_idx = lig_to_pdb[metal_complex.target.atom.idx]
-                cmd.select('Metal-L', 'Metal-L or id %s' % l_idx)
-                cmd.select('tmp_m', 'id %i' % m_idx)
-                cmd.select('tmp_l', 'id %s' % l_idx)
-                cmd.distance('MetalComplexes', 'tmp_m', 'tmp_l')
-
-        cmd.delete('tmp_m or tmp_t or tmp_w or tmp_l')
+                cmd.select('Metal-L', 'Metal-L or id %s' % metal_complex.target_orig_idx)
+            cmd.distance('MetalComplexes', 'tmp_m', 'tmp_t')
+            cmd.delete('tmp_m or tmp_t')
     if object_exists('MetalComplexes'):
         cmd.set('dash_color', 'violetpurple', 'MetalComplexes')
         cmd.set('dash_gap', 0.5, 'MetalComplexes')
@@ -413,11 +395,11 @@ def visualize_in_pymol(protcomplex_class, pli_site):
     # Selections for unpaired groups #
     ##################################
     if not len(pli.unpaired_hba) == 0:
-        cmd.select('Unpaired-HBA', 'Unpaired-HBA or id %s' % '+'.join([str(lig_to_pdb[a.idx]) for a in pli.unpaired_hba]))
+        cmd.select('Unpaired-HBA', 'Unpaired-HBA or id %s' % '+'.join(str(idx) for idx in pli.unpaired_hba_orig_idx))
     if not len(pli.unpaired_hbd) == 0:
-        cmd.select('Unpaired-HBD', 'Unpaired-HBD or id %s' % '+'.join([str(lig_to_pdb[a.idx]) for a in pli.unpaired_hbd]))
+        cmd.select('Unpaired-HBD', 'Unpaired-HBD or id %s' % '+'.join(str(idx) for idx in pli.unpaired_hbd_orig_idx))
     if not len(pli.unpaired_hal) == 0:
-        cmd.select('Unpaired-HAL', 'Unpaired-HAL or id %s' % '+'.join([str(lig_to_pdb[a.idx]) for a in pli.unpaired_hal]))
+        cmd.select('Unpaired-HAL', 'Unpaired-HAL or id %s' % '+'.join(str(idx) for idx in pli.unpaired_hal_orig_idx))
 
     ##############################
     # Organization of selections #
@@ -459,8 +441,7 @@ def visualize_in_pymol(protcomplex_class, pli_site):
     cmd.disable('%sCartoon' % pdbid)
     cmd.hide('everything', 'hydrogens')
 
-    # #@todo Change hyphen to underscore to account for negative residue numbers
-    filename = '%s-%s' % (pdbid.upper(), "-".join(ligdata.bs_id).upper())
+    filename = '%s_%s' % (pdbid.upper(), "_".join([ligand.hetid, ligand.chain, str(ligand.position)]))
     if config.PYMOL:
         cmd.save("".join([save_to, "%s.pse" % filename]))
 

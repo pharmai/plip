@@ -27,30 +27,25 @@ import lxml.etree as et
 
 class TextOutput:
     """Gather report data and generate reports for one binding site in different formats"""
-    def __init__(self, pli_class):
+    def __init__(self, plcomplex):
 
         ################
         # GENERAL DATA #
         ################
 
-        self.pli = pli_class
-        self.output_path = pli_class.output_path
-        self.name = pli_class.name
-        self.longname = pli_class.ligand.longname
-        self.ligtype = pli_class.ligand.type
-        self.ligand = pli_class.ligand
-        self.bs_res = pli_class.bindingsite.bs_res
-        self.min_dist = pli_class.bindingsite.min_dist
-        self.bs_res_interacting = pli_class.interacting_res
-        self.pdbid = pli_class.pdbid.upper()
-        self.lig_members = pli_class.lig_members
-        self.interacting_chains = pli_class.interacting_chains
-        self.smiles = pli_class.ligand.smile
-        self.num_heavy_atoms = pli_class.ligand.heavy_atoms
-        mapping = pli_class.idx_to_pdb
-        lig_to_pdb = {key: mapping[pli_class.lig_to_pdb[key]] for key in pli_class.lig_to_pdb}  # Atom mapping ligand
-        self.header = ['#PREDICTION OF NONCOVALENT INTERACTIONS FOR %s:%s' % (self.pdbid, self.name),
-                       '#Created on %s' % time.strftime("%Y/%m/%d")]
+        self.complex = plcomplex
+        self.ligand = self.complex.ligand
+        self.bindingsite = self.complex.bindingsite
+        self.output_path = self.complex.output_path
+        self.bsid = ':'.join([self.ligand.hetid, self.ligand.chain, str(self.ligand.position)])
+        self.longname = self.ligand.longname
+        self.ligtype = self.ligand.type
+        self.bs_res = self.bindingsite.bs_res
+        self.min_dist = self.bindingsite.min_dist
+        self.bs_res_interacting = self.complex.interacting_res
+        self.pdbid = self.complex.pdbid.upper()
+        self.lig_members = self.complex.lig_members
+        self.interacting_chains = self.complex.interacting_chains
 
         ############################
         # HYDROPHOBIC INTERACTIONS #
@@ -59,10 +54,10 @@ class TextOutput:
         self.hydrophobic_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'DIST', 'LIGCARBONIDX', 'PROTCARBONIDX', 'LIGCOO',
                                      'PROTCOO')
         self.hydrophobic_info = []
-        for hydroph in pli_class.hydrophobic_contacts:
+        for hydroph in self.complex.hydrophobic_contacts:
             self.hydrophobic_info.append((hydroph.resnr, hydroph.restype, hydroph.reschain, '%.2f' % hydroph.distance,
-                                          lig_to_pdb[hydroph.ligatom.idx], mapping[hydroph.bsatom.idx],
-                                          hydroph.ligatom.coords, hydroph.bsatom.coords))
+                                          hydroph.ligatom_orig_idx, hydroph.bsatom_orig_idx, hydroph.ligatom.coords,
+                                          hydroph.bsatom.coords))
 
         ##################
         # HYDROGEN BONDS #
@@ -71,19 +66,11 @@ class TextOutput:
         self.hbond_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'SIDECHAIN', 'DIST_H-A', 'DIST_D-A', 'DON_ANGLE',
                                'PROTISDON', 'DONORIDX', 'DONORTYPE', 'ACCEPTORIDX', 'ACCEPTORTYPE', 'LIGCOO', 'PROTCOO')
         self.hbond_info = []
-        for hbond in pli_class.hbonds_pdon + pli_class.hbonds_ldon:
-            if hbond.protisdon:
-                donidx, accidx = mapping[hbond.d.idx], lig_to_pdb[hbond.a.idx]
-                self.hbond_info.append((hbond.resnr, hbond.restype, hbond.reschain, hbond.sidechain,
-                                        '%.2f' % hbond.distance_ah, '%.2f' % hbond.distance_ad, '%.2f' % hbond.angle,
-                                        hbond.protisdon, donidx, hbond.dtype, accidx, hbond.atype, hbond.a.coords,
-                                        hbond.d.coords))
-            else:
-                donidx, accidx = lig_to_pdb[hbond.d.idx], mapping[hbond.a.idx]
-                self.hbond_info.append((hbond.resnr, hbond.restype, hbond.reschain, hbond.sidechain,
-                                        '%.2f' % hbond.distance_ah, '%.2f' % hbond.distance_ad, '%.2f' % hbond.angle,
-                                        hbond.protisdon, donidx, hbond.dtype, accidx, hbond.atype, hbond.d.coords,
-                                        hbond.a.coords))
+        for hbond in self.complex.hbonds_pdon + self.complex.hbonds_ldon:
+            self.hbond_info.append((hbond.resnr, hbond.restype, hbond.reschain, hbond.sidechain,
+                                    '%.2f' % hbond.distance_ah, '%.2f' % hbond.distance_ad, '%.2f' % hbond.angle,
+                                    hbond.protisdon, hbond.d_orig_idx, hbond.dtype, hbond.a_orig_idx, hbond.atype,
+                                    hbond.a.coords, hbond.d.coords))
 
         #################
         # WATER-BRIDGES #
@@ -92,15 +79,12 @@ class TextOutput:
         self.waterbridge_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'DIST_A-W', 'DIST_D-W', 'DON_ANGLE', 'WATER_ANGLE',
                                      'PROTISDON', 'DONOR_IDX', 'DONORTYPE', 'ACCEPTOR_IDX', 'ACCEPTORTYPE', 'WATER_IDX')
         self.waterbridge_info = []
-        for wbridge in pli_class.water_bridges:
-            if wbridge.protisdon:
-                donidx, accidx = mapping[wbridge.d.idx], lig_to_pdb[wbridge.a.idx]
-            else:
-                donidx, accidx = lig_to_pdb[wbridge.d.idx], mapping[wbridge.a.idx]
+        for wbridge in self.complex.water_bridges:
             self.waterbridge_info.append((wbridge.resnr, wbridge.restype, wbridge.reschain,
                                           '%.2f' % wbridge.distance_aw, '%.2f' % wbridge.distance_dw,
                                           '%.2f' % wbridge.d_angle, '%.2f' % wbridge.w_angle, wbridge.protisdon,
-                                          donidx, wbridge.dtype, accidx, wbridge.atype, mapping[wbridge.water.idx]))
+                                          wbridge.d_orig_idx, wbridge.dtype, wbridge.a_orig_idx, wbridge.atype,
+                                          wbridge.water_orig_idx))
 
         ################
         # SALT BRIDGES #
@@ -109,14 +93,14 @@ class TextOutput:
         self.saltbridge_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'DIST', 'PROTISPOS', 'LIG_GROUP', 'LIG_IDX_LIST',
                                     'LIGCOO', 'PROTCOO')
         self.saltbridge_info = []
-        for sb in pli_class.saltbridge_lneg + pli_class.saltbridge_pneg:
+        for sb in self.complex.saltbridge_lneg + self.complex.saltbridge_pneg:
             if sb.protispos:
-                group, ids = sb.negative.fgroup, [str(lig_to_pdb[x.idx]) for x in sb.negative.atoms]
+                group, ids = sb.negative.fgroup, [str(x) for x in sb.negative.atoms_orig_idx]
                 self.saltbridge_info.append((sb.resnr, sb.restype, sb.reschain, '%.2f' % sb.distance, sb.protispos,
                                              group.capitalize(), ",".join(ids),
                                              tuple(sb.negative.center), tuple(sb.positive.center)))
             else:
-                group, ids = sb.positive.fgroup, [str(lig_to_pdb[x.idx]) for x in sb.positive.atoms]
+                group, ids = sb.positive.fgroup, [str(x) for x in sb.positive.atoms_orig_idx]
                 self.saltbridge_info.append((sb.resnr, sb.restype, sb.reschain, '%.2f' % sb.distance, sb.protispos,
                                              group.capitalize(), ",".join(ids),
                                              tuple(sb.positive.center), tuple(sb.negative.center)))
@@ -128,8 +112,8 @@ class TextOutput:
         self.pistacking_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'CENTDIST', 'ANGLE', 'OFFSET', 'TYPE',
                                     'LIG_IDX_LIST', 'LIGCOO', 'PROTCOO')
         self.pistacking_info = []
-        for stack in pli_class.pistacking:
-            ids = [str(lig_to_pdb[x.idx]) for x in stack.ligandring.atoms]
+        for stack in self.complex.pistacking:
+            ids = [str(x) for x in stack.ligandring.atoms_orig_idx]
             self.pistacking_info.append((stack.resnr, stack.restype, stack.reschain, '%.2f' % stack.distance,
                                          '%.2f' % stack.angle, '%.2f' % stack.offset, stack.type, ",".join(ids),
                                          tuple(stack.ligandring.center), tuple(stack.proteinring.center)))
@@ -141,15 +125,15 @@ class TextOutput:
         self.pication_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'DIST', 'OFFSET', 'PROTCHARGED', 'LIG_GROUP',
                                   'LIG_IDX_LIST', 'LIGCOO', 'PROTCOO')
         self.pication_info = []
-        for picat in pli_class.pication_laro + pli_class.pication_paro:
+        for picat in self.complex.pication_laro + self.complex.pication_paro:
             if picat.protcharged:
-                ids = [str(lig_to_pdb[x.idx]) for x in picat.ring.atoms]
+                ids = [str(x) for x in picat.ring.atoms_orig_idx]
                 group = 'Aromatic'
                 self.pication_info.append((picat.resnr, picat.restype, picat.reschain, '%.2f' % picat.distance,
                                            '%.2f' % picat.offset, picat.protcharged, group, ",".join(ids),
                                            tuple(picat.ring.center), tuple(picat.charge.center)))
             else:
-                ids = [str(lig_to_pdb[x.idx]) for x in picat.charge.atoms]
+                ids = [str(x) for x in picat.charge.atoms_orig_idx]
                 group = picat.charge.fgroup
                 self.pication_info.append((picat.resnr, picat.restype, picat.reschain, '%.2f' % picat.distance,
                                            '%.2f' % picat.offset, picat.protcharged, group, ",".join(ids),
@@ -162,11 +146,11 @@ class TextOutput:
         self.halogen_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'SIDECHAIN', 'DIST', 'DON_ANGLE', 'ACC_ANGLE',
                                  'DON_IDX', 'DONORTYPE', 'ACC_IDX', 'ACCEPTORTYPE', 'LIGCOO', 'PROTCOO')
         self.halogen_info = []
-        for halogen in pli_class.halogen_bonds:
+        for halogen in self.complex.halogen_bonds:
             self.halogen_info.append((halogen.resnr, halogen.restype, halogen.reschain, halogen.sidechain,
                                       '%.2f' % halogen.distance, '%.2f' % halogen.don_angle, '%.2f' % halogen.acc_angle,
-                                      lig_to_pdb[halogen.don.x.idx], halogen.donortype,
-                                      mapping[halogen.acc.o.idx], halogen.acctype,
+                                      halogen.don_orig_idx, halogen.donortype,
+                                      halogen.acc_orig_idx, halogen.acctype,
                                       halogen.acc.o.coords, halogen.don.x.coords))
 
         ###################
@@ -176,10 +160,9 @@ class TextOutput:
         self.metal_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'METAL_IDX', 'METAL_TYPE', 'TARGET_IDX', 'TARGET_TYPE',
                                'COORDINATION', 'DIST', 'LOCATION', 'RMS', 'GEOMETRY', 'COMPLEXNUM')
         self.metal_info = []
-        for m in pli_class.metal_complexes:
-            pdb_idx = lig_to_pdb[m.target.atom.idx] if m.location == 'ligand' else mapping[m.target.atom.idx]
-            self.metal_info.append((m.resnr, m.restype, m.reschain, lig_to_pdb[m.metal.idx], m.metal_type,
-                                    pdb_idx, m.target_type, m.coordination_num, '%.2f' % m.distance,
+        for m in self.complex.metal_complexes:
+            self.metal_info.append((m.resnr, m.restype, m.reschain, m.metal_orig_idx, m.metal_type,
+                                    m.target_orig_idx, m.target_type, m.coordination_num, '%.2f' % m.distance,
                                     m.location, '%.2f' % m.rms, m.geometry, str(m.complexnum)))
 
     def write_section(self, name, features, info, f):
@@ -235,10 +218,10 @@ class TextOutput:
         """Generates an flat text report for a single binding site"""
 
         txt = []
-        txt.append('%s (%s) - %s' % (self.name, self.longname, self.ligtype))
+        txt.append('%s (%s) - %s' % (self.bsid, self.longname, self.ligtype))
         for i, member in enumerate(sorted(self.lig_members)[1:]):
             txt.append('  + %s' % "-".join(str(element) for element in member))
-        txt.append("-" * len(self.name))
+        txt.append("-" * len(self.bsid))
         txt.append("Interacting chain(s): %s\n" % ','.join([chain for chain in self.interacting_chains]))
         for section in [['Hydrophobic Interactions', self.hydrophobic_features, self.hydrophobic_info],
                         ['Hydrogen Bonds', self.hbond_features, self.hbond_info],
@@ -288,15 +271,15 @@ class TextOutput:
         num_hbd = et.SubElement(lig_properties, 'num_hbd')
         num_hbd.text = str(self.ligand.num_hbd)
         num_unpaired_hbd = et.SubElement(lig_properties, 'num_unpaired_hbd')
-        num_unpaired_hbd.text = str(self.pli.num_unpaired_hbd)
+        num_unpaired_hbd.text = str(self.complex.num_unpaired_hbd)
         num_hba = et.SubElement(lig_properties, 'num_hba')
         num_hba.text = str(self.ligand.num_hba)
         num_unpaired_hba = et.SubElement(lig_properties, 'num_unpaired_hba')
-        num_unpaired_hba.text = str(self.pli.num_unpaired_hba)
+        num_unpaired_hba.text = str(self.complex.num_unpaired_hba)
         num_hal = et.SubElement(lig_properties, 'num_hal')
         num_hal.text = str(self.ligand.num_hal)
         num_unpaired_hal = et.SubElement(lig_properties, 'num_unpaired_hal')
-        num_unpaired_hal.text = str(self.pli.num_unpaired_hal)
+        num_unpaired_hal.text = str(self.complex.num_unpaired_hal)
         num_aromatic_rings = et.SubElement(lig_properties, 'num_aromatic_rings')
         num_aromatic_rings.text = str(self.ligand.num_rings)
 
@@ -311,12 +294,12 @@ class TextOutput:
             aatype = self.min_dist[bsres][1]
             c = et.SubElement(bsresidues, 'bs_residue', id=str(i + 1), contact=contact, min_dist=distance, aa=aatype)
             c.text = bsres
-        hetid.text, chain.text, position.text = self.name.split(':')
+        hetid.text, chain.text, position.text = self.ligand.hetid, self.ligand.chain, str(self.ligand.position)
         composite.text = 'True' if len(self.lig_members) > 1 else 'False'
         longname.text = self.longname
         ligtype.text = self.ligtype
-        smiles.text = self.smiles
-        num_heavy_atoms.text = str(self.num_heavy_atoms)  # Number of heavy atoms in ligand
+        smiles.text = self.ligand.smiles
+        num_heavy_atoms.text = str(self.ligand.heavy_atoms)  # Number of heavy atoms in ligand
         for i, member in enumerate(sorted(self.lig_members)):
             bsid = "-".join(str(element) for element in member)
             m = et.SubElement(members, 'member', id=str(i + 1))

@@ -112,35 +112,20 @@ def extract_pdbid(string):
 
 def whichrestype(atom):
     """Returns the residue name of an Pybel or OpenBabel atom."""
-    if isinstance(atom, Atom):
-        try:
-            return atom.OBAtom.GetResidue().GetName() if atom.OBAtom.GetResidue() is not None else None
-        except AttributeError:
-            return None
-    elif isinstance(atom, OBAtom):
-            return atom.GetResidue().GetName() if atom.GetResidue() is not None else None
-    else:
-        return None
+    atom = atom if not isinstance(atom, Atom) else atom.OBAtom  # Convert to OpenBabel Atom
+    return atom.GetResidue().GetName() if atom.GetResidue() is not None else None
 
 
 def whichresnumber(atom):
     """Returns the residue number of an Pybel or OpenBabel atom (numbering as in original PDB file)."""
-    if isinstance(atom, Atom):
-        return atom.OBAtom.GetResidue().GetNum() if atom.OBAtom.GetResidue() is not None else None
-    elif isinstance(atom, OBAtom):
-        return atom.GetResidue().GetNum() if atom.GetResidue() is not None else None
-    else:
-        return None
+    atom = atom if not isinstance(atom, Atom) else atom.OBAtom  # Convert to OpenBabel Atom
+    return atom.GetResidue().GetNum() if atom.GetResidue() is not None else None
 
 
 def whichchain(atom):
     """Returns the residue number of an PyBel or OpenBabel atom."""
-    if isinstance(atom, Atom):
-        return atom.OBAtom.GetResidue().GetChain() if atom.OBAtom.GetResidue() is not None else None
-    elif isinstance(atom, OBAtom):
-        return atom.GetResidue().GetChain() if atom.GetResidue() is not None else None
-    else:
-        return None
+    atom = atom if not isinstance(atom, Atom) else atom.OBAtom  # Convert to OpenBabel Atom
+    return atom.GetResidue().GetChain() if atom.GetResidue() is not None else None
 
 #########################
 # Mathematical operations
@@ -330,18 +315,13 @@ def set_custom_colorset():
     cmd.set_color('mylightgreen', '[229, 245, 224]')
 
 
-#############################################
-# Following code adapted from Joachim Haupt #
-#############################################
-
-
-def getligs(mol, altconf, idx_to_pdb, modres, covalent):
-    """Get all ligands from a PDB file. Adapted from Joachim's structTools"""
+def getligs(mol, altconf, modres, covalent, mapper):
+    """Get all ligands from a PDB file and prepare them for analysis."""
     #############################
     # Read in file and get name #
     #############################
 
-    data = namedtuple('ligand', 'mol mapping water members longname type')
+    data = namedtuple('ligand', 'mol hetid chain position water members longname type')
     ligands = []
 
     #########################
@@ -425,13 +405,11 @@ def getligs(mol, altconf, idx_to_pdb, modres, covalent):
     ###################
     # Extract ligands #
     ###################
-
     for kmer in res_kmers:  # iterate over all ligands
         members = [(res.GetName(), res.GetChain(), int32_to_negative(res.GetNum())) for res in kmer]
         rname, rchain, rnum = sorted(members)[0]  # representative name, chain, and number
         ordered_members = sorted(members, key=lambda x: (x[1], x[2]))
         names = [x[0] for x in ordered_members]
-        # #@todo Change this ID to ':' format
         longname = '-'.join([x[0] for x in ordered_members])
         if len(names) > 3:  # Polymer
             if len({'U', 'A', 'C', 'G'}.intersection(set(names))) != 0:
@@ -456,7 +434,9 @@ def getligs(mol, altconf, idx_to_pdb, modres, covalent):
             hetatoms_res = set([(obatom.GetIdx(), obatom) for obatom in pybel.ob.OBResidueAtomIter(obresidue)
                                 if not obatom.IsHydrogen()])
 
-            hetatoms_res = set([atm for atm in hetatoms_res if not idx_to_pdb[atm[0]] in altconf])  # Remove alt. conf.
+            # Remove alternative conformations
+            hetatoms_res = set([atm for atm in hetatoms_res
+                                if not mapper.mapid(atm[0], mtype='protein', to='internal') in altconf])
             hetatoms.update(hetatoms_res)
         if len(hetatoms) == 0:
             continue
@@ -492,7 +472,9 @@ def getligs(mol, altconf, idx_to_pdb, modres, covalent):
             rnum = int32_to_negative(rnum)
 
         lig.title = ':'.join((rname, rchain, str(rnum)))
-        ligands.append(data(mol=lig, mapping=mapold, water=water, members=members, longname=longname, type=ligtype))
+        mapper.ligandmaps[lig.title] = mapold
+        ligands.append(data(mol=lig, hetid=rname, chain=rchain, position=rnum, water=water,
+                            members=members, longname=longname, type=ligtype))
     excluded = sorted(list(all_lignames.difference(set(lignames))))
     return ligands, excluded
 
@@ -508,7 +490,6 @@ def int32_to_negative(int32):
         return dct[int32]
     else:
         return int32
-
 
 
 def read_pdb(pdbfname):
@@ -539,7 +520,7 @@ def read(fil):
 def readmol(path):
     """Reads the given molecule file and returns the corresponding Pybel molecule as well as the input file type.
     In contrast to the standard Pybel implementation, the file is closed properly."""
-    supported_formats = ['pdb', 'pdbqt']
+    supported_formats = ['pdb', 'pdbqt', 'mmcif']
     obc = pybel.ob.OBConversion()
 
     with read(path) as f:
@@ -553,6 +534,8 @@ def readmol(path):
             if sformat == 'pdbqt':
                 message('[EXPERIMENTAL] Input is PDBQT file. Some features (especially visualization) might not '
                         'work as expected. Please consider using PDB format instead.\n')
+            if sformat == 'mmcif':
+                message('[EXPERIMENTAL] Input is mmCIF file. Most features do currently not work with this format.\n')
             return pybel.Molecule(mol), sformat
     sysexit(4, 'No valid PDB or PDBQT file provided.')
 

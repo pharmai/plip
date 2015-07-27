@@ -70,126 +70,197 @@ Legend for PyMOL visualization
 All colors given as RGB values.
 <Description> - <RGB> - <PyMOL color> - <Representation>
 
-Structural Elements
-"""""""""""""""""""
+__Structural Elements__
+
+
 Protein - [43, 131, 186] - myblue (custom) - sticks
+
 Ligand - [253, 174, 97] - myorange (custom) - sticks
+
 Water - [191, 191, 255] - lightblue - nb_spheres
+
 Charge Center - [255, 255, 0] - yellow - spheres
+
 Aromatic Ring Center - [230, 230, 230] -  grey90 - spheres
+
 Ions - [255, 255, 128] - hotpink - spheres
 
-Interactions
-""""""""""""
+
+__Interactions__
+
+
 Hydrophobic Interaction - [128, 128, 128] - grey50 - dashed Line
+
 Hydrogen Bond - [0, 0, 255] - blue - solid Line
+
 Water Bridges - [191, 191, 255] - lightblue - solid Line
+
 pi-Stacking (parallel) - [0, 255, 0] - green - dashed Line
+
 pi-Stacking (perpendicular) - [140, 179, 102] - smudge - dashed Line
+
 pi-Cation Interaction - [255, 128, 0] - orange - dashed Line
+
 Halogen Bond - [64, 255, 191] - greencyan - solid Line
+
 Salt Bridge - [255, 255, 0] - yellow - dashed Line
+
 Metal Complexation - [140, 64, 153] - violetpurple - dashed Line
 
-Output Files
-------------
-All output files contain information on non-covalent interactions between the protein and all relevant ligands in the PDB structure.
 
-XML/RST Result Files
-""""""""""""""""""""
+XML Report Documentation
+------------------------
+
 
 **report**
+
 Contains all binding site information
 
+
 **plipversion**
+
 Version of PLIP used for generating the output file
 
 **bindingsite**
+
 Information for one bindingsite. Has a unique ID and attribute `has_interactions`
 
+
 **identifiers**
+
 Ligand/bindingsite identifiers
 
+
 **longname**
+
 Long name of ligand, contains all het ids of ligands in one composite cluster
 
+
 **ligtype**
+
 Classification of ligand, can be SMALLMOLECULE/POLYMER/DNA/RNA/ION or combinations of the first four with ION
 
+
 **hetid**
+
 PDB hetero ID of the ligand
 
+
 **chain**
+
 Chain assigned to the ligand in the PDB file
+
 
 **position**
 Position in chain of the ligand in the PDB file
 
 **composite**
+
 Can be True or False depending on whether the ligand consists of several separate subunits or not
 
+
 **members**
+
 Lists the members of a composite ligand cluster
 
+
 **smiles**
+
 The SMILES string of the complete (composite) ligand
 
+
 **lig_properties**
+
 Additional information on the ligand, i.e. number of functional atoms
 
+
 **num_heavy_atoms**
+
 Number of heavy atoms in the ligand
 
+
 **num_hbd**
+
 Number of hydrogen bond donors in the ligand
 
+
 **num_unpaired_hbd**
+
 Number of unpaired hydrogen bond donors in the ligand (not involved as acceptor/donor in hydrogen bonds, salt bridges,
 water bridges, metal complexes)
 
+
 **num_hba**
+
 Number of hydrogen bond acceptors in the ligand
 
+
 **num_unpaired_hba**
+
 Number of unpaired hydrogen bond acceptors in the ligand (not involved as acceptor/donor in hydrogen bonds, salt bridges,
 water bridges, metal complexes)
 
+
 **num_hal**
+
 Number of halogen bond donors in the ligand
 
+
 **num_unpaired_hal**
+
 Number of unpaired halogen bond donors in the ligand
 
+
 **num_aromatic_rings**
+
 Number of aromatic rings in the ligand
 
+
 **interacting chains**
+
 Lists the chains the ligand interacts with
 
+
 **bs_residues**
+
 Listing of binding site residues the ligand is near to or interacts with. Contains the type of amino acid, information
 on contact, a unique id and the minimal distance to the ligand in Angstrom
 
+
 **interactions**
+
 Detailed information on all interactions (general attributes documented below)
 
+
 **resnr**
+
 Residue number of interacting amino acid
 
+
 **restype**
+
 Residue type of interacting amino acid
 
+
 **reschain**
+
 Residue chain of interacting amino acid
 
+
 **dist**
+
 Distance of interacting atoms or groups in Angstrom
 
+
 **ligcoo**
+
 Coordinates of interacting ligand atom or interaction center in ligand
 
+
 **protcoo**
+
 Coordinates of interacting protein atom or interaction center in ligand
+
 
 
 

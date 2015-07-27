@@ -33,13 +33,15 @@ def hydrophobic_interactions(atom_set_a, atom_set_b):
     """Detection of hydrophobic pliprofiler between atom_set_a (binding site) and atom_set_b (ligand).
     Definition: All pairs of qualified carbon atoms within a distance of HYDROPH_DIST_MAX
     """
-    data = namedtuple('hydroph_interaction', 'bsatom ligatom distance restype resnr reschain')
+    data = namedtuple('hydroph_interaction', 'bsatom bsatom_orig_idx ligatom ligatom_orig_idx '
+                                             'distance restype resnr reschain')
     pairings = []
-    for a, b in itertools.product(atom_set_a.atoms, atom_set_b.atoms):
-        e = euclidean3d(a.coords, b.coords)
+    for a, b in itertools.product(atom_set_a, atom_set_b):
+        e = euclidean3d(a.atom.coords, b.atom.coords)
         if e < config.HYDROPH_DIST_MAX:
-            contact = data(bsatom=a, ligatom=b, distance=e, restype=whichrestype(a),
-                           resnr=whichresnumber(a), reschain=whichchain(a))
+            contact = data(bsatom=a.atom, bsatom_orig_idx=a.orig_idx, ligatom=b.atom, ligatom_orig_idx=b.orig_idx,
+                           distance=e, restype=whichrestype(a.atom), resnr=whichresnumber(a.atom),
+                           reschain=whichchain(a.atom))
             pairings.append(contact)
     return pairings
 
@@ -50,7 +52,7 @@ def hbonds(acceptors, donor_pairs, protisdon, typ):
     donor hydrogens and acceptor showing a distance within HBOND DIST MIN and HBOND DIST MAX
     and donor angles above HBOND_DON_ANGLE_MIN
     """
-    data = namedtuple('hbond', 'a d h distance_ah distance_ad angle type protisdon resnr '
+    data = namedtuple('hbond', 'a a_orig_idx d d_orig_idx h distance_ah distance_ad angle type protisdon resnr '
                                'restype reschain sidechain atype dtype')
     pairings = []
     for acc, don in itertools.product(acceptors, donor_pairs):
@@ -66,9 +68,10 @@ def hbonds(acceptors, donor_pairs, protisdon, typ):
                     protatom = don.d.OBAtom if protisdon else acc.a.OBAtom
                     is_sidechain_hbond = protatom.GetResidue().GetAtomProperty(protatom, 8)  # Check if sidechain atom
                     resnr = whichresnumber(don.d)if protisdon else whichresnumber(acc.a)
-                    contact = data(a=acc.a, d=don.d, h=don.h, distance_ah=dist_ah, distance_ad=dist_ad, angle=v,
-                                   type=typ, protisdon=protisdon, resnr=resnr, restype=restype, reschain=reschain,
-                                   sidechain=is_sidechain_hbond, atype=acc.a.type, dtype=don.d.type)
+                    contact = data(a=acc.a, a_orig_idx=acc.a_orig_idx, d=don.d, d_orig_idx=don.d_orig_idx, h=don.h,
+                                   distance_ah=dist_ah, distance_ad=dist_ad, angle=v, type=typ, protisdon=protisdon,
+                                   resnr=resnr, restype=restype, reschain=reschain, sidechain=is_sidechain_hbond,
+                                   atype=acc.a.type, dtype=don.d.type)
                     pairings.append(contact)
     return pairings
 
@@ -163,7 +166,7 @@ def saltbridge(poscenter, negcenter, protispos):
 
 def halogen(acceptor, donor):
     """Detect all halogen bonds of the type Y-O...X-C"""
-    data = namedtuple('halogenbond', 'acc don distance don_angle acc_angle restype '
+    data = namedtuple('halogenbond', 'acc acc_orig_idx don don_orig_idx distance don_angle acc_angle restype '
                                      'resnr reschain donortype acctype sidechain')
     pairings = []
     for acc, don in itertools.product(acceptor, donor):
@@ -177,7 +180,8 @@ def halogen(acceptor, donor):
                     < config.HALOGEN_ACC_ANGLE + config.HALOGEN_ANGLE_DEV:
                 if config.HALOGEN_DON_ANGLE - config.HALOGEN_ANGLE_DEV < don_angle \
                         < config.HALOGEN_DON_ANGLE + config.HALOGEN_ANGLE_DEV:
-                    contact = data(acc=acc, don=don, distance=dist, don_angle=don_angle, acc_angle=acc_angle,
+                    contact = data(acc=acc, acc_orig_idx=acc.o_orig_idx, don=don, don_orig_idx=don.x_orig_idx,
+                                   distance=dist, don_angle=don_angle, acc_angle=acc_angle,
                                    restype=whichrestype(acc.o), resnr=whichresnumber(acc.o),
                                    reschain=whichchain(acc.o), donortype=don.x.OBAtom.GetType(), acctype=acc.o.type,
                                    sidechain=is_sidechain_hal)
@@ -187,30 +191,30 @@ def halogen(acceptor, donor):
 
 def water_bridges(bs_hba, lig_hba, bs_hbd, lig_hbd, water):
     """Find water-bridged hydrogen bonds between ligand and protein. For now only considers bridged of first degree."""
-    data = namedtuple('waterbridge', 'a atype d dtype h water distance_aw distance_dw d_angle w_angle type '
-                                     'resnr restype reschain protisdon')
+    data = namedtuple('waterbridge', 'a a_orig_idx atype d d_orig_idx dtype h water water_orig_idx distance_aw '
+                                     'distance_dw d_angle w_angle type resnr restype reschain protisdon')
     pairings = []
     # First find all acceptor-water pairs with distance within d
     # and all donor-water pairs with distance within d and angle greater theta
     lig_aw, prot_aw, lig_dw, prot_hw = [], [], [], []
     for w in water:
         for acc1 in lig_hba:
-            dist = euclidean3d(acc1.a.coords, w.coords)
+            dist = euclidean3d(acc1.a.coords, w.oxy.coords)
             if config.WATER_BRIDGE_MINDIST <= dist <= config.WATER_BRIDGE_MAXDIST:
                 lig_aw.append((acc1, w, dist))
         for acc2 in bs_hba:
-            dist = euclidean3d(acc2.a.coords, w.coords)
+            dist = euclidean3d(acc2.a.coords, w.oxy.coords)
             if config.WATER_BRIDGE_MINDIST <= dist <= config.WATER_BRIDGE_MAXDIST:
                 prot_aw.append((acc2, w, dist))
         for don1 in lig_hbd:
-            dist = euclidean3d(don1.d.coords, w.coords)
-            d_angle = vecangle(vector(don1.h.coords, don1.d.coords), vector(don1.h.coords, w.coords))
+            dist = euclidean3d(don1.d.coords, w.oxy.coords)
+            d_angle = vecangle(vector(don1.h.coords, don1.d.coords), vector(don1.h.coords, w.oxy.coords))
             if config.WATER_BRIDGE_MINDIST <= dist <= config.WATER_BRIDGE_MAXDIST \
                     and d_angle > config.WATER_BRIDGE_THETA_MIN:
                 lig_dw.append((don1, w, dist, d_angle))
         for don2 in bs_hbd:
-            dist = euclidean3d(don2.d.coords, w.coords)
-            d_angle = vecangle(vector(don2.h.coords, don2.d.coords), vector(don2.h.coords, w.coords))
+            dist = euclidean3d(don2.d.coords, w.oxy.coords)
+            d_angle = vecangle(vector(don2.h.coords, don2.d.coords), vector(don2.h.coords, w.oxy.coords))
             if config.WATER_BRIDGE_MINDIST <= dist <= config.WATER_BRIDGE_MAXDIST \
                     and d_angle > config.WATER_BRIDGE_THETA_MIN:
                 prot_hw.append((don2, w, dist, d_angle))
@@ -218,23 +222,25 @@ def water_bridges(bs_hba, lig_hba, bs_hbd, lig_hbd, water):
     for l, p in itertools.product(lig_aw, prot_hw):
         acc, wl, distance_aw = l
         don, wd, distance_dw, d_angle = p
-        if wl == wd:  # Same water molecule and angle within omega
-            w_angle = vecangle(vector(acc.a.coords, wl.coords), vector(wl.coords, don.h.coords))
+        if wl.oxy == wd.oxy:  # Same water molecule and angle within omega
+            w_angle = vecangle(vector(acc.a.coords, wl.oxy.coords), vector(wl.oxy.coords, don.h.coords))
             if config.WATER_BRIDGE_OMEGA_MIN < w_angle < config.WATER_BRIDGE_OMEGA_MAX:
-                contact = data(a=acc.a, atype=acc.a.type, d=don.d, dtype=don.d.type, h=don.h, water=wl,
-                               distance_aw=distance_aw, distance_dw=distance_dw,
-                               d_angle=d_angle, w_angle=w_angle, type='first_deg', resnr=whichresnumber(don.d),
-                               restype=whichrestype(don.d), reschain=whichchain(don.d), protisdon=True)
+                contact = data(a=acc.a, a_orig_idx=acc.a_orig_idx, atype=acc.a.type, d=don.d, d_orig_idx=don.d_orig_idx,
+                               dtype=don.d.type, h=don.h, water=wl.oxy, water_orig_idx=wl.oxy_orig_idx,
+                               distance_aw=distance_aw, distance_dw=distance_dw, d_angle=d_angle, w_angle=w_angle,
+                               type='first_deg', resnr=whichresnumber(don.d), restype=whichrestype(don.d),
+                               reschain=whichchain(don.d), protisdon=True)
                 pairings.append(contact)
     for p, l in itertools.product(prot_aw, lig_dw):
         acc, wl, distance_aw = p
         don, wd, distance_dw, d_angle = l
-        if wl == wd:  # Same water molecule and angle within omega
-            w_angle = vecangle(vector(acc.a.coords, wl.coords), vector(wl.coords, don.h.coords))
+        if wl.oxy == wd.oxy:  # Same water molecule and angle within omega
+            w_angle = vecangle(vector(acc.a.coords, wl.oxy.coords), vector(wl.oxy.coords, don.h.coords))
             if config.WATER_BRIDGE_OMEGA_MIN < w_angle < config.WATER_BRIDGE_OMEGA_MAX:
-                contact = data(a=acc.a, atype=acc.a.type, d=don.d, dtype=don.d.type, h=don.h, water=wl,
-                               distance_aw=distance_aw, distance_dw=distance_dw, d_angle=d_angle, w_angle=w_angle,
-                               type='first_deg', resnr=whichresnumber(acc.a),
+                contact = data(a=acc.a, a_orig_idx=acc.a_orig_idx, atype=acc.a.type, d=don.d, d_orig_idx=don.d_orig_idx,
+                               dtype=don.d.type, h=don.h, water=wl.oxy, water_orig_idx=wl.oxy_orig_idx,
+                               distance_aw=distance_aw, distance_dw=distance_dw,
+                               d_angle=d_angle, w_angle=w_angle, type='first_deg', resnr=whichresnumber(acc.a),
                                restype=whichrestype(acc.a), reschain=whichchain(acc.a), protisdon=False)
                 pairings.append(contact)
     return pairings
@@ -242,17 +248,21 @@ def water_bridges(bs_hba, lig_hba, bs_hbd, lig_hbd, water):
 
 def metal_complexation(metals, metal_binding_lig, metal_binding_bs):
     """Find all metal complexes between metals and appropriate groups in both protein and ligand, as well as water"""
-    data = namedtuple('metal_complex', 'metal metal_type target target_type coordination_num distance resnr restype '
+    data = namedtuple('metal_complex', 'metal metal_orig_idx metal_type target target_orig_idx target_type '
+                                       'coordination_num distance resnr restype '
                                        'reschain location rms, geometry num_partners complexnum')
     pairings_dict = {}
     pairings = []
+    # #@todo Refactor
+    metal_to_id = {}
     for metal, target in itertools.product(metals, metal_binding_lig + metal_binding_bs):
-        distance = euclidean3d(metal.coords, target.atom.coords)
+        distance = euclidean3d(metal.m.coords, target.atom.coords)
         if distance < config.METAL_DIST_MAX:
-            if metal not in pairings_dict:
-                pairings_dict[metal] = [(target, distance), ]
+            if metal.m not in pairings_dict:
+                pairings_dict[metal.m] = [(target, distance), ]
+                metal_to_id[metal.m] = metal.m_orig_idx
             else:
-                pairings_dict[metal].append((target, distance))
+                pairings_dict[metal.m].append((target, distance))
     for cnum, metal in enumerate(pairings_dict):
         rms = 0.0
         excluded = []
@@ -374,7 +384,8 @@ def metal_complexation(metals, metal_binding_lig, metal_binding_bs):
             for contact_pair in contact_pairs:
                 target, distance = contact_pair
                 if target.atom.idx not in excluded:
-                    contact = data(metal=metal, metal_type=metal.type, target=target, target_type=target.type,
+                    contact = data(metal=metal, metal_orig_idx=metal_to_id[metal], metal_type=metal.type,
+                                   target=target, target_orig_idx=target.atom_orig_idx, target_type=target.type,
                                    coordination_num=final_coo, distance=distance, resnr=target.resnr,
                                    restype=target.restype, reschain=target.reschain, location=target.location,
                                    rms=rms, geometry=final_geom, num_partners=num_targets, complexnum=cnum + 1)

@@ -1,7 +1,7 @@
 # coding=utf-8
 """
 Protein-Ligand Interaction Profiler - Analyze and visualize protein-ligand interactions in PDB files.
-test_literature_validated.py - Unit Tests for literature-validated cases.
+test_metal_coordination.py - Unit Tests for Metal Coordination.
 Copyright 2014-2015 Sebastian Salentin
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,7 +36,7 @@ class MetalCoordinationTest(unittest.TestCase):
 
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/1rmd.pdb')
-        s = tmpmol.interaction_sets['ZN-A-119']
+        s = tmpmol.interaction_sets['ZN:A:119']
         # Coordination by three cysteines and one histidine of the protein
         metalres = [mres.restype for mres in s.metal_complexes]
         self.assertEqual(metalres.count('CYS'), 3)
@@ -52,7 +52,7 @@ class MetalCoordinationTest(unittest.TestCase):
 
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/1rla.pdb')
-        s = tmpmol.interaction_sets['MN-A-500']
+        s = tmpmol.interaction_sets['MN:A:500']
         # Coordination by one histidine, three aspartic acid residues, and one water molecule
         metalres = [mres.restype for mres in s.metal_complexes]
         self.assertEqual(metalres.count('HIS'), 1)
@@ -69,7 +69,7 @@ class MetalCoordinationTest(unittest.TestCase):
 
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/1het.pdb')
-        s = tmpmol.interaction_sets['ZN-A-401']
+        s = tmpmol.interaction_sets['ZN:A:401']
         # Coordination by four cysteines
         metalres = [mres.restype + str(mres.resnr) for mres in s.metal_complexes]
         self.assertEqual(set(metalres), {'CYS97', 'CYS100', 'CYS103', 'CYS111'})
@@ -84,7 +84,7 @@ class MetalCoordinationTest(unittest.TestCase):
 
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/1vfy.pdb')
-        s = tmpmol.interaction_sets['ZN-A-300']
+        s = tmpmol.interaction_sets['ZN:A:300']
         # Coordination by four cysteines
         metalres = [mres.restype for mres in s.metal_complexes]
         self.assertEqual(set(metalres), {'CYS'})
@@ -99,7 +99,7 @@ class MetalCoordinationTest(unittest.TestCase):
 
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/2pvb.pdb')
-        s = tmpmol.interaction_sets['CA-A-110']
+        s = tmpmol.interaction_sets['CA:A:110']
         # Ca atom with square pyramidal geometry (coordination number 5)
         self.assertEqual(s.metal_complexes[0].coordination_num, 5)
         self.assertEqual(s.metal_complexes[0].geometry, 'square.pyramidal')
@@ -111,7 +111,7 @@ class MetalCoordinationTest(unittest.TestCase):
 
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/2q8q.pdb')
-        s = tmpmol.interaction_sets['HEM-A-300']
+        s = tmpmol.interaction_sets['HEM:A:300']
         # Coordination by four nitrogens of heme itself and one additional histidine from the protein
         metalres = [mres.restype for mres in s.metal_complexes]
         self.assertEqual(metalres.count('LIG'), 4)

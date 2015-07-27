@@ -35,7 +35,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/1eve.pdb')
-        s = tmpmol.interaction_sets['E20-A-2001']
+        s = tmpmol.interaction_sets['E20:A:2001']
         # Aromatic stacking with Trp84 and Trp279
         pistackres = {pistack.resnr for pistack in s.pistacking}
         self.assertTrue({84, 279}.issubset(pistackres))
@@ -49,7 +49,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/1h2t.pdb')
-        s = tmpmol.interaction_sets['7MG-Z-1152']
+        s = tmpmol.interaction_sets['7MG:Z:1152']
         # Sandwiched pi-stacking involving Tyr20 and Tyr43
         pistackres = {pistack.resnr for pistack in s.pistacking}
         self.assertTrue({20, 43}.issubset(pistackres))
@@ -66,7 +66,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/3pxf.pdb')
-        s = tmpmol.interaction_sets['2AN-A-305']
+        s = tmpmol.interaction_sets['2AN:A:305']
         # Hydrogen bonding of Asp145 and Phe146
         hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
         self.assertTrue({145, 146}.issubset(hbonds))
@@ -76,7 +76,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         # Naphtalene positioned between Leu55 and Lys56, indicating hydrophobic interactions
         hydroph = {hydroph.resnr for hydroph in s.hydrophobic_contacts}
         self.assertTrue({55, 56}.issubset(hydroph))
-        s = tmpmol.interaction_sets['2AN-A-304']
+        s = tmpmol.interaction_sets['2AN:A:304']
         # Salt bridges to sulfonate group by Lys56 and His71
         saltb = {saltbridge.resnr for saltbridge in s.saltbridge_lneg}
         self.assertTrue({56, 71}.issubset(saltb))
@@ -91,7 +91,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/2reg.pdb')
-        s = tmpmol.interaction_sets['CHT-A-1']
+        s = tmpmol.interaction_sets['CHT:A:1']
         # Cation-pi interactions with Trp43, Trp90, Trp205, and Tyr119
         picat = {pication.resnr for pication in s.pication_paro}
         self.assertEqual({43, 90, 205, 119}, picat)
@@ -105,7 +105,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/1osn.pdb')
-        s = tmpmol.interaction_sets['BVP-A-500']
+        s = tmpmol.interaction_sets['BVP:A:500']
         # Sandwiched pi-stacking involving Phe93 and Phe139
         pistackres = {pistack.resnr for pistack in s.pistacking}
         self.assertTrue({93, 139}.issubset(pistackres))
@@ -120,7 +120,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/2w0s.pdb')
-        s = tmpmol.interaction_sets['BVP-B-1207']
+        s = tmpmol.interaction_sets['BVP:B:1207']
         # Hydrogen bonding of Tyr101 and Arg72
         hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
         self.assertTrue({101, 72}.issubset(hbonds))
@@ -140,7 +140,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/1vsn.pdb')
-        s = tmpmol.interaction_sets['NFT-A-283']
+        s = tmpmol.interaction_sets['NFT:A:283']
         # Hydrogen bonding to Gly66
         hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
         self.assertTrue({66}.issubset(hbonds))
@@ -151,7 +151,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/1p5e.pdb')
-        s = tmpmol.interaction_sets['TBS-A-301']
+        s = tmpmol.interaction_sets['TBS:A:301']
         # Halogen Bonding of Ile10 and Leu83
         halogens = {halogen.resnr for halogen in s.halogen_bonds}
         self.assertTrue({10, 83}.issubset(halogens))
@@ -163,7 +163,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/1acj.pdb')
-        s = tmpmol.interaction_sets['THA-A-999']
+        s = tmpmol.interaction_sets['THA:A:999']
         # pi-stacking interaction with Phe330 and Trp84
         pistackres = {pistack.resnr for pistack in s.pistacking}
         self.assertTrue({330, 84}.issubset(pistackres))
@@ -175,7 +175,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/2zoz.pdb')
-        s = tmpmol.interaction_sets['ET-B-184']
+        s = tmpmol.interaction_sets['ET:B:184']
         # pi-stacking interaction with Trp63 and Phe147
         pistackres = {pistack.resnr for pistack in s.pistacking}
         self.assertTrue({147}.issubset(pistackres))  # Trp 63!!
@@ -191,7 +191,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/1xdn.pdb')
-        s = tmpmol.interaction_sets['ATP-A-501']
+        s = tmpmol.interaction_sets['ATP:A:501']
         # Hydrogen bonds to Arg111, Ile61 (backbone), Asn92, Val88, Lys87 and Glu86#
         hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
         self.assertTrue({111, 61, 92, 88, 87}.issubset(hbonds))
@@ -210,7 +210,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/1bma.pdb')
-        s = tmpmol.interaction_sets['0QH-A-256']
+        s = tmpmol.interaction_sets['0QH:A:256']
         # Hydrogen bonds to val224 and Gln200
         hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
         self.assertTrue({224, 200}.issubset(hbonds))
@@ -230,7 +230,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/4rao.pdb')
-        s = tmpmol.interaction_sets['3L7-B-301']
+        s = tmpmol.interaction_sets['3L7:B:301']
         # Hydrogen bonds to Val187, Lys165, Thr141, Lys140, Gly139, Thr138, Asp137
         hbonds = {hbond.resnr for hbond in s.hbonds_pdon}  # res nr 100, 68, 69 and 199 in alternative conformation,
         self.assertTrue({137, 138, 139, 140, 141, 165, 187}.issubset(hbonds))
@@ -247,7 +247,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/4qnb.pdb')
-        s = tmpmol.interaction_sets['1B0-A-301']
+        s = tmpmol.interaction_sets['1B0:A:301']
         # Hydrogen bonds to Asn57 and Lys70
         hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
         self.assertTrue({57, 70}.issubset(hbonds))
@@ -261,7 +261,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/4kya.pdb')
-        s = tmpmol.interaction_sets['1UG-E-702']
+        s = tmpmol.interaction_sets['1UG:E:702']
         # Hydrogen bonds to Ala609
         hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
         self.assertTrue({609}.issubset(hbonds))
@@ -282,7 +282,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/1n7g.pdb')
-        s = tmpmol.interaction_sets['NDP-A-701']
+        s = tmpmol.interaction_sets['NDP:A:701']
         # Hydrogen bonds to Thr37, Gly38, Gln39, Asp40,  Arg60, Leu92, Asp91, Ser63, Leu92, Ala115, Ser117,
         # Tyr128, Tyr185, Lys189, His215 and Arg220
         # Publication give the Prediction for Asp91 as hydrogen bond, when this contains two acceptor atoms.
@@ -307,7 +307,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/4alw.pdb')
-        s = tmpmol.interaction_sets['HY7-A-1308']
+        s = tmpmol.interaction_sets['HY7:A:1308']
         # Hydrogen bonds to Asp186
         hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
         self.assertTrue({186}.issubset(hbonds))
@@ -322,7 +322,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/3o1h.pdb')
-        s = tmpmol.interaction_sets['TMO-B-1']
+        s = tmpmol.interaction_sets['TMO:B:1']
         # Hydrogen bonds to Trp45
         hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
         self.assertTrue({45}.issubset(hbonds))
@@ -337,7 +337,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/3thy.pdb')
-        s = tmpmol.interaction_sets['ADP-A-935']
+        s = tmpmol.interaction_sets['ADP:A:935']
         # Saltbridge to His295 and Lys675
         saltb = {saltbridge.resnr for saltbridge in s.saltbridge_lneg}
         self.assertTrue({675}.issubset(saltb))
@@ -351,7 +351,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/3tah.pdb')
-        s = tmpmol.interaction_sets['BGO-A-300']
+        s = tmpmol.interaction_sets['BGO:A:300']
         # Hydrogen bonds to Ala11, Lys14, Thr15, Ser16, Asp113, Met114, Ala143 and Asp113
         hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
         self.assertTrue({11, 13, 14, 15, 16, 113, 114, 143, 113}.issubset(hbonds))
@@ -367,7 +367,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/3r0t.pdb')
-        s = tmpmol.interaction_sets['FU9-A-338']
+        s = tmpmol.interaction_sets['FU9:A:338']
         # Hydrogen bonds to Val116
         hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
         self.assertTrue({116}.issubset(hbonds))
@@ -391,7 +391,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/1aku.pdb')
-        s = tmpmol.interaction_sets['FMN-A-150']
+        s = tmpmol.interaction_sets['FMN:A:150']
         # Hydrogen bonds to Tht59 and Trp60
         hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
         self.assertTrue({59, 60}.issubset(hbonds))
@@ -413,7 +413,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/4pjt.pdb')
-        s = tmpmol.interaction_sets['2YQ-D-1104']
+        s = tmpmol.interaction_sets['2YQ:D:1104']
         # Hydrogen bonds to Gly863
         hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
         self.assertTrue({863}.issubset(hbonds))
@@ -427,7 +427,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/1bju.pdb')
-        s = tmpmol.interaction_sets['GP6-A-910']
+        s = tmpmol.interaction_sets['GP6:A:910']
         #@todo Publication show hydrogen bond interactions for Gly219
         # Hydrogen bonds to Ser190, Ser195, Gly219 and Asp189
         hbonds = {hbond.resnr for hbond in s.hbonds_pdon+s.hbonds_ldon}
@@ -449,7 +449,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/4agl.pdb')
-        s = tmpmol.interaction_sets['P84-A-400']
+        s = tmpmol.interaction_sets['P84:A:400']
         # Water bridges to Val147
         waterbridges = {wb.resnr for wb in s.water_bridges}
         self.assertTrue({147}.issubset(waterbridges))
@@ -467,7 +467,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/2efj.pdb')
-        s = tmpmol.interaction_sets['37T-A-502']
+        s = tmpmol.interaction_sets['37T:A:502']
         # Hydrogen bonds to Trp161, Ser237
         hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
         self.assertTrue({161, 237}.issubset(hbonds))
@@ -482,7 +482,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/2iuz.pdb')
-        s = tmpmol.interaction_sets['D1H-A-1440']
+        s = tmpmol.interaction_sets['D1H:A:1440']
         # Hydrogen bonds to Trp137, Trp184
         hbonds = {hbond.resnr for hbond in s.hbonds_pdon}  # res nr 52 mentioned in alternative conformation, not considered
         self.assertTrue({137, 384}.issubset(hbonds))
@@ -500,7 +500,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/3shy.pdb')
-        s = tmpmol.interaction_sets['5FO-A-1']
+        s = tmpmol.interaction_sets['5FO:A:1']
         # Hydrogen bonds to Gln817
         hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
         self.assertTrue({817}.issubset(hbonds))
@@ -521,7 +521,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/1ay8.pdb')
-        s = tmpmol.interaction_sets['PLP-A-413']
+        s = tmpmol.interaction_sets['PLP:A:413']
         # Hydrogen bonds to Gly108, Thr109, Asn194 and Ser257
         hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
         self.assertTrue({108, 109, 194, 257}.issubset(hbonds))
@@ -539,7 +539,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/4rdl.pdb')
-        s = tmpmol.interaction_sets['FUC-A-601']  # Instead of FUC-A-604 (sugar representative)
+        s = tmpmol.interaction_sets['FUC:A:601']  # Instead of FUC-A-604 (sugar representative)
         # Water bridges to Asn395
         waterbridges = {wb.resnr for wb in s.water_bridges}
         self.assertTrue({395}.issubset(waterbridges))
@@ -561,7 +561,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/1hii.pdb')
-        s = tmpmol.interaction_sets['C20-B-101']
+        s = tmpmol.interaction_sets['C20:B:101']
         # Water bridges
         waterbridges = {str(wb.resnr)+wb.reschain for wb in s.water_bridges}
         self.assertTrue({'50A', '50B'}.issubset(waterbridges))  # Bridging Ile-B50 and Ile-A50 with ligand
@@ -578,7 +578,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/1hvi.pdb')
-        s = tmpmol.interaction_sets['A77-A-800']
+        s = tmpmol.interaction_sets['A77:A:800']
         # Water bridges
         waterbridges = {str(wb.resnr)+wb.reschain for wb in s.water_bridges}
         # #@todo Water bridge with 50B not detected
@@ -598,7 +598,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/3og7.pdb')
-        s = tmpmol.interaction_sets['032-A-1']
+        s = tmpmol.interaction_sets['032:A:1']
         # Hydrogen bonds
         hbonds = {str(hbond.resnr)+hbond.reschain for hbond in s.hbonds_pdon+s.hbonds_ldon}
         self.assertTrue({'594A', '530A'}.issubset(hbonds))
