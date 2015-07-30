@@ -51,7 +51,7 @@ pistack_info = namedtuple('pistack_info', 'proteinring_atoms, proteinring_center
 pication_info = namedtuple('pication_info', 'ring_center charge_center ring_atoms charge_atoms, protcharged')
 sbridge_info = namedtuple('sbridge_info', 'positive_atoms negative_atoms positive_center negative_center protispos')
 wbridge_info = namedtuple('wbridge_info', 'don_id acc_id water_id protisdon')
-metal_info = namedtuple('metal_info', 'metal_id, target_id')
+metal_info = namedtuple('metal_info', 'metal_id, target_id location')
 
 # External libraries
 import lxml.etree as et
@@ -204,7 +204,7 @@ def process_pdb(pdbfile, outpath):
 
         # Pi-cation interactions
         new_complex.pication = [pication_info(ring_center=picat.ring.center,
-                                              charge_center=picat.ring.center,
+                                              charge_center=picat.charge.center,
                                               ring_atoms=picat.ring.atoms_orig_idx,
                                               charge_atoms=picat.charge.atoms_orig_idx,
                                               protcharged=picat.protcharged)
@@ -226,7 +226,8 @@ def process_pdb(pdbfile, outpath):
 
         # Metal Complexes
         new_complex.metal_complexes = [metal_info(metal_id=metalc.metal_orig_idx,
-                                                  target_id=metalc.target_orig_idx) for metalc in pli.metal_complexes]
+                                                  target_id=metalc.target_orig_idx,
+                                                  location=metalc.location) for metalc in pli.metal_complexes]
 
         complexes.append(new_complex)
 

@@ -315,14 +315,14 @@ def visualize_in_pymol(plcomplex):
     if not len(plcomplex.metal_complexes) == 0:
         cmd.select('Metal-M', 'id %s' % metal_ids_str)
         for metal_complex in plcomplex.metal_complexes:
-            cmd.select('tmp_m', 'id %i' % metal_complex.metal_orig_idx)
-            cmd.select('tmp_t', 'id %i' % metal_complex.target_orig_idx)
+            cmd.select('tmp_m', 'id %i' % metal_complex.metal_id)
+            cmd.select('tmp_t', 'id %i' % metal_complex.target_id)
             if metal_complex.location == 'water':
-                cmd.select('Metal-W', 'Metal-W or id %s' % metal_complex.target_orig_idx)
+                cmd.select('Metal-W', 'Metal-W or id %s' % metal_complex.target_id)
             if metal_complex.location.startswith('protein'):
-                cmd.select('Metal-P', 'Metal-P or id %s' % metal_complex.target_orig_idx)
+                cmd.select('Metal-P', 'Metal-P or id %s' % metal_complex.target_id)
             if metal_complex.location == 'ligand':
-                cmd.select('Metal-L', 'Metal-L or id %s' % metal_complex.target_orig_idx)
+                cmd.select('Metal-L', 'Metal-L or id %s' % metal_complex.target_id)
             cmd.distance('MetalComplexes', 'tmp_m', 'tmp_t')
             cmd.delete('tmp_m or tmp_t')
     if object_exists('MetalComplexes'):
