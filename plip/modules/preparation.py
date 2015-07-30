@@ -838,10 +838,12 @@ class PDBComplex:
         self.output_path = '/tmp'
         self.pymol_name = None
         self.modres = set()
+        self.resis = []
         self.altconf = []  # Atom idx of atoms with alternate conformations
         self.covalent = []  # Covalent linkages between ligands and protein residues/other ligands
         self.excluded = []  # Excluded ligands
         self.Mapper = Mapper()
+        self.ligand = []
 
     def load_pdb(self, pdbpath):
         """Loads a pdb file with protein AND ligand(s), separates and prepares them."""
@@ -869,14 +871,13 @@ class PDBComplex:
             self.atoms[atm.idx] = atm
 
         # Extract and prepare ligands
-        ligands, excluded = getligs(self.protcomplex, self.altconf, self.modres, self.covalent, self.Mapper)
-        self.excluded = excluded
-        if len(excluded) != 0:
-            message("Excluded molecules as ligands: %s\n" % ','.join([lig for lig in excluded]))
+        self.ligands, self.excluded = getligs(self.protcomplex, self.altconf, self.modres, self.covalent, self.Mapper)
+        if len(self.excluded) != 0:
+            message("Excluded molecules as ligands: %s\n" % ','.join([lig for lig in self.excluded]))
 
-        resis = [obres for obres in pybel.ob.OBResidueIter(self.protcomplex.OBMol) if obres.GetResidueProperty(0)]
+        self.resis = [obres for obres in pybel.ob.OBResidueIter(self.protcomplex.OBMol) if obres.GetResidueProperty(0)]
 
-        num_ligs = len(ligands)
+        num_ligs = len(self.ligands)
         if num_ligs == 1:
             message("Analyzing one ligand...\n")
         elif num_ligs > 1:
@@ -884,50 +885,52 @@ class PDBComplex:
         else:
             message("Structure contains no ligands.\n")
 
-        for ligand in ligands:
-            single_sites = []
-            for member in ligand.members:
-                single_sites.append(':'.join([str(x) for x in member]))
-            site = ' + '.join(single_sites)
-            site = site if not len(site) > 20 else site[:20] + '...'
-            longname = ligand.longname if not len(ligand.longname) > 20 else ligand.longname[:20] + '...'
-            ligtype = 'Unspecified type' if ligand.type == 'UNSPECIFIED' else ligand.type
-            ligtext = "\n%s [%s] -- %s" % (longname, ligtype, site)
-            any_in_biolip = len(set([x[0] for x in ligand.members]).intersection(config.biolip_list)) != 0
-            if ligtype not in ['POLYMER', 'DNA', 'ION', 'DNA+ION', 'RNA+ION', 'SMALLMOLECULE+ION'] and any_in_biolip:
-                ligtext += ' (possible artifact/unspecific binder)'
-            message(ligtext)
-            message('\n' + '-' * len(ligtext) + '\n')
+    def characterize_complex(self, ligand):
+        """Handles all basic functions for characterizing the interactions for one ligand"""
 
-            lig_obj = Ligand(self, ligand)
-            cutoff = lig_obj.max_dist_to_center + config.BS_DIST
-            bs_res = self.extract_bs(cutoff, lig_obj.centroid, resis)
-            # Get a list of all atoms belonging to the binding site, search by idx
-            bs_atoms = [self.atoms[idx] for idx in [i for i in self.atoms.keys()
-                                                    if self.atoms[i].OBAtom.GetResidue().GetIdx() in bs_res]
-                        if idx in self.Mapper.proteinmap and self.Mapper.mapid(idx, mtype='protein') not in self.altconf]
-            bs_atoms_refined = []
+        single_sites = []
+        for member in ligand.members:
+            single_sites.append(':'.join([str(x) for x in member]))
+        site = ' + '.join(single_sites)
+        site = site if not len(site) > 20 else site[:20] + '...'
+        longname = ligand.longname if not len(ligand.longname) > 20 else ligand.longname[:20] + '...'
+        ligtype = 'Unspecified type' if ligand.type == 'UNSPECIFIED' else ligand.type
+        ligtext = "\n%s [%s] -- %s" % (longname, ligtype, site)
+        any_in_biolip = len(set([x[0] for x in ligand.members]).intersection(config.biolip_list)) != 0
+        if ligtype not in ['POLYMER', 'DNA', 'ION', 'DNA+ION', 'RNA+ION', 'SMALLMOLECULE+ION'] and any_in_biolip:
+            ligtext += ' (possible artifact/unspecific binder)'
+        message(ligtext)
+        message('\n' + '-' * len(ligtext) + '\n')
 
-            # Create hash with BSRES -> (MINDIST_TO_LIG, AA_TYPE)
-            # and refine binding site atom selection with exact threshold
-            min_dist = {}
-            for r in bs_atoms:
-                bs_res_id = ''.join([str(whichresnumber(r)), whichchain(r)])
-                for l in ligand.mol.atoms:
-                    distance = euclidean3d(r.coords, l.coords)
-                    if bs_res_id not in min_dist:
-                        min_dist[bs_res_id] = (distance, whichrestype(r))
-                    elif min_dist[bs_res_id][0] > distance:
-                        min_dist[bs_res_id] = (distance, whichrestype(r))
-                    if distance <= config.BS_DIST and r not in bs_atoms_refined:
-                        bs_atoms_refined.append(r)
-            num_bs_atoms = len(bs_atoms_refined)
-            message('Binding site atoms in vicinity (%.1f A max. dist: %i).\n' % (config.BS_DIST, num_bs_atoms),
-                    indent=True)
+        lig_obj = Ligand(self, ligand)
+        cutoff = lig_obj.max_dist_to_center + config.BS_DIST
+        bs_res = self.extract_bs(cutoff, lig_obj.centroid, self.resis)
+        # Get a list of all atoms belonging to the binding site, search by idx
+        bs_atoms = [self.atoms[idx] for idx in [i for i in self.atoms.keys()
+                                                if self.atoms[i].OBAtom.GetResidue().GetIdx() in bs_res]
+                    if idx in self.Mapper.proteinmap and self.Mapper.mapid(idx, mtype='protein') not in self.altconf]
+        bs_atoms_refined = []
 
-            bs_obj = BindingSite(bs_atoms_refined, self.protcomplex, self, self.altconf, min_dist, self.Mapper)
-            pli_obj = PLInteraction(lig_obj, bs_obj, self)
-            self.interaction_sets[ligand.mol.title] = pli_obj
+        # Create hash with BSRES -> (MINDIST_TO_LIG, AA_TYPE)
+        # and refine binding site atom selection with exact threshold
+        min_dist = {}
+        for r in bs_atoms:
+            bs_res_id = ''.join([str(whichresnumber(r)), whichchain(r)])
+            for l in ligand.mol.atoms:
+                distance = euclidean3d(r.coords, l.coords)
+                if bs_res_id not in min_dist:
+                    min_dist[bs_res_id] = (distance, whichrestype(r))
+                elif min_dist[bs_res_id][0] > distance:
+                    min_dist[bs_res_id] = (distance, whichrestype(r))
+                if distance <= config.BS_DIST and r not in bs_atoms_refined:
+                    bs_atoms_refined.append(r)
+        num_bs_atoms = len(bs_atoms_refined)
+        message('Binding site atoms in vicinity (%.1f A max. dist: %i).\n' % (config.BS_DIST, num_bs_atoms),
+                indent=True)
+
+        bs_obj = BindingSite(bs_atoms_refined, self.protcomplex, self, self.altconf, min_dist, self.Mapper)
+        pli_obj = PLInteraction(lig_obj, bs_obj, self)
+        self.interaction_sets[ligand.mol.title] = pli_obj
 
     def extract_bs(self, cutoff, ligcentroid, resis):
         """Return list of ids from residues belonging to the binding site"""

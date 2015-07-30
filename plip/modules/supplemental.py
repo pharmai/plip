@@ -1,7 +1,7 @@
 """
 Protein-Ligand Interaction Profiler - Analyze and visualize protein-ligand interactions in PDB files.
 supplemental.py - Supplemental functions for PLIP analysis.
-Copyright 2014-2015 Sebastian Salentin
+Copyright 2014-2015 Sebastian Salentin, Joachim Haupt
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -418,7 +418,6 @@ def getligs(mol, altconf, modres, covalent, mapper):
                 ligtype = 'DNA'
             else:
                 ligtype = "POLYMER"
-
         else:
             ligtype = 'SMALLMOLECULE'
 
@@ -537,7 +536,7 @@ def readmol(path):
             if sformat == 'mmcif':
                 message('[EXPERIMENTAL] Input is mmCIF file. Most features do currently not work with this format.\n')
             return pybel.Molecule(mol), sformat
-    sysexit(4, 'No valid PDB or PDBQT file provided.')
+    sysexit(4, 'No valid file format provided.')
 
 
 def sysexit(code, msg):
