@@ -67,24 +67,28 @@ class TextOutput:
                                'PROTISDON', 'DONORIDX', 'DONORTYPE', 'ACCEPTORIDX', 'ACCEPTORTYPE', 'LIGCOO', 'PROTCOO')
         self.hbond_info = []
         for hbond in self.complex.hbonds_pdon + self.complex.hbonds_ldon:
+            ligatom, protatom = (hbond.a, hbond.d) if hbond.protisdon else (hbond.d, hbond.a)
             self.hbond_info.append((hbond.resnr, hbond.restype, hbond.reschain, hbond.sidechain,
                                     '%.2f' % hbond.distance_ah, '%.2f' % hbond.distance_ad, '%.2f' % hbond.angle,
                                     hbond.protisdon, hbond.d_orig_idx, hbond.dtype, hbond.a_orig_idx, hbond.atype,
-                                    hbond.a.coords, hbond.d.coords))
+                                    ligatom.coords, protatom.coords))
 
         #################
         # WATER-BRIDGES #
         #################
 
         self.waterbridge_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'DIST_A-W', 'DIST_D-W', 'DON_ANGLE', 'WATER_ANGLE',
-                                     'PROTISDON', 'DONOR_IDX', 'DONORTYPE', 'ACCEPTOR_IDX', 'ACCEPTORTYPE', 'WATER_IDX')
+                                     'PROTISDON', 'DONOR_IDX', 'DONORTYPE', 'ACCEPTOR_IDX', 'ACCEPTORTYPE', 'WATER_IDX',
+                                     'LIGCOO', 'PROTCOO', 'WATERCOO')
+        # The coordinate format is an exception here, since the interaction is not only between ligand and protein
         self.waterbridge_info = []
         for wbridge in self.complex.water_bridges:
+            lig, prot = (wbridge.a, wbridge.d) if wbridge.protisdon else (wbridge.d, wbridge.a)
             self.waterbridge_info.append((wbridge.resnr, wbridge.restype, wbridge.reschain,
                                           '%.2f' % wbridge.distance_aw, '%.2f' % wbridge.distance_dw,
                                           '%.2f' % wbridge.d_angle, '%.2f' % wbridge.w_angle, wbridge.protisdon,
                                           wbridge.d_orig_idx, wbridge.dtype, wbridge.a_orig_idx, wbridge.atype,
-                                          wbridge.water_orig_idx))
+                                          wbridge.water_orig_idx, lig.coords, prot.coords, wbridge.water.coords))
 
         ################
         # SALT BRIDGES #
@@ -158,12 +162,15 @@ class TextOutput:
         ###################
 
         self.metal_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'METAL_IDX', 'METAL_TYPE', 'TARGET_IDX', 'TARGET_TYPE',
-                               'COORDINATION', 'DIST', 'LOCATION', 'RMS', 'GEOMETRY', 'COMPLEXNUM')
+                               'COORDINATION', 'DIST', 'LOCATION', 'RMS', 'GEOMETRY', 'COMPLEXNUM', 'METALCOO',
+                               'TARGETCOO')
         self.metal_info = []
+        # Coordinate format here is non-standard since the interaction partner can be either ligand or protein
         for m in self.complex.metal_complexes:
             self.metal_info.append((m.resnr, m.restype, m.reschain, m.metal_orig_idx, m.metal_type,
                                     m.target_orig_idx, m.target_type, m.coordination_num, '%.2f' % m.distance,
-                                    m.location, '%.2f' % m.rms, m.geometry, str(m.complexnum)))
+                                    m.location, '%.2f' % m.rms, m.geometry, str(m.complexnum), m.metal.coords,
+                                    m.target.atom.coords))
 
     def write_section(self, name, features, info, f):
         """Provides formatting for one section (e.g. hydrogen bonds)"""
@@ -323,7 +330,7 @@ class TextOutput:
                         for k, atm_idx in enumerate(feature.split(',')):
                             idx = et.SubElement(feat, 'idx', id=str(k + 1))
                             idx.text = str(atm_idx)
-                    elif features[i] in ['LIGCOO', 'PROTCOO']:
+                    elif features[i].endswith('COO'):
                         feat = et.SubElement(new_contact, features[i].lower())
                         xc, yc, zc = feature
                         xcoo = et.SubElement(feat, 'x')

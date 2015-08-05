@@ -854,7 +854,7 @@ class PDBComplex:
         # Counting is different from PDB if TER records present
         self.Mapper.proteinmap, self.modres, self.covalent, self.altconf = parse_pdb(read(pdbpath).readlines())
 
-        # #@todo mmcfif currently unsupported
+        # #@todo mmcif currently unsupported
         if self.filetype == 'mmcif':
             self.modres, self.covalent, self.altconf = [], [], []
             # #@todo New function for parsing mmcif files

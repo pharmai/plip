@@ -103,7 +103,9 @@ def process_pdb(pdbfile, outpath):
     mol = PDBComplex()
     mol.output_path = outpath
     mol.load_pdb(pdbfile)
+    # #@todo Offers possibility for filter function from command line (by ligand chain, position, hetid)
     for ligand in mol.ligands:
+        # #@todo e.g. if not ligand.hetid in config.BLACKLIST and is in config.WHITELIST
         mol.characterize_complex(ligand)
     excluded = mol.excluded
 

@@ -30,6 +30,9 @@ class TestMapping(unittest.TestCase):
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/1vsn.pdb')
         bsid = 'NFT:A:283'
+        for ligand in tmpmol.ligands:
+            if ':'.join([ligand.hetid, ligand.chain, str(ligand.position)]) == bsid:
+                tmpmol.characterize_complex(ligand)
         s = tmpmol.interaction_sets[bsid]
         for contact in s.hydrophobic_contacts:
             if contact.restype == 'ALA' and contact.resnr == 133:

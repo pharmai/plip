@@ -452,11 +452,16 @@ def visualize_in_pymol(plcomplex):
     cmd.show('sticks', '%sCartoon' % pdbid)
     cmd.set('stick_transparency', 1, '%sCartoon' % pdbid)
     # Set view. Zoom on the ligand (and its pliprofiler)
+
+    cmd.center(ligname)
+    cmd.orient(ligname)
+    cmd.turn('x', 110)  # If the ligand is aligned with the longest axis, aromatic rings are hidden
     if 'AllBSRes' in cmd.get_names("selections"):
-        cmd.zoom('%s or AllBSRes' % ligname)
+        cmd.zoom('%s or AllBSRes' % ligname, 3)
     else:
         if object_exists(ligname):
             cmd.zoom(ligname, 3)
+
     cmd.set('sphere_scale', 0.2, 'resn HOH')  # Needs to be done here because of the copy made
     cmd.set('sphere_transparency', 0.4, '!resn HOH')
     cmd.origin(ligname)
