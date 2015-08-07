@@ -478,12 +478,106 @@ def getligs(mol, altconf, modres, covalent, mapper):
     return ligands, excluded
 
 
+def getligs_single(mol, altconf, modres, mapper):
+    """Get all ligands from a PDB file (break up composite!) and prepare them for analysis."""
+    #############################
+    # Read in file and get name #
+    #############################
+
+    data = namedtuple('ligand', 'mol hetid chain position water members longname type')
+    ligands = []
+
+    #########################
+    # Filtering using lists #
+    #########################
+
+    all_res1 = [o for o in pybel.ob.OBResidueIter(mol.OBMol) if not (o.GetResidueProperty(9)
+                                                                     or o.GetResidueProperty(0))]
+    all_lignames = set([a.GetName() for a in all_res1])
+
+    water = [o for o in pybel.ob.OBResidueIter(mol.OBMol) if o.GetResidueProperty(9)]
+    all_res2 = [a for a in all_res1 if is_lig(a.GetName()) and a.GetName() not in modres]  # Filter out non-ligands
+
+    ############################################
+    # Filtering by counting and artifacts list #
+    ############################################
+    artifacts = []
+    unique_ligs = set(a.GetName() for a in all_res2)
+    for ulig in unique_ligs:
+        # Discard if appearing 15 times or more and is possible artifact
+        if ulig in config.biolip_list and [a.GetName() for a in all_res2].count(ulig) >= 15:
+            artifacts.append(ulig)
+
+    all_res3 = [a for a in all_res2 if a.GetName() not in artifacts]
+    lignames = list(set([a.GetName() for a in all_res3]))
+
+    ###################
+    # Extract ligands #
+    ###################
+    for lgnd in all_res3:  # iterate over all ligands
+        members = [(lgnd.GetName(), lgnd.GetChain(), int32_to_negative(lgnd.GetNum()))]
+        rname, rchain, rnum = sorted(members)[0]  # representative name, chain, and number
+        ordered_members = sorted(members, key=lambda x: (x[1], x[2]))
+        longname = '-'.join([x[0] for x in ordered_members])
+        if lgnd.GetName() in config.METAL_IONS:
+            ligtype = 'ION'
+        else:
+            ligtype = 'SMALLMOLECULE/FRAGMENT'
+        hetatoms = set()
+        hetatoms_res = set([(obatom.GetIdx(), obatom) for obatom in pybel.ob.OBResidueAtomIter(lgnd)
+                            if not obatom.IsHydrogen()])
+
+        # Remove alternative conformations
+        hetatoms_res = set([atm for atm in hetatoms_res
+                            if not mapper.mapid(atm[0], mtype='protein', to='internal') in altconf])
+        hetatoms.update(hetatoms_res)
+        if len(hetatoms) == 0:
+            continue
+        hetatoms = dict(hetatoms)  # make it a dict with idx as key and OBAtom as value
+        lig = pybel.ob.OBMol()  # new ligand mol
+        neighbours = dict()
+        for obatom in hetatoms.values():  # iterate over atom objects
+            idx = obatom.GetIdx()
+            lig.AddAtom(obatom)
+            # ids of all neighbours of obatom
+            neighbours[idx] = set([neighbour_atom.GetIdx() for neighbour_atom
+                                   in pybel.ob.OBAtomAtomIter(obatom)]) & set(hetatoms.keys())
+
+        ##############################################################
+        # map the old atom idx of OBMol to the new idx of the ligand #
+        ##############################################################
+
+        newidx = dict(zip(hetatoms.keys(), [obatom.GetIdx() for obatom in pybel.ob.OBMolAtomIter(lig)]))
+        mapold = dict(zip(newidx.values(), newidx))
+        # copy the bonds
+        for obatom in hetatoms:
+            for neighbour_atom in neighbours[obatom]:
+                bond = hetatoms[obatom].GetBond(hetatoms[neighbour_atom])
+                lig.AddBond(newidx[obatom], newidx[neighbour_atom], bond.GetBondOrder())
+        lig = pybel.Molecule(lig)
+        # For kmers, the representative ids are chosen (first residue of kmer)
+        lig.data.update({'Name': rname,
+                         'Chain': rchain,
+                         'ResNr': rnum})
+
+        # Check if a negative residue number is represented as a 32 bit integer
+        if rnum > 10 ** 5:
+            rnum = int32_to_negative(rnum)
+
+        lig.title = ':'.join((rname, rchain, str(rnum)))
+        mapper.ligandmaps[lig.title] = mapold
+        ligands.append(data(mol=lig, hetid=rname, chain=rchain, position=rnum, water=water,
+                            members=members, longname=longname, type=ligtype))
+    excluded = sorted(list(all_lignames.difference(set(lignames))))
+    return ligands, excluded
+
+
 def int32_to_negative(int32):
     """Checks if a suspicious number (e.g. ligand position) is in fact a negative number represented as a
     32 bit integer and returns the actual number.
     """
     dct = {}
-    for i in range(-100, -1):
+    for i in range(-1000, -1):
         dct[np.uint32(i)] = i
     if int32 in dct:
         return dct[int32]

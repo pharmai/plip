@@ -23,6 +23,7 @@ TXT = False
 PICS = False
 PYMOL = False
 OUTPATH = './'
+BREAKCOMPOSITE = False
 
 # Configuration file for Protein-Ligand Interaction Profiler (PLIP)
 # Set thresholds for detection of interactions

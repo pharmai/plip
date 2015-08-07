@@ -232,6 +232,10 @@ if __name__ == '__main__':
                         help="Set maximum number of main threads (number of binding sites processed simultaneously)."
                              "If not set, PLIP uses all available CPUs if possible.",
                         type=int)
+    parser.add_argument("--breakcomposite", dest="breakcomposite", default=False,
+                        help="Don't combine ligand fragments into with covalent bonds but treat them as single ligands"
+                             "fot the analysis.",
+                        action="store_true")
     # Optional threshold arguments, not shown in help
     thr = namedtuple('threshold', 'name type')
     thresholds = [thr(name='aromatic_planarity', type='angle'),
@@ -255,6 +259,7 @@ if __name__ == '__main__':
     config.OUTPATH = arguments.outpath
     config.OUTPATH = tilde_expansion("".join([config.OUTPATH, '/'])
                                      if not config.OUTPATH.endswith('/') else config.OUTPATH)
+    config.BREAKCOMPOSITE = arguments.breakcomposite
     # Assign values to global thresholds
     for t in thresholds:
         tvalue = getattr(arguments, t.name)

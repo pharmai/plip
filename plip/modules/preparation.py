@@ -871,7 +871,11 @@ class PDBComplex:
             self.atoms[atm.idx] = atm
 
         # Extract and prepare ligands
-        self.ligands, self.excluded = getligs(self.protcomplex, self.altconf, self.modres, self.covalent, self.Mapper)
+        if not config.BREAKCOMPOSITE:
+            self.ligands, self.excluded = getligs(self.protcomplex, self.altconf, self.modres, self.covalent, self.Mapper)
+        else:
+            self.ligands, self.excluded = getligs_single(self.protcomplex, self.altconf, self.modres, self.Mapper)
+
         if len(self.excluded) != 0:
             message("Excluded molecules as ligands: %s\n" % ','.join([lig for lig in self.excluded]))
 
