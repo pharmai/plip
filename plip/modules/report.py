@@ -289,6 +289,12 @@ class TextOutput:
         num_unpaired_hal.text = str(self.complex.num_unpaired_hal)
         num_aromatic_rings = et.SubElement(lig_properties, 'num_aromatic_rings')
         num_aromatic_rings.text = str(self.ligand.num_rings)
+        num_rot_bonds = et.SubElement(lig_properties, 'num_rotatable_bonds')
+        num_rot_bonds.text = str(self.ligand.num_rot_bonds)
+        molweight = et.SubElement(lig_properties, 'molweight')
+        molweight.text = str(self.ligand.molweight)
+        logp = et.SubElement(lig_properties, 'logp')
+        logp.text = str(self.ligand.logp)
 
         ichains = et.SubElement(report, 'interacting_chains')
         bsresidues = et.SubElement(report, 'bs_residues')

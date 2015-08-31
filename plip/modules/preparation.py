@@ -236,7 +236,9 @@ class PLInteraction:
         self.interacting_chains = sorted(list(set([i.reschain for i in self.all_itypes
                                                    if i.reschain not in [' ', None]])))
 
-        self.interacting_res = list(set([''.join([str(i.resnr), str(i.reschain)]) for i in self.all_itypes]))
+        # Get all interacting residues, excluding ligand and water molecules
+        self.interacting_res = list(set([''.join([str(i.resnr), str(i.reschain)]) for i in self.all_itypes
+                                         if i.restype not in ['LIG', 'HOH']]))
         if len(self.interacting_res) != 0:
             message('Ligand interacts with %i binding site residue(s) in chain(s) %s.\n'
                     % (len(self.interacting_res), '/'.join(self.interacting_chains)), indent=True)
@@ -592,6 +594,9 @@ class Ligand(Mol):
         self.num_rings = len(self.rings)
         if self.num_rings != 0:
             message('Contains %i aromatic ring(s).\n' % self.num_rings, indent=True)
+        descvalues = self.molecule.calcdesc()
+        self.molweight, self.logp = float(descvalues['MW']), float(descvalues['logP'])
+        self.num_rot_bonds = int(self.molecule.OBMol.NumRotors())
 
         ##########################################################
         # Special Case for hydrogen bond acceptor identification #
