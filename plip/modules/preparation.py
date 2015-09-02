@@ -840,6 +840,7 @@ class PDBComplex:
         self.filetype = None
         self.atoms = {}  # Dictionary of Pybel atoms, accessible by their idx
         self.sourcefiles = {}
+        self.corrected_pdb = ''
         self.output_path = '/tmp'
         self.pymol_name = None
         self.modres = set()
@@ -853,11 +854,21 @@ class PDBComplex:
     def load_pdb(self, pdbpath):
         """Loads a pdb file with protein AND ligand(s), separates and prepares them."""
         self.sourcefiles['pdbcomplex'] = pdbpath
+
+        # Counting is different from PDB if TER records present
+        self.Mapper.proteinmap, self.modres, self.covalent, self.altconf, self.corrected_pdb = parse_pdb(read(pdbpath).readlines())
+
+        # Save modified PDB file
+        # #@todo Show message if modified
+        # #@todo Set option for no correction
+        os.rename(pdbpath, '.'.join([pdbpath, 'old']))
+        with open(pdbpath, 'w') as f:
+            f.write(self.corrected_pdb)
+
         self.protcomplex, self.filetype = read_pdb(pdbpath)
         message('PDB structure successfully read.\n')
 
-        # Counting is different from PDB if TER records present
-        self.Mapper.proteinmap, self.modres, self.covalent, self.altconf = parse_pdb(read(pdbpath).readlines())
+
 
         # #@todo mmcif currently unsupported
         if self.filetype == 'mmcif':
@@ -865,10 +876,11 @@ class PDBComplex:
             # #@todo New function for parsing mmcif files
             self.Mapper.proteinmap = {x: x for x in range(10000)}
 
+        # Determine filename
         try:
             self.pymol_name = self.protcomplex.data['HEADER'][56:60].lower()  # Get name from HEADER data
         except KeyError:  # Extract the PDBID from the filename
-            self.pymol_name = extract_pdbid(pdbpath.split('/')[-1])
+            self.pymol_name = pdbpath.split('/')[-1].split('.')[0] + '-Protein'
         if self.pymol_name == '':
             self.pymol_name = self.protcomplex.data['HEADER'].split()[0]
         self.protcomplex.OBMol.AddPolarHydrogens()

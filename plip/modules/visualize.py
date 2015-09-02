@@ -43,6 +43,7 @@ class PyMOLComplex:
         # General Information
         self.lig_members = sorted(pli.ligand.members)
         self.sourcefile = pcomp.sourcefiles['pdbcomplex']
+        self.corrected_pdb = pcomp.corrected_pdb
         self.pdbid = mol.pymol_name
         self.hetid = ligand.hetid
         self.chain = ligand.chain if not ligand.chain == "0" else ""  # #@todo Fix this
@@ -193,7 +194,7 @@ def visualize_in_pymol(plcomplex):
     # Basic visualizations #
     ########################
 
-    start_pymol(run=True, options='-pcq', quiet=True)
+    start_pymol(run=True, options='-pcq', quiet=False)
     standard_settings()
     cmd.set('dash_gap', 0)  # Show not dashes, but lines for the pliprofiler
     cmd.set('ray_shadow', 0)  # Turn on ray shadows for clearer ray-traced images

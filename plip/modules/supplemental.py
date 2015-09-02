@@ -51,6 +51,19 @@ def is_lig(hetid):
     return not (h == 'HOH' or h in config.UNSUPPORTED)
 
 
+def fix_pdb(pdbline):
+    # #@todo Introduce verbose/log
+    if pdbline.startswith('HETATM'):
+        # No chain assigned
+        if pdbline[21] == ' ':
+            pdbline = pdbline[:21] + 'Z' + pdbline[22:]
+        # Non-standard Ligand Names
+        ligname = pdbline[17:20]
+        if ' ' in ligname[1:3] or not re.match("^[a-zA-Z0-9_]*$", ligname):
+            pdbline = pdbline[:17] + 'LIG ' + pdbline[21:]
+    return pdbline
+
+
 def parse_pdb(fil):
     """Extracts additional information from PDB files.
     I. When reading in a PDB file, OpenBabel numbers ATOMS and HETATOMS continously.
@@ -61,6 +74,7 @@ def parse_pdb(fil):
     IV. Alternative conformations
     """
     # #@todo Also consider SSBOND entries here
+    corrected_lines = []
     i, j = 0, 0  # idx and PDB numbering
     d = {}
     modres = set()
@@ -69,6 +83,8 @@ def parse_pdb(fil):
     alt = []
     previous_ter = False
     for line in fil:
+        corrected_line = fix_pdb(line)
+
         if line.startswith(("ATOM", "HETATM")):
 
             # Retrieve alternate conformations
@@ -97,12 +113,15 @@ def parse_pdb(fil):
             conf2, id2, chain2, pos2 = line[46].strip(), line[47:50].strip(), line[51].strip(), int(line[52:56])
             covalent.append(covlinkage(id1=id1, chain1=chain1, pos1=pos1, conf1=conf1,
                                        id2=id2, chain2=chain2, pos2=pos2, conf2=conf2))
-    return d, modres, covalent, alt
+        # #@todo Perform corrections to wrong formats
+        corrected_lines.append(corrected_line)
+    corrected_pdb = ''.join(corrected_lines)
+    return d, modres, covalent, alt, corrected_pdb
 
 
 def extract_pdbid(string):
     """Use regular expressions to get a PDB ID from a string"""
-    p = re.compile("[0-9][0-9a-z]{3}")
+    p = re.compile("[0-9][a-z]{2}[0-9]]")
     m = p.search(string.lower())
     try:
         return m.group()
