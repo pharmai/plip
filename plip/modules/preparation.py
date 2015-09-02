@@ -856,14 +856,15 @@ class PDBComplex:
         self.sourcefiles['pdbcomplex'] = pdbpath
 
         # Counting is different from PDB if TER records present
-        self.Mapper.proteinmap, self.modres, self.covalent, self.altconf, self.corrected_pdb = parse_pdb(read(pdbpath).readlines())
-
-        # Save modified PDB file
-        # #@todo Show message if modified
-        # #@todo Set option for no correction
-        os.rename(pdbpath, '.'.join([pdbpath, 'old']))
-        with open(pdbpath, 'w') as f:
-            f.write(self.corrected_pdb)
+        self.Mapper.proteinmap, self.modres, self.covalent, self.altconf, self.corrected_pdb, lines_fixed = parse_pdb(read(pdbpath).readlines())
+        if lines_fixed > 0:
+            message('%i lines automatically fixed in PDB input file.\n' % lines_fixed)
+            # Save modified PDB file
+            # #@todo Show message if modified
+            # #@todo Set option for no correction
+            os.rename(pdbpath, '.'.join([pdbpath, 'old']))
+            with open(pdbpath, 'w') as f:
+                f.write(self.corrected_pdb)
 
         self.protcomplex, self.filetype = read_pdb(pdbpath)
         message('PDB structure successfully read.\n')

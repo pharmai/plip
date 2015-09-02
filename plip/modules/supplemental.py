@@ -53,15 +53,18 @@ def is_lig(hetid):
 
 def fix_pdb(pdbline):
     # #@todo Introduce verbose/log
+    fixed = False
     if pdbline.startswith('HETATM'):
         # No chain assigned
         if pdbline[21] == ' ':
             pdbline = pdbline[:21] + 'Z' + pdbline[22:]
+            fixed = True
         # Non-standard Ligand Names
         ligname = pdbline[17:20]
         if ' ' in ligname[1:3] or not re.match("^[a-zA-Z0-9_]*$", ligname):
             pdbline = pdbline[:17] + 'LIG ' + pdbline[21:]
-    return pdbline
+            fixed = True
+    return pdbline, fixed
 
 
 def parse_pdb(fil):
@@ -75,6 +78,7 @@ def parse_pdb(fil):
     """
     # #@todo Also consider SSBOND entries here
     corrected_lines = []
+    lines_fixed = 0
     i, j = 0, 0  # idx and PDB numbering
     d = {}
     modres = set()
@@ -83,7 +87,9 @@ def parse_pdb(fil):
     alt = []
     previous_ter = False
     for line in fil:
-        corrected_line = fix_pdb(line)
+        corrected_line, fix = fix_pdb(line)
+        if fix:
+            lines_fixed += 1
 
         if line.startswith(("ATOM", "HETATM")):
 
@@ -116,7 +122,7 @@ def parse_pdb(fil):
         # #@todo Perform corrections to wrong formats
         corrected_lines.append(corrected_line)
     corrected_pdb = ''.join(corrected_lines)
-    return d, modres, covalent, alt, corrected_pdb
+    return d, modres, covalent, alt, corrected_pdb, lines_fixed
 
 
 def extract_pdbid(string):

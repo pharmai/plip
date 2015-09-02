@@ -194,7 +194,7 @@ def visualize_in_pymol(plcomplex):
     # Basic visualizations #
     ########################
 
-    start_pymol(run=True, options='-pcq', quiet=False)
+    start_pymol(run=True, options='-pcq', quiet=True)
     standard_settings()
     cmd.set('dash_gap', 0)  # Show not dashes, but lines for the pliprofiler
     cmd.set('ray_shadow', 0)  # Turn on ray shadows for clearer ray-traced images

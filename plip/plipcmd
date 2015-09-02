@@ -108,6 +108,7 @@ def process_pdb(pdbfile, outpath):
         # #@todo e.g. if not ligand.hetid in config.BLACKLIST and is in config.WHITELIST
         mol.characterize_complex(ligand)
     excluded = mol.excluded
+    create_folder_if_not_exists(outpath)
 
     # Begin constructing the XML tree
     report = et.Element('report')
@@ -164,7 +165,6 @@ def process_pdb(pdbfile, outpath):
         sys.stdout = sys.__stdout__  # Change back to original stdout, gets changed when PyMOL has been used before
 
     tree = et.ElementTree(report)
-    create_folder_if_not_exists(outpath)
     if config.XML:  # Generate report in xml format
         tree.write('%s/report.xml' % outpath, pretty_print=True, xml_declaration=True)
 
