@@ -61,7 +61,8 @@ def fix_pdb(pdbline):
             fixed = True
         # Non-standard Ligand Names
         ligname = pdbline[17:20]
-        if re.match("^[a-zA-Z0-9_]*$", ligname):
+        if re.match("[^a-zA-Z0-9_]", ligname.strip()):
+            print(ligname, len(ligname))
             pdbline = pdbline[:17] + 'LIG ' + pdbline[21:]
             fixed = True
     return pdbline, fixed
