@@ -840,6 +840,7 @@ class PDBComplex:
         self.filetype = None
         self.atoms = {}  # Dictionary of Pybel atoms, accessible by their idx
         self.sourcefiles = {}
+        self.information = {}
         self.corrected_pdb = ''
         self.output_path = '/tmp'
         self.pymol_name = None
@@ -853,22 +854,23 @@ class PDBComplex:
 
     def load_pdb(self, pdbpath):
         """Loads a pdb file with protein AND ligand(s), separates and prepares them."""
+        self.sourcefiles['pdbcomplex.original'] = pdbpath
         self.sourcefiles['pdbcomplex'] = pdbpath
-
+        self.information['pdbfixes'] = False
         # Counting is different from PDB if TER records present
         self.Mapper.proteinmap, self.modres, self.covalent, self.altconf, self.corrected_pdb, lines_fixed = parse_pdb(read(pdbpath).readlines())
         if lines_fixed > 0:
             message('%i lines automatically fixed in PDB input file.\n' % lines_fixed)
             # Save modified PDB file
-            # #@todo Show message if modified
-            # #@todo Set option for no correction
-            os.rename(pdbpath, '.'.join([pdbpath, 'old']))
-            with open(pdbpath, 'w') as f:
+            basename = os.path.basename(pdbpath).split('.')[0]
+            pdbpath_fixed = tmpfile(prefix='plipfixed.' + basename + '_', direc=self.output_path)
+            self.sourcefiles['pdbcomplex'] = pdbpath_fixed
+            with open(pdbpath_fixed, 'w') as f:
                 f.write(self.corrected_pdb)
+            self.information['pdbfixes'] = True
 
-        self.protcomplex, self.filetype = read_pdb(pdbpath)
+        self.protcomplex, self.filetype = read_pdb(self.sourcefiles['pdbcomplex'])
         message('PDB structure successfully read.\n')
-
 
 
         # #@todo mmcif currently unsupported

@@ -32,6 +32,7 @@ import subprocess
 import codecs
 import gzip
 import zipfile
+import tempfile
 
 # External libraries
 import pybel
@@ -43,6 +44,11 @@ from pymol import finish_launching
 
 # Settings
 np.seterr(all='ignore')  # No runtime warnings
+
+
+def tmpfile(prefix, direc):
+    """Returns the path to a newly created temporary file."""
+    return tempfile.mktemp(prefix=prefix, suffix='.pdb', dir=direc)
 
 
 def is_lig(hetid):
@@ -62,7 +68,6 @@ def fix_pdb(pdbline):
         # Non-standard Ligand Names
         ligname = pdbline[17:20]
         if re.match("[^a-zA-Z0-9_]", ligname.strip()):
-            print(ligname, len(ligname))
             pdbline = pdbline[:17] + 'LIG ' + pdbline[21:]
             fixed = True
     return pdbline, fixed
