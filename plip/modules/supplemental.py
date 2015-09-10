@@ -133,7 +133,7 @@ def parse_pdb(fil):
 
 def extract_pdbid(string):
     """Use regular expressions to get a PDB ID from a string"""
-    p = re.compile("[0-9][a-z]{3}")
+    p = re.compile("[0-9][0-9a-z]{3}")
     m = p.search(string.lower())
     try:
         return m.group()

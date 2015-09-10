@@ -221,7 +221,6 @@ class PLInteraction:
         self.all_itypes = self.all_itypes + self.metal_complexes
 
         self.no_interactions = all(len(i) == 0 for i in self.all_itypes)
-        # #@todo Use namedtuples for passing the IDs
         self.unpaired_hba, self.unpaired_hbd, self.unpaired_hal = self.find_unpaired_ligand()
         self.unpaired_hba_orig_idx = [self.Mapper.mapid(atom.idx, mtype='ligand', bsid=self.ligand.bsid)
                                       for atom in self.unpaired_hba]
@@ -271,6 +270,7 @@ class PLInteraction:
         """
         unpaired_hba, unpaired_hbd, unpaired_hal = [], [], []
         # #@todo Is mapping correct for different cases: metal and other?
+        # #todo Number of unpaired halogens not correct in some cases, e.g. 11gs
         # Unpaired hydrogen bond acceptors/donors in ligand (not used for hydrogen bonds/water, salt bridges/mcomplex)
         involved_atoms = [hbond.a.idx for hbond in self.hbonds_pdon] + [hbond.d.idx for hbond in self.hbonds_ldon]
         [[involved_atoms.append(atom.idx) for atom in sb.negative.atoms] for sb in self.saltbridge_lneg]
@@ -287,7 +287,7 @@ class PLInteraction:
                 unpaired_hbd.append(atom)
 
         # unpaired halogen bond donors in ligand (not used for the previous + halogen bonds)
-        [involved_atoms.append(atom.don.x) for atom in self.halogen_bonds]
+        [involved_atoms.append(atom.don.x.idx) for atom in self.halogen_bonds]
         for atom in [haldon.x for haldon in self.ligand.halogenbond_don]:
             if atom.idx not in involved_atoms:
                 unpaired_hal.append(atom)
@@ -639,7 +639,7 @@ class Ligand(Mol):
         data = namedtuple('metal', 'm m_orig_idx')
         for a in [a for a in self.all_atoms if a.type.upper() in config.METAL_IONS]:
             self.metals.append(data(m=a, m_orig_idx=self.Mapper.mapid(a.idx, mtype=self.mtype, bsid=self.bsid)))
-        self.num_hbd, self.num_hba = len(self.hbond_acc_atoms), len(self.hbond_don_atom_pairs)
+        self.num_hba, self.num_hbd = len(self.hbond_acc_atoms), len(self.hbond_don_atom_pairs)
         self.num_hal = len(self.halogenbond_don)
 
 
