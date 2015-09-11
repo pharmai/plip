@@ -122,6 +122,8 @@ def process_pdb(pdbfile, outpath):
     pdbfile.text = mol.sourcefiles['pdbcomplex']
     pdbfixes = et.SubElement(report, 'pdbfixes')
     pdbfixes.text = str(mol.information['pdbfixes'])
+    filename = et.SubElement(report, 'filename')
+    filename.text = str(mol.sourcefiles['filename'])
     exligs = et.SubElement(report, 'excluded_ligands')
     for i, exlig in enumerate(excluded):
         e = et.SubElement(exligs, 'excluded_ligand', id=str(i + 1))
