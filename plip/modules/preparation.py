@@ -865,11 +865,11 @@ class PDBComplex:
             basename = os.path.basename(pdbpath).split('.')[0]
             pdbpath_fixed = tmpfile(prefix='plipfixed.' + basename + '_', direc=self.output_path)
             self.sourcefiles['pdbcomplex'] = pdbpath_fixed
-            self.sourcefiles['filename'] = os.path.basename(pdbpath_fixed)
             with open(pdbpath_fixed, 'w') as f:
                 f.write(self.corrected_pdb)
             self.information['pdbfixes'] = True
 
+        self.sourcefiles['filename'] = os.path.basename(self.sourcefiles['pdbcomplex'])
         self.protcomplex, self.filetype = read_pdb(self.sourcefiles['pdbcomplex'])
         message('PDB structure successfully read.\n')
 
