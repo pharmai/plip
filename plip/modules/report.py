@@ -226,7 +226,7 @@ class TextOutput:
 
         txt = []
         txt.append('%s (%s) - %s' % (self.bsid, self.longname, self.ligtype))
-        for i, member in enumerate(sorted(self.lig_members)[1:]):
+        for i, member in enumerate(self.lig_members)[1:]:  # Already sorted by (chain, position)
             txt.append('  + %s' % ":".join(str(element) for element in member))
         txt.append("-" * len(self.bsid))
         txt.append("Interacting chain(s): %s\n" % ','.join([chain for chain in self.interacting_chains]))
