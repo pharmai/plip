@@ -438,10 +438,10 @@ def getligs(mol, altconf, modres, covalent, mapper):
     ###################
     for kmer in res_kmers:  # iterate over all ligands
         members = [(res.GetName(), res.GetChain(), int32_to_negative(res.GetNum())) for res in kmer]
-        rname, rchain, rnum = sorted(members)[0]  # representative name, chain, and number
-        ordered_members = sorted(members, key=lambda x: (x[1], x[2]))
-        names = [x[0] for x in ordered_members]
-        longname = '-'.join([x[0] for x in ordered_members])
+        members = sorted(members, key=lambda x: (x[1], x[2]))
+        rname, rchain, rnum = members[0]
+        names = [x[0] for x in members]
+        longname = '-'.join([x[0] for x in members])
         if len(names) > 3:  # Polymer
             if len({'U', 'A', 'C', 'G'}.intersection(set(names))) != 0:
                 ligtype = 'RNA'
@@ -511,6 +511,8 @@ def getligs(mol, altconf, modres, covalent, mapper):
 
 def getligs_single(mol, altconf, modres, mapper):
     """Get all ligands from a PDB file (break up composite!) and prepare them for analysis."""
+    # #@Todo Combine this function with function for extracting multiple ligands
+
     #############################
     # Read in file and get name #
     #############################
@@ -548,8 +550,8 @@ def getligs_single(mol, altconf, modres, mapper):
     for lgnd in all_res3:  # iterate over all ligands
         members = [(lgnd.GetName(), lgnd.GetChain(), int32_to_negative(lgnd.GetNum()))]
         rname, rchain, rnum = sorted(members)[0]  # representative name, chain, and number
-        ordered_members = sorted(members, key=lambda x: (x[1], x[2]))
-        longname = '-'.join([x[0] for x in ordered_members])
+        members = sorted(members, key=lambda x: (x[1], x[2]))
+        longname = '-'.join([x[0] for x in members])
         if lgnd.GetName() in config.METAL_IONS:
             ligtype = 'ION'
         else:
@@ -608,6 +610,8 @@ def int32_to_negative(int32):
     32 bit integer and returns the actual number.
     """
     dct = {}
+    if int32 == 4294967295:  # Special case in some structures (note, this is just a workaround)
+        return -1
     for i in range(-1000, -1):
         dct[np.uint32(i)] = i
     if int32 in dct:
