@@ -779,11 +779,11 @@ class Ligand(Mol):
             if a.atomicnum == 8:  # Oxygen
                 if n_atoms_atomicnum.count('1') == 1 and len(n_atoms_atomicnum) == 2:  # Oxygen in alcohol (R-[O]-H)
                     a_set.append(data(atom=a, atom_orig_idx=a_orig_idx, type='O', fgroup='alcohol',
-                                      restype=whichrestype(a), resnr=whichresnumber(a), reschain=whichchain(a),
+                                      restype=self.hetid, resnr=self.position, reschain=self.chain,
                                       location='ligand'))
                 if True in [n.IsAromatic() for n in n_atoms] and not a.OBAtom.IsAromatic():  # Phenolate oxygen
                     a_set.append(data(atom=a, atom_orig_idx=a_orig_idx, type='O', fgroup='phenolate',
-                                      restype=whichrestype(a), resnr=whichresnumber(a), reschain=whichchain(a),
+                                      restype=self.hetid, resnr=self.position, reschain=self.chain,
                                       location='ligand'))
             if a.atomicnum == 6:  # It's a carbon atom
                 if n_atoms_atomicnum.count(8) == 2 and n_atoms_atomicnum.count(6) == 1:  # It's a carboxylate group
@@ -791,8 +791,8 @@ class Ligand(Mol):
                         neighbor_orig_idx = self.Mapper.mapid(neighbor.GetIdx(), mtype='ligand', bsid=self.bsid)
                         a_set.append(data(atom=pybel.Atom(neighbor), atom_orig_idx=neighbor_orig_idx, type='O',
                                           fgroup='carboxylate',
-                                          restype=whichrestype(neighbor),
-                                          resnr=whichresnumber(neighbor), reschain=whichchain(neighbor),
+                                          restype=self.hetid,
+                                          resnr=self.position, reschain=self.chain,
                                           location='ligand'))
             if a.atomicnum == 15:  # It's a phosphor atom
                 if n_atoms_atomicnum.count(8) >= 3:  # It's a phosphoryl
@@ -800,29 +800,29 @@ class Ligand(Mol):
                         neighbor_orig_idx = self.Mapper.mapid(neighbor.GetIdx(), mtype='ligand', bsid=self.bsid)
                         a_set.append(data(atom=pybel.Atom(neighbor), atom_orig_idx=neighbor_orig_idx, type='O',
                                           fgroup='phosphoryl',
-                                          restype=whichrestype(neighbor),
-                                          resnr=whichresnumber(neighbor), reschain=whichchain(neighbor),
+                                          restype=self.hetid,
+                                          resnr=self.position, reschain=self.chain,
                                           location='ligand'))
                 if n_atoms_atomicnum.count(8) == 2:  # It's another phosphor-containing group #@todo (correct name?)
                     for neighbor in [n for n in n_atoms if n.GetAtomicNum() == 8]:
                         neighbor_orig_idx = self.Mapper.mapid(neighbor.GetIdx(), mtype='ligand', bsid=self.bsid)
                         a_set.append(data(atom=pybel.Atom(neighbor), atom_orig_idx=neighbor_orig_idx, type='O',
-                                          fgroup='phosphor.other', restype=whichrestype(neighbor),
-                                          resnr=whichresnumber(neighbor),
-                                          reschain=whichchain(neighbor), location='ligand'))
+                                          fgroup='phosphor.other', restype=self.hetid,
+                                          resnr=self.position,
+                                          reschain=self.chain, location='ligand'))
             if a.atomicnum == 7:  # It's a nitrogen atom
                 if n_atoms_atomicnum.count(6) == 2:  # It's imidazole/pyrrole or similar
                     a_set.append(data(atom=a, atom_orig_idx=a_orig_idx, type='N', fgroup='imidazole/pyrrole',
-                                      restype=whichrestype(a), resnr=whichresnumber(a), reschain=whichchain(a),
+                                      restype=self.hetid, resnr=self.position, reschain=self.chain,
                                       location='ligand'))
             if a.atomicnum == 16:  # It's a sulfur atom
                 if True in [n.IsAromatic() for n in n_atoms] and not a.OBAtom.IsAromatic():  # Thiolate
                     a_set.append(data(atom=a, atom_orig_idx=a_orig_idx, type='S', fgroup='thiolate',
-                                      restype=whichrestype(a), resnr=whichresnumber(a), reschain=whichchain(a),
+                                      restype=self.hetid, resnr=self.position, reschain=self.chain,
                                       location='ligand'))
                 if set(n_atoms_atomicnum) == {26}:  # Sulfur in Iron sulfur cluster
                     a_set.append(data(atom=a, atom_orig_idx=a_orig_idx, type='S', fgroup='iron-sulfur.cluster',
-                                      restype=whichrestype(a), resnr=whichresnumber(a), reschain=whichchain(a),
+                                      restype=self.hetid, resnr=self.position, reschain=self.chain,
                                       location='ligand'))
 
         return a_set

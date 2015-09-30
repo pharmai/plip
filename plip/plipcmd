@@ -182,6 +182,7 @@ def process_pdb(pdbfile, outpath):
 def main(inputstruct, inputpdbid):
     """Main function. Calls functions for processing, report generation and visualization."""
     pdbid, pdbpath = None, None
+    # #@todo For multiprocessing, implement better stacktracing for errors
 
     # Print title and version
     title = "* Protein-Ligand Interaction Profiler v%s *" % __version__

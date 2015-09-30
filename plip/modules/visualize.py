@@ -234,6 +234,8 @@ def visualize_in_pymol(plcomplex):
                   'Metal-W', 'Metal-L', 'Unpaired-HBA', 'Unpaired-HBD', 'Unpaired-HAL', 'Unpaired-RINGS']:
         cmd.select(group, 'None')
 
+    # #@todo Up here, define all names necessary for analysis
+
     ######################################
     # Visualize hydrophobic interactions #
     ######################################
@@ -431,6 +433,7 @@ def visualize_in_pymol(plcomplex):
     # Show sticks for all residues interacing with the ligand
     cmd.select('AllBSRes', 'byres (Hydrophobic-P or HBondDonor-P or HBondAccept-P or PosCharge-P or NegCharge-P or '
                            'StackRings-P or PiCatRing-P or HalogenAcc or Metal-P)')
+    # #@todo Check, should be HalogenAccept here?
     cmd.show('sticks', 'AllBSRes')
     # Show spheres for the ring centroids
     cmd.hide('everything', 'centroids*')
