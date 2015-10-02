@@ -597,6 +597,7 @@ class Ligand(Mol):
         descvalues = self.molecule.calcdesc()
         self.molweight, self.logp = float(descvalues['MW']), float(descvalues['logP'])
         self.num_rot_bonds = int(self.molecule.OBMol.NumRotors())
+        self.atomorder = ligand.atomorder
 
         ##########################################################
         # Special Case for hydrogen bond acceptor identification #
@@ -641,6 +642,10 @@ class Ligand(Mol):
             self.metals.append(data(m=a, m_orig_idx=self.Mapper.mapid(a.idx, mtype=self.mtype, bsid=self.bsid)))
         self.num_hba, self.num_hbd = len(self.hbond_acc_atoms), len(self.hbond_don_atom_pairs)
         self.num_hal = len(self.halogenbond_don)
+
+    def get_canonical_num(self, atomnum):
+        """Converts internal atom ID into canonical atom ID. Agrees with Canonical SMILES in XML."""
+        return self.atomorder[atomnum-1]
 
 
     def is_functional_group(self, atom, group):

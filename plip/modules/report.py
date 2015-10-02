@@ -272,6 +272,7 @@ class TextOutput:
         members = et.SubElement(identifiers, 'members')
         smiles = et.SubElement(identifiers, 'smiles')
 
+
         # Ligand properties. Number of (unpaired) functional atoms and rings.
         lig_properties = et.SubElement(report, 'lig_properties')
         num_heavy_atoms = et.SubElement(lig_properties, 'num_heavy_atoms')
@@ -359,4 +360,18 @@ class TextOutput:
         interactions.append(format_interactions('pi_cation_interactions', self.pication_features, self.pication_info))
         interactions.append(format_interactions('halogen_bonds', self.halogen_features, self.halogen_info))
         interactions.append(format_interactions('metal_complexes', self.metal_features, self.metal_info))
+
+        # Mappings
+        mappings = et.SubElement(report, 'mappings')
+        can_to_pdb = et.SubElement(mappings, 'can_to_pdb')  # Canonical SMILES numbering to PDB file numbering (atoms)
+        bsid = ':'.join([self.ligand.hetid, self.ligand.chain, str(self.ligand.position)])
+        can_to_pdb_map = []
+        if self.ligand.atomorder is not None:
+            for i, can_id in enumerate(self.ligand.atomorder):
+                # i + 1 is internal atom ID, can_id is canonical SMILES atom ID
+                can_to_pdb_map.append((can_id, self.ligand.Mapper.mapid(i+1, mtype='ligand', bsid=bsid, to='original')))
+                can_to_pdb.text = ','.join([str(mapping[0])+':'+str(mapping[1]) for mapping in can_to_pdb_map])
+        else:
+            can_to_pdb.text = ''
+
         return report

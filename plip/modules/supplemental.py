@@ -352,7 +352,7 @@ def getligs(mol, altconf, modres, covalent, mapper):
     # Read in file and get name #
     #############################
 
-    data = namedtuple('ligand', 'mol hetid chain position water members longname type')
+    data = namedtuple('ligand', 'mol hetid chain position water members longname type atomorder')
     ligands = []
 
     #########################
@@ -492,6 +492,14 @@ def getligs(mol, altconf, modres, covalent, mapper):
                 bond = hetatoms[obatom].GetBond(hetatoms[neighbour_atom])
                 lig.AddBond(newidx[obatom], newidx[neighbour_atom], bond.GetBondOrder())
         lig = pybel.Molecule(lig)
+
+        # Get canonical atom order
+        lig.write("can")
+        try:
+            atomorder = [int(x) for x in lig.data['SMILES Atom Order'].split(' ')]
+        except KeyError:
+            atomorder = None
+
         # For kmers, the representative ids are chosen (first residue of kmer)
         lig.data.update({'Name': rname,
                          'Chain': rchain,
@@ -504,7 +512,7 @@ def getligs(mol, altconf, modres, covalent, mapper):
         lig.title = ':'.join((rname, rchain, str(rnum)))
         mapper.ligandmaps[lig.title] = mapold
         ligands.append(data(mol=lig, hetid=rname, chain=rchain, position=rnum, water=water,
-                            members=members, longname=longname, type=ligtype))
+                            members=members, longname=longname, type=ligtype, atomorder=atomorder))
     excluded = sorted(list(all_lignames.difference(set(lignames))))
     return ligands, excluded
 

@@ -104,7 +104,6 @@ def pistacking(rings_bs, rings_lig):
                 contact = data(proteinring=r, ligandring=l, distance=d, angle=a, offset=offset,
                                type='T', resnr=resnr, restype=restype, reschain=reschain)
                 pairings.append(contact)
-
     return pairings
 
 
