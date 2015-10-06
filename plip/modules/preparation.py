@@ -102,33 +102,30 @@ class Mol:
         return donor_pairs
 
     def find_rings(self, mol, all_atoms):
-        """Find rings and return only aromatic."""
+        """Find rings and return only aromatic.
+        Rings have to be sufficiently planar OR be detected by OpenBabel as aromatic."""
         data = namedtuple('aromatic_ring', 'atoms atoms_orig_idx normal obj center type')
         rings, arings = [], []
         # Check here first for ligand rings not being detected as aromatic by Babel and check for planarity
-        if len(mol.title) > 0:  # it's the ligand
-            for ring in [r for r in mol.OBMol.GetSSSR()]:
-                r_atoms = [a for a in all_atoms if ring.IsMember(a.OBAtom)]
-                normals = []
-                aromatic = True
-                for a in r_atoms:
-                    adj = pybel.ob.OBAtomAtomIter(a.OBAtom)
-                    # Check for neighboring atoms in the ring
-                    n_coords = [pybel.Atom(neigh).coords for neigh in adj if ring.IsMember(neigh)]
-                    vec1, vec2 = vector(a.coords, n_coords[0]), vector(a.coords, n_coords[1])
-                    normals.append(np.cross(vec1, vec2))
-                # Given all normals of ring atoms and their neighbors, the angle between any has to be 5.0 deg or less
-                for n1, n2 in itertools.product(normals, repeat=2):
-                    arom_angle = vecangle(n1, n2)
-                    if all([arom_angle > config.AROMATIC_PLANARITY, arom_angle < 180.0 - config.AROMATIC_PLANARITY]):
-                        aromatic = False
-                        break
-                # Ring is aromatic either by OpenBabel's criteria or if sufficiently planar
-                if aromatic or ring.IsAromatic():
-                    arings.append(ring)
-        else:
-            # Detection for proteins should work more reliably just with OpenBabel
-            arings = [r for r in mol.OBMol.GetSSSR() if r.IsAromatic()]
+        for ring in [r for r in mol.OBMol.GetSSSR()]:
+            r_atoms = [a for a in all_atoms if ring.IsMember(a.OBAtom)]
+            normals = []
+            aromatic = True
+            for a in r_atoms:
+                adj = pybel.ob.OBAtomAtomIter(a.OBAtom)
+                # Check for neighboring atoms in the ring
+                n_coords = [pybel.Atom(neigh).coords for neigh in adj if ring.IsMember(neigh)]
+                vec1, vec2 = vector(a.coords, n_coords[0]), vector(a.coords, n_coords[1])
+                normals.append(np.cross(vec1, vec2))
+            # Given all normals of ring atoms and their neighbors, the angle between any has to be 5.0 deg or less
+            for n1, n2 in itertools.product(normals, repeat=2):
+                arom_angle = vecangle(n1, n2)
+                if all([arom_angle > config.AROMATIC_PLANARITY, arom_angle < 180.0 - config.AROMATIC_PLANARITY]):
+                    aromatic = False
+                    break
+            # Ring is aromatic either by OpenBabel's criteria or if sufficiently planar
+            if aromatic or ring.IsAromatic():
+                arings.append(ring)
 
         # Store all rings which are detected as aromatic by Babel or are sufficiently planar
         for r in arings:
