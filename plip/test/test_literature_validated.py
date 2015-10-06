@@ -53,7 +53,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/1h2t.pdb')
-        bsid = '7MG:Z:1152'
+        bsid = 'GDP:Z:1151'
         for ligand in tmpmol.ligands:
             if ':'.join([ligand.hetid, ligand.chain, str(ligand.position)]) == bsid:
                 tmpmol.characterize_complex(ligand)

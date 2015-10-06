@@ -124,7 +124,11 @@ class Mol:
                     aromatic = False
                     break
             # Ring is aromatic either by OpenBabel's criteria or if sufficiently planar
-            if aromatic or ring.IsAromatic():
+            res = list(set([whichrestype(a) for a in r_atoms]))
+            aromatic_amino = False
+            if not res == []:
+                aromatic_amino = res[0] in ['TYR', 'TRP', 'HIS', 'PHE']
+            if aromatic or ring.IsAromatic() or aromatic_amino:
                 arings.append(ring)
 
         # Store all rings which are detected as aromatic by Babel or are sufficiently planar
