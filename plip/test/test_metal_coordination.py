@@ -138,7 +138,7 @@ class MetalCoordinationTest(unittest.TestCase):
         s = tmpmol.interaction_sets[bsid]
         # Coordination by four nitrogens of heme itself and one additional histidine from the protein
         metalres = [mres.restype for mres in s.metal_complexes]
-        self.assertEqual(metalres.count('LIG'), 4)
+        self.assertEqual(metalres.count('HEM'), 4)
         self.assertEqual(metalres.count('HIS'), 1)
         # Fe atom with square pyramidal geometry (coordination number 5)
         self.assertEqual(s.metal_complexes[0].coordination_num, 5)

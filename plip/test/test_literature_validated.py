@@ -78,7 +78,8 @@ class LiteratureValidatedTest(unittest.TestCase):
         for ligand in tmpmol.ligands:
             if ':'.join([ligand.hetid, ligand.chain, str(ligand.position)]) in bsids:
                 tmpmol.characterize_complex(ligand)
-        s = tmpmol.interaction_sets[bsids[0]]
+
+        s = tmpmol.interaction_sets[bsids[0]]  # 2AN:A:305
         # Hydrogen bonding of Asp145 and Phe146
         hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
         self.assertTrue({145, 146}.issubset(hbonds))
@@ -88,7 +89,8 @@ class LiteratureValidatedTest(unittest.TestCase):
         # Naphtalene positioned between Leu55 and Lys56, indicating hydrophobic interactions
         hydroph = {hydroph.resnr for hydroph in s.hydrophobic_contacts}
         self.assertTrue({55, 56}.issubset(hydroph))
-        s = tmpmol.interaction_sets[bsids[0]]
+
+        s = tmpmol.interaction_sets[bsids[1]]  # 2AN:A:304
         # Salt bridges to sulfonate group by Lys56 and His71
         saltb = {saltbridge.resnr for saltbridge in s.saltbridge_lneg}
         self.assertTrue({56, 71}.issubset(saltb))
@@ -140,7 +142,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/2w0s.pdb')
-        bsid = 'BVP:B:1207'
+        bsid = 'MG:B:1206'  # Complex of BVDU with Magnesium Cofactor
         for ligand in tmpmol.ligands:
             if ':'.join([ligand.hetid, ligand.chain, str(ligand.position)]) == bsid:
                 tmpmol.characterize_complex(ligand)
