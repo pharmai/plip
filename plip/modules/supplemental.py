@@ -494,12 +494,12 @@ def getligs(mol, altconf, modres, covalent, mapper):
         lig = pybel.Molecule(lig)
 
         # Get canonical atom order
-        lig.write("can")
+        # #@todo Doesn't work as expected
+        lig.write(format='can')
         try:
             atomorder = [int(x) for x in lig.data['SMILES Atom Order'].split(' ')]
         except KeyError:
             atomorder = None
-
         # For kmers, the representative ids are chosen (first residue of kmer)
         lig.data.update({'Name': rname,
                          'Chain': rchain,

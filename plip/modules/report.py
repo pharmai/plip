@@ -363,15 +363,15 @@ class TextOutput:
 
         # Mappings
         mappings = et.SubElement(report, 'mappings')
-        can_to_pdb = et.SubElement(mappings, 'can_to_pdb')  # Canonical SMILES numbering to PDB file numbering (atoms)
+        smiles_to_pdb = et.SubElement(mappings, 'smiles_to_pdb')  # SMILES numbering to PDB file numbering (atoms)
         bsid = ':'.join([self.ligand.hetid, self.ligand.chain, str(self.ligand.position)])
-        can_to_pdb_map = []
+        smiles_to_pdb_map = []
         if self.ligand.atomorder is not None:
             for i, can_id in enumerate(self.ligand.atomorder):
                 # i + 1 is internal atom ID, can_id is canonical SMILES atom ID
-                can_to_pdb_map.append((can_id, self.ligand.Mapper.mapid(i+1, mtype='ligand', bsid=bsid, to='original')))
-                can_to_pdb.text = ','.join([str(mapping[0])+':'+str(mapping[1]) for mapping in can_to_pdb_map])
+                smiles_to_pdb_map.append((can_id, self.ligand.Mapper.mapid(i+1, mtype='ligand', bsid=bsid, to='original')))
+                smiles_to_pdb.text = ','.join([str(mapping[0])+':'+str(mapping[1]) for mapping in smiles_to_pdb_map])
         else:
-            can_to_pdb.text = ''
+            smiles_to_pdb.text = ''
 
         return report

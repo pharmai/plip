@@ -144,7 +144,8 @@ def process_pdb(pdbfile, outpath):
 
     if config.PYMOL or config.PICS:
         # #@todo Disable on Windows? os.name == 'nt'
-        complexes = [PyMOLComplex(mol, site) for site in sorted(mol.interaction_sets)]
+        complexes = [PyMOLComplex(mol, site) for site in sorted(mol.interaction_sets)
+                     if not len(mol.interaction_sets[site].interacting_res) == 0]
         if config.MAXTHREADS > 1:
             message('\nGenerating visualizations in parallel on %i cores ...' % config.MAXTHREADS)
             parfn = parallel_fn(visualize_in_pymol)

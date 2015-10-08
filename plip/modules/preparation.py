@@ -580,7 +580,7 @@ class Ligand(Mol):
         self.type = ligand.type
         self.complex = cclass
         self.molecule = ligand.mol  # Pybel Molecule
-        self.smiles = self.molecule.write(format='can')  # Canonical smile
+        self.smiles = self.molecule.write(format='can')  # SMILES String
         if not len(self.smiles) == 0:
             self.smiles = self.smiles.split()[0]
         else:

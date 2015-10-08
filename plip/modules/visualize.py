@@ -203,7 +203,7 @@ def visualize_in_pymol(plcomplex):
     current_name = cmd.get_object_list(selection='(all)')[0]
     cmd.set_name(current_name, pdbid)
     cmd.hide('everything', 'all')
-    cmd.select(ligname, 'resn %s and chain %s and resi %s' % (ligname, chain, plcomplex.position))
+    cmd.select(ligname, 'resn %s and chain %s and resi %s*' % (ligname, chain, plcomplex.position))
 
     # Visualize and color metal ions if there are any
     if not len(metal_ids) == 0:
