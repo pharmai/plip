@@ -272,7 +272,6 @@ class TextOutput:
         members = et.SubElement(identifiers, 'members')
         smiles = et.SubElement(identifiers, 'smiles')
 
-
         # Ligand properties. Number of (unpaired) functional atoms and rings.
         lig_properties = et.SubElement(report, 'lig_properties')
         num_heavy_atoms = et.SubElement(lig_properties, 'num_heavy_atoms')
@@ -365,12 +364,9 @@ class TextOutput:
         mappings = et.SubElement(report, 'mappings')
         smiles_to_pdb = et.SubElement(mappings, 'smiles_to_pdb')  # SMILES numbering to PDB file numbering (atoms)
         bsid = ':'.join([self.ligand.hetid, self.ligand.chain, str(self.ligand.position)])
-        smiles_to_pdb_map = []
         if self.ligand.atomorder is not None:
-            for i, can_id in enumerate(self.ligand.atomorder):
-                # i + 1 is internal atom ID, can_id is canonical SMILES atom ID
-                smiles_to_pdb_map.append((can_id, self.ligand.Mapper.mapid(i+1, mtype='ligand', bsid=bsid, to='original')))
-                smiles_to_pdb.text = ','.join([str(mapping[0])+':'+str(mapping[1]) for mapping in smiles_to_pdb_map])
+            smiles_to_pdb_map = [(key, self.ligand.Mapper.mapid(self.ligand.can_to_pdb[key], mtype='protein', bsid=bsid)) for key in self.ligand.can_to_pdb]
+            smiles_to_pdb.text = ','.join([str(mapping[0])+':'+str(mapping[1]) for mapping in smiles_to_pdb_map])
         else:
             smiles_to_pdb.text = ''
 

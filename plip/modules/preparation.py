@@ -30,6 +30,254 @@ import config
 # MAIN CLASSES #
 ################
 
+class PDBParser:
+    def __init__(self, pdbpath):
+        self.pdbpath = pdbpath
+        self.num_fixed_lines = 0
+        self.covlinkage = namedtuple("covlinkage", "id1 chain1 pos1 conf1 id2 chain2 pos2 conf2")
+        self.proteinmap, self.modres, self.covalent, self.altconformations, self.corrected_pdb = self.parse_pdb()
+
+    def parse_pdb(self):
+        """Extracts additional information from PDB files.
+        I. When reading in a PDB file, OpenBabel numbers ATOMS and HETATOMS continously.
+        In PDB files, TER records are also counted, leading to a different numbering system.
+        This functions reads in a PDB file and provides a mapping as a dictionary.
+        II. Additionally, it returns a list of modified residues.
+        III. Furthermore, covalent linkages between ligands and protein residues/other ligands are identified
+        IV. Alternative conformations
+        """
+        fil = read(self.pdbpath).readlines()
+        # #@todo Also consider SSBOND entries here
+        corrected_lines = []
+        i, j = 0, 0  # idx and PDB numbering
+        d = {}
+        modres = set()
+        covalent = []
+        alt = []
+        previous_ter = False
+        for line in fil:
+            corrected_line = self.fix_pdbline(line)
+            corrected_lines.append(corrected_line)
+
+            if line.startswith(("ATOM", "HETATM")):
+                # Retrieve alternate conformations
+                atomid, location = int(line[6:11]), line[16]
+                location = 'A' if location == ' ' else location
+                if location != 'A':
+                    alt.append(atomid)
+
+                if not previous_ter:
+                    i += 1
+                    j += 1
+                else:
+                    i += 1
+                    j += 2
+                d[i] = j
+                previous_ter = False
+            # Numbering Changes at TER records
+            if line.startswith("TER"):
+                previous_ter = True
+            # Get modified residues
+            if line.startswith("MODRES"):
+                modres.add(line[12:15].strip())
+            # Get covalent linkages between ligands
+            if line.startswith("LINK"):
+                covalent.append(self.get_linkage(line))
+
+        corrected_pdb = ''.join(corrected_lines)
+        return d, modres, covalent, alt, corrected_pdb
+
+    def fix_pdbline(self, pdbline):
+        """Fix a PDB line if information is missing."""
+        # #@todo Introduce verbose/log
+        #@ todo Unit tests
+        fixed = False
+        if pdbline.startswith('ATOM'):
+            # No chain assigned
+            if pdbline[21] == ' ':
+                pdbline = pdbline[:21] + 'A' + pdbline[22:]
+                fixed = True
+        if pdbline.startswith('HETATM'):
+            # No chain assigned
+            if pdbline[21] == ' ':
+                pdbline = pdbline[:21] + 'Z' + pdbline[22:]
+                fixed = True
+            # No residue number assigned
+            if pdbline[23:26] == '   ':
+                pdbline = pdbline[:23] + '999' + pdbline[26:]
+                fixed = True
+            # Non-standard Ligand Names
+            ligname = pdbline[17:20]
+            if re.match("[^a-zA-Z0-9_]", ligname.strip()):
+                pdbline = pdbline[:17] + 'LIG ' + pdbline[21:]
+                fixed = True
+        self.num_fixed_lines += 1 if fixed else self.num_fixed_lines
+        return pdbline
+
+    def get_linkage(self, line):
+        """Get the linkage information from a LINK entry PDB line."""
+        conf1, id1, chain1, pos1 = line[16].strip(), line[17:20].strip(), line[21].strip(), int(line[22:26])
+        conf2, id2, chain2, pos2 = line[46].strip(), line[47:50].strip(), line[51].strip(), int(line[52:56])
+        return self.covlinkage(id1=id1, chain1=chain1, pos1=pos1, conf1=conf1,
+                               id2=id2, chain2=chain2, pos2=pos2, conf2=conf2)
+
+
+class LigandFinder:
+    def __init__(self, proteincomplex, altconf, modres, covalent, mapper):
+        self.lignames_all = None
+        self.lignames_kept = None
+        self.water = None
+        self.proteincomplex = proteincomplex
+        self.altconformations = altconf
+        self.modresidues = modres
+        self.covalent = covalent
+        self.mapper = mapper
+        self.ligands = self.getligs()
+        self.excluded = sorted(list(self.lignames_all.difference(set(self.lignames_kept))))
+
+    def getligs(self):
+        """Get all ligands from a PDB file and prepare them for analysis."""
+        ligands = []
+
+        # Filter for ligands using lists
+        ligand_residues, self.lignames_all, self.water = self.filter_for_ligands()
+
+        all_res_dict = {(a.GetName(), a.GetChain(), a.GetNum()): a for a in ligand_residues}
+        self.lignames_kept = list(set([a.GetName() for a in ligand_residues]))
+
+        if not config.BREAKCOMPOSITE:
+            #  Update register of covalent links with those between DNA/RNA subunits
+            self.covalent += nucleotide_linkage(all_res_dict)
+            #  Find fragment linked by covalent bonds
+            res_kmers = self.identify_kmers(all_res_dict)
+        else:
+            res_kmers = [[a, ] for a in ligand_residues]
+        for kmer in res_kmers:  # iterate over all ligands and extract molecules + information
+            ligands.append(self.extract_ligand(kmer))
+        return ligands
+
+    def extract_ligand(self, kmer):
+        """Extract the ligand by copying atoms and bonds and assign all information necessary for later steps."""
+        data = namedtuple('ligand', 'mol hetid chain position water members longname type atomorder can_to_pdb')
+        members = [(res.GetName(), res.GetChain(), int32_to_negative(res.GetNum())) for res in kmer]
+        members = sorted(members, key=lambda x: (x[1], x[2]))
+        rname, rchain, rnum = members[0]
+        debuglog("Finalizing extraction for ligand %s:%s:%s" % (rname, rchain, rnum))
+        names = [x[0] for x in members]
+        longname = '-'.join([x[0] for x in members])
+
+        # Classify a ligand by its HETID(s)
+        ligtype = classify_by_name(names)
+
+        hetatoms = set()
+        for obresidue in kmer:
+            hetatoms_res = set([(obatom.GetIdx(), obatom) for obatom in pybel.ob.OBResidueAtomIter(obresidue)
+                                if not obatom.IsHydrogen()])
+
+            # Remove alternative conformations
+            hetatoms_res = set([atm for atm in hetatoms_res
+                                if not self.mapper.mapid(atm[0], mtype='protein', to='internal') in self.altconformations])
+            hetatoms.update(hetatoms_res)
+
+        hetatoms = dict(hetatoms)  # make it a dict with idx as key and OBAtom as value
+        lig = pybel.ob.OBMol()  # new ligand mol
+        neighbours = dict()
+        for obatom in hetatoms.values():  # iterate over atom objects
+            idx = obatom.GetIdx()
+            lig.AddAtom(obatom)
+            # ids of all neighbours of obatom
+            neighbours[idx] = set([neighbour_atom.GetIdx() for neighbour_atom
+                                   in pybel.ob.OBAtomAtomIter(obatom)]) & set(hetatoms.keys())
+
+        ##############################################################
+        # map the old atom idx of OBMol to the new idx of the ligand #
+        ##############################################################
+
+        newidx = dict(zip(hetatoms.keys(), [obatom.GetIdx() for obatom in pybel.ob.OBMolAtomIter(lig)]))
+        mapold = dict(zip(newidx.values(), newidx))
+        # copy the bonds
+        for obatom in hetatoms:
+            for neighbour_atom in neighbours[obatom]:
+                bond = hetatoms[obatom].GetBond(hetatoms[neighbour_atom])
+                lig.AddBond(newidx[obatom], newidx[neighbour_atom], bond.GetBondOrder())
+        lig = pybel.Molecule(lig)
+
+        # For kmers, the representative ids are chosen (first residue of kmer)
+        lig.data.update({'Name': rname, 'Chain': rchain, 'ResNr': rnum})
+
+        # Check if a negative residue number is represented as a 32 bit integer
+        if rnum > 10 ** 5:
+            rnum = int32_to_negative(rnum)
+
+        lig.title = ':'.join((rname, rchain, str(rnum)))
+        self.mapper.ligandmaps[lig.title] = mapold
+
+        atomorder = canonicalize(lig)
+
+        can_to_pdb = {}
+        if atomorder is not None:
+            can_to_pdb = {atomorder[key-1]: mapold[key] for key in mapold}
+
+        ligand = data(mol=lig, hetid=rname, chain=rchain, position=rnum, water=self.water,
+                      members=members, longname=longname, type=ligtype, atomorder=atomorder,
+                      can_to_pdb=can_to_pdb)
+        return ligand
+
+    def filter_for_ligands(self):
+        """Given an OpenBabel Molecule, get all ligands, their names, and water"""
+
+        candidates1 = [o for o in pybel.ob.OBResidueIter(self.proteincomplex.OBMol) if not (o.GetResidueProperty(9)
+                                                                                         or o.GetResidueProperty(0))]
+        all_lignames = set([a.GetName() for a in candidates1])
+
+        water = [o for o in pybel.ob.OBResidueIter(self.proteincomplex.OBMol) if o.GetResidueProperty(9)]
+        # Filter out non-ligands
+        candidates2 = [a for a in candidates1 if is_lig(a.GetName()) and a.GetName() not in self.modresidues]
+        debuglog("%i ligand(s) after first filtering step." % len(candidates2))
+
+        ############################################
+        # Filtering by counting and artifacts list #
+        ############################################
+        artifacts = []
+        unique_ligs = set(a.GetName() for a in candidates2)
+        for ulig in unique_ligs:
+            # Discard if appearing 15 times or more and is possible artifact
+            if ulig in config.biolip_list and [a.GetName() for a in candidates2].count(ulig) >= 15:
+                artifacts.append(ulig)
+
+        selected_ligands = [a for a in candidates2 if a.GetName() not in artifacts]
+
+        return selected_ligands, all_lignames, water
+
+    def identify_kmers(self, residues):
+        """Using the covalent linkage information, find out which fragments/subunits form a ligand."""
+
+        # Remove all those not considered by ligands and pairings including alternate conformations
+        ligdoubles = [[(link.id1, link.chain1, link.pos1),
+                       (link.id2, link.chain2, link.pos2)] for link in
+                      [c for c in self.covalent if c.id1 in self.lignames_kept and c.id2 in self.lignames_kept and
+                       c.conf1 in ['A', ''] and c.conf2 in ['A', '']
+                      and (c.id1, c.chain1, c.pos1) in residues and (c.id2, c.chain2, c.pos2) in residues]]
+        kmers = cluster_doubles(ligdoubles)
+        if not kmers:  # No ligand kmers, just normal independent ligands
+            return [[residues[res]] for res in residues]
+
+        else:
+            # res_kmers contains clusters of covalently bound ligand residues (kmer ligands)
+            res_kmers = [[residues[res] for res in kmer] for kmer in kmers]
+
+            # In this case, add other ligands which are not part of a kmer
+            in_kmer = []
+            for res_kmer in res_kmers:
+                for res in res_kmer:
+                    in_kmer.append((res.GetName(), res.GetChain(), res.GetNum()))
+            for res in residues:
+                if res not in in_kmer:
+                    newres = [residues[res], ]
+                    res_kmers.append(newres)
+            return res_kmers
+
+
 class Mapper:
     """Provides functions for mapping atom IDs in the correct way"""
     def __init__(self):
@@ -270,8 +518,6 @@ class PLInteraction:
         """Identify unpaired functional in groups in ligands, involving H-Bond donors, acceptors, halogen bond donors.
         """
         unpaired_hba, unpaired_hbd, unpaired_hal = [], [], []
-        # #@todo Is mapping correct for different cases: metal and other?
-        # #todo Number of unpaired halogens not correct in some cases, e.g. 11gs
         # Unpaired hydrogen bond acceptors/donors in ligand (not used for hydrogen bonds/water, salt bridges/mcomplex)
         involved_atoms = [hbond.a.idx for hbond in self.hbonds_pdon] + [hbond.d.idx for hbond in self.hbonds_ldon]
         [[involved_atoms.append(atom.idx) for atom in sb.negative.atoms] for sb in self.saltbridge_lneg]
@@ -581,6 +827,7 @@ class Ligand(Mol):
         self.complex = cclass
         self.molecule = ligand.mol  # Pybel Molecule
         self.smiles = self.molecule.write(format='can')  # SMILES String
+        self.can_to_pdb = ligand.can_to_pdb
         if not len(self.smiles) == 0:
             self.smiles = self.smiles.split()[0]
         else:
@@ -856,17 +1103,23 @@ class PDBComplex:
         self.covalent = []  # Covalent linkages between ligands and protein residues/other ligands
         self.excluded = []  # Excluded ligands
         self.Mapper = Mapper()
-        self.ligand = []
+        self.ligands = []
 
     def load_pdb(self, pdbpath):
         """Loads a pdb file with protein AND ligand(s), separates and prepares them."""
         self.sourcefiles['pdbcomplex.original'] = pdbpath
         self.sourcefiles['pdbcomplex'] = pdbpath
         self.information['pdbfixes'] = False
-        # Counting is different from PDB if TER records present
-        self.Mapper.proteinmap, self.modres, self.covalent, self.altconf, self.corrected_pdb, lines_fixed = parse_pdb(read(pdbpath).readlines())
-        if lines_fixed > 0:
-            message('%i lines automatically fixed in PDB input file.\n' % lines_fixed)
+        pdbparser = PDBParser(pdbpath)  # Parse PDB file to find errors and get additonal data
+        # #@todo Refactor and rename here
+        self.Mapper.proteinmap = pdbparser.proteinmap
+        self.modres = pdbparser.modres
+        self.covalent = pdbparser.covalent
+        self.altconf = pdbparser.altconformations
+        self.corrected_pdb = pdbparser.corrected_pdb
+
+        if pdbparser.num_fixed_lines > 0:
+            message('%i lines automatically fixed in PDB input file.\n' % pdbparser.num_fixed_lines)
             # Save modified PDB file
             basename = os.path.basename(pdbpath).split('.')[0]
             pdbpath_fixed = tmpfile(prefix='plipfixed.' + basename + '_', direc=self.output_path)
@@ -878,13 +1131,6 @@ class PDBComplex:
         self.sourcefiles['filename'] = os.path.basename(self.sourcefiles['pdbcomplex'])
         self.protcomplex, self.filetype = read_pdb(self.sourcefiles['pdbcomplex'])
         message('PDB structure successfully read.\n')
-
-
-        # #@todo mmcif currently unsupported
-        if self.filetype == 'mmcif':
-            self.modres, self.covalent, self.altconf = [], [], []
-            # #@todo New function for parsing mmcif files
-            self.Mapper.proteinmap = {x: x for x in range(10000)}
 
         # Determine filename
         try:
@@ -898,10 +1144,9 @@ class PDBComplex:
             self.atoms[atm.idx] = atm
 
         # Extract and prepare ligands
-        if not config.BREAKCOMPOSITE:
-            self.ligands, self.excluded = getligs(self.protcomplex, self.altconf, self.modres, self.covalent, self.Mapper)
-        else:
-            self.ligands, self.excluded = getligs_single(self.protcomplex, self.altconf, self.modres, self.Mapper)
+        ligandfinder = LigandFinder(self.protcomplex, self.altconf, self.modres, self.covalent, self.Mapper)
+        self.ligands = ligandfinder.ligands
+        self.excluded = ligandfinder.excluded
 
         if len(self.excluded) != 0:
             message("Excluded molecules as ligands: %s\n" % ','.join([lig for lig in self.excluded]))
@@ -982,3 +1227,6 @@ class PDBComplex:
     @output_path.setter
     def output_path(self, path):
         self.output_path = tilde_expansion(path)
+
+
+

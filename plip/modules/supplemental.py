@@ -32,7 +32,6 @@ import subprocess
 import codecs
 import gzip
 import zipfile
-import tempfile
 
 # External libraries
 import pybel
@@ -55,80 +54,6 @@ def is_lig(hetid):
     """Checks if a PDB compound can be excluded as a small molecule ligand"""
     h = hetid.upper()
     return not (h == 'HOH' or h in config.UNSUPPORTED)
-
-
-def fix_pdb(pdbline):
-    # #@todo Introduce verbose/log
-    fixed = False
-    if pdbline.startswith('HETATM'):
-        # No chain assigned
-        if pdbline[21] == ' ':
-            pdbline = pdbline[:21] + 'Z' + pdbline[22:]
-            fixed = True
-        # Non-standard Ligand Names
-        ligname = pdbline[17:20]
-        if re.match("[^a-zA-Z0-9_]", ligname.strip()):
-            pdbline = pdbline[:17] + 'LIG ' + pdbline[21:]
-            fixed = True
-    return pdbline, fixed
-
-
-def parse_pdb(fil):
-    """Extracts additional information from PDB files.
-    I. When reading in a PDB file, OpenBabel numbers ATOMS and HETATOMS continously.
-    In PDB files, TER records are also counted, leading to a different numbering system.
-    This functions reads in a PDB file and provides a mapping as a dictionary.
-    II. Additionally, it returns a list of modified residues.
-    III. Furthermore, covalent linkages between ligands and protein residues/other ligands are identified
-    IV. Alternative conformations
-    """
-    # #@todo Also consider SSBOND entries here
-    corrected_lines = []
-    lines_fixed = 0
-    i, j = 0, 0  # idx and PDB numbering
-    d = {}
-    modres = set()
-    covlinkage = namedtuple("covlinkage", "id1 chain1 pos1 conf1 id2 chain2 pos2 conf2")
-    covalent = []
-    alt = []
-    previous_ter = False
-    for line in fil:
-        corrected_line, fix = fix_pdb(line)
-        if fix:
-            lines_fixed += 1
-
-        if line.startswith(("ATOM", "HETATM")):
-
-            # Retrieve alternate conformations
-            atomid, location = int(line[6:11]), line[16]
-            location = 'A' if location == ' ' else location
-            if location != 'A':
-                alt.append(atomid)
-
-            if not previous_ter:
-                i += 1
-                j += 1
-            else:
-                i += 1
-                j += 2
-            d[i] = j
-            previous_ter = False
-        # Numbering Changes at TER records
-        if line.startswith("TER"):
-            previous_ter = True
-        # Get modified residues
-        if line.startswith("MODRES"):
-            modres.add(line[12:15].strip())
-        # Get covalent linkages between ligands
-        if line.startswith("LINK"):
-            conf1, id1, chain1, pos1 = line[16].strip(), line[17:20].strip(), line[21].strip(), int(line[22:26])
-            conf2, id2, chain2, pos2 = line[46].strip(), line[47:50].strip(), line[51].strip(), int(line[52:56])
-            covalent.append(covlinkage(id1=id1, chain1=chain1, pos1=pos1, conf1=conf1,
-                                       id2=id2, chain2=chain2, pos2=pos2, conf2=conf2))
-        # #@todo Perform corrections to wrong formats
-        corrected_lines.append(corrected_line)
-    corrected_pdb = ''.join(corrected_lines)
-    return d, modres, covalent, alt, corrected_pdb, lines_fixed
 
 
 def extract_pdbid(string):
@@ -346,39 +271,10 @@ def set_custom_colorset():
     cmd.set_color('mylightgreen', '[229, 245, 224]')
 
 
-def getligs(mol, altconf, modres, covalent, mapper):
-    """Get all ligands from a PDB file and prepare them for analysis."""
-    #############################
-    # Read in file and get name #
-    #############################
+def nucleotide_linkage(residues):
+    """Support for DNA/RNA ligands by finding missing covalent linkages to stitch DNA/RNA together."""
 
-    data = namedtuple('ligand', 'mol hetid chain position water members longname type atomorder')
-    ligands = []
-
-    #########################
-    # Filtering using lists #
-    #########################
-
-    all_res1 = [o for o in pybel.ob.OBResidueIter(mol.OBMol) if not (o.GetResidueProperty(9)
-                                                                     or o.GetResidueProperty(0))]
-    all_lignames = set([a.GetName() for a in all_res1])
-
-    water = [o for o in pybel.ob.OBResidueIter(mol.OBMol) if o.GetResidueProperty(9)]
-    all_res2 = [a for a in all_res1 if is_lig(a.GetName()) and a.GetName() not in modres]  # Filter out non-ligands
-
-    ############################################
-    # Filtering by counting and artifacts list #
-    ############################################
-    artifacts = []
-    unique_ligs = set(a.GetName() for a in all_res2)
-    for ulig in unique_ligs:
-        # Discard if appearing 15 times or more and is possible artifact
-        if ulig in config.biolip_list and [a.GetName() for a in all_res2].count(ulig) >= 15:
-            artifacts.append(ulig)
-
-    all_res3 = [a for a in all_res2 if a.GetName() not in artifacts]
-    all_res_dict = {(a.GetName(), a.GetChain(), a.GetNum()): a for a in all_res3}
-
+    nuc_covalent = []
     #######################################
     # Basic support for RNA/DNA as ligand #
     #######################################
@@ -386,7 +282,7 @@ def getligs(mol, altconf, modres, covalent, mapper):
     dna_rna = {}  # Dictionary of DNA/RNA residues by chain
     covlinkage = namedtuple("covlinkage", "id1 chain1 pos1 conf1 id2 chain2 pos2 conf2")
     # Create missing covlinkage entries for DNA/RNA
-    for ligand in all_res_dict:
+    for ligand in residues:
         resname, chain, pos = ligand
         if resname in nucleotides:
             if chain not in dna_rna:
@@ -402,215 +298,72 @@ def getligs(mol, altconf, modres, covalent, mapper):
                 nextname, nextpos = nextnucleotide
                 newlink = covlinkage(id1=name, chain1=chain, pos1=pos, conf1='',
                                      id2=nextname, chain2=chain, pos2=nextpos, conf2='')
-                covalent.append(newlink)
+                nuc_covalent.append(newlink)
 
-    #########################
-    # Identify kmer ligands #
-    #########################
+    return nuc_covalent
 
-    lignames = list(set([a.GetName() for a in all_res3]))
-    # Remove all those not considered by ligands and pairings including alternate conformations
 
-    ligdoubles = [[(link.id1, link.chain1, link.pos1),
-                   (link.id2, link.chain2, link.pos2)] for link in
-                  [c for c in covalent if c.id1 in lignames and c.id2 in lignames and
-                   c.conf1 in ['A', ''] and c.conf2 in ['A', '']
-                  and (c.id1, c.chain1, c.pos1) in all_res_dict and (c.id2, c.chain2, c.pos2) in all_res_dict]]
-    kmers = cluster_doubles(ligdoubles)
-    if not kmers:  # No ligand kmers, just normal independent ligands
-        res_kmers = [[all_res_dict[res]] for res in all_res_dict]
+def classify_by_name(names):
+    """Classify a (composite) ligand by the HETID(s)"""
+    if len(names) > 3:  # Polymer
+        if len({'U', 'A', 'C', 'G'}.intersection(set(names))) != 0:
+            ligtype = 'RNA'
+        elif len({'DT', 'DA', 'DC', 'DG'}.intersection(set(names))) != 0:
+            ligtype = 'DNA'
+        else:
+            ligtype = "POLYMER"
     else:
-        # res_kmers contains clusters of covalently bound ligand residues (kmer ligands)
-        res_kmers = [[all_res_dict[res] for res in kmer] for kmer in kmers]
+        ligtype = 'SMALLMOLECULE'
 
-        # In this case, add other ligands which are not part of a kmer
-        in_kmer = []
-        for res_kmer in res_kmers:
-            for res in res_kmer:
-                in_kmer.append((res.GetName(), res.GetChain(), res.GetNum()))
-        for res in all_res_dict:
-            if res not in in_kmer:
-                newres = [all_res_dict[res], ]
-                res_kmers.append(newres)
-
-    ###################
-    # Extract ligands #
-    ###################
-    for kmer in res_kmers:  # iterate over all ligands
-        members = [(res.GetName(), res.GetChain(), int32_to_negative(res.GetNum())) for res in kmer]
-        members = sorted(members, key=lambda x: (x[1], x[2]))
-        rname, rchain, rnum = members[0]
-        names = [x[0] for x in members]
-        longname = '-'.join([x[0] for x in members])
-        if len(names) > 3:  # Polymer
-            if len({'U', 'A', 'C', 'G'}.intersection(set(names))) != 0:
-                ligtype = 'RNA'
-            elif len({'DT', 'DA', 'DC', 'DG'}.intersection(set(names))) != 0:
-                ligtype = 'DNA'
+    for name in names:
+        if name in config.METAL_IONS:
+            if len(names) == 1:
+                ligtype = 'ION'
             else:
-                ligtype = "POLYMER"
+                if "ION" not in ligtype:
+                    ligtype += '+ION'
+    return ligtype
+
+
+def canonicalize(lig):
+    # Get canonical atom order
+    # #@todo Check which isomorphism to take
+    lig = pybel.ob.OBMol(lig.OBMol)
+    for bond in pybel.ob.OBMolBondIter(lig):
+        if bond.GetBondOrder() != 1:
+            bond.SetBondOrder(1)
+    lig.DeleteData(pybel.ob.StereoData)
+    lig = pybel.Molecule(lig)
+    testcan = lig.write(format='can')
+    if testcan != '':
+        reference = pybel.readstring('can', testcan)
+        reference.removeh()
+
+        query = pybel.ob.CompileMoleculeQuery(reference.OBMol)
+        mappr = pybel.ob.OBIsomorphismMapper.GetInstance(query)
+        if all:
+            isomorphs = pybel.ob.vvpairUIntUInt()
+            mappr.MapAll(lig.OBMol, isomorphs)
         else:
-            ligtype = 'SMALLMOLECULE'
+            isomorphs = pybel.ob.vpairUIntUInt()
+            mappr.MapFirst(lig.OBMol, isomorphs)
+            isomorphs = [isomorphs]
+        debuglog("Number of isomorphisms: %i" % len(isomorphs))
 
-        for name in names:
-            if name in config.METAL_IONS:
-                if len(names) == 1:
-                    ligtype = 'ION'
-                else:
-                    if "ION" not in ligtype:
-                        ligtype += '+ION'
-        hetatoms = set()
-        for obresidue in kmer:
-            hetatoms_res = set([(obatom.GetIdx(), obatom) for obatom in pybel.ob.OBResidueAtomIter(obresidue)
-                                if not obatom.IsHydrogen()])
-
-            # Remove alternative conformations
-            hetatoms_res = set([atm for atm in hetatoms_res
-                                if not mapper.mapid(atm[0], mtype='protein', to='internal') in altconf])
-            hetatoms.update(hetatoms_res)
-        if len(hetatoms) == 0:
-            continue
-        hetatoms = dict(hetatoms)  # make it a dict with idx as key and OBAtom as value
-        lig = pybel.ob.OBMol()  # new ligand mol
-        neighbours = dict()
-        for obatom in hetatoms.values():  # iterate over atom objects
-            idx = obatom.GetIdx()
-            lig.AddAtom(obatom)
-            # ids of all neighbours of obatom
-            neighbours[idx] = set([neighbour_atom.GetIdx() for neighbour_atom
-                                   in pybel.ob.OBAtomAtomIter(obatom)]) & set(hetatoms.keys())
-
-        ##############################################################
-        # map the old atom idx of OBMol to the new idx of the ligand #
-        ##############################################################
-
-        newidx = dict(zip(hetatoms.keys(), [obatom.GetIdx() for obatom in pybel.ob.OBMolAtomIter(lig)]))
-        mapold = dict(zip(newidx.values(), newidx))
-        # copy the bonds
-        for obatom in hetatoms:
-            for neighbour_atom in neighbours[obatom]:
-                bond = hetatoms[obatom].GetBond(hetatoms[neighbour_atom])
-                lig.AddBond(newidx[obatom], newidx[neighbour_atom], bond.GetBondOrder())
-        lig = pybel.Molecule(lig)
-
-        # Get canonical atom order
-        # #@todo Doesn't work as expected
-        lig.write(format='can')
-        try:
-            atomorder = [int(x) for x in lig.data['SMILES Atom Order'].split(' ')]
-        except KeyError:
+        # isomorphs now holds all isomorphisms within the molecule
+        # store isomorphisms
+        if not len(isomorphs) == 0:
+            smi_dict = {}
+            smi_to_can = isomorphs[0]
+            for x in smi_to_can:
+                smi_dict[int(x[1])+1] = int(x[0])+1
+            atomorder = [smi_dict[x+1] for x in range(len(lig.atoms))]
+        else:
             atomorder = None
-        # For kmers, the representative ids are chosen (first residue of kmer)
-        lig.data.update({'Name': rname,
-                         'Chain': rchain,
-                         'ResNr': rnum})
 
-        # Check if a negative residue number is represented as a 32 bit integer
-        if rnum > 10 ** 5:
-            rnum = int32_to_negative(rnum)
-
-        lig.title = ':'.join((rname, rchain, str(rnum)))
-        mapper.ligandmaps[lig.title] = mapold
-        ligands.append(data(mol=lig, hetid=rname, chain=rchain, position=rnum, water=water,
-                            members=members, longname=longname, type=ligtype, atomorder=atomorder))
-    excluded = sorted(list(all_lignames.difference(set(lignames))))
-    return ligands, excluded
-
-
-def getligs_single(mol, altconf, modres, mapper):
-    """Get all ligands from a PDB file (break up composite!) and prepare them for analysis."""
-    # #@Todo Combine this function with function for extracting multiple ligands
-
-    #############################
-    # Read in file and get name #
-    #############################
-
-    data = namedtuple('ligand', 'mol hetid chain position water members longname type')
-    ligands = []
-
-    #########################
-    # Filtering using lists #
-    #########################
-
-    all_res1 = [o for o in pybel.ob.OBResidueIter(mol.OBMol) if not (o.GetResidueProperty(9)
-                                                                     or o.GetResidueProperty(0))]
-    all_lignames = set([a.GetName() for a in all_res1])
-
-    water = [o for o in pybel.ob.OBResidueIter(mol.OBMol) if o.GetResidueProperty(9)]
-    all_res2 = [a for a in all_res1 if is_lig(a.GetName()) and a.GetName() not in modres]  # Filter out non-ligands
-
-    ############################################
-    # Filtering by counting and artifacts list #
-    ############################################
-    artifacts = []
-    unique_ligs = set(a.GetName() for a in all_res2)
-    for ulig in unique_ligs:
-        # Discard if appearing 15 times or more and is possible artifact
-        if ulig in config.biolip_list and [a.GetName() for a in all_res2].count(ulig) >= 15:
-            artifacts.append(ulig)
-
-    all_res3 = [a for a in all_res2 if a.GetName() not in artifacts]
-    lignames = list(set([a.GetName() for a in all_res3]))
-
-    ###################
-    # Extract ligands #
-    ###################
-    for lgnd in all_res3:  # iterate over all ligands
-        members = [(lgnd.GetName(), lgnd.GetChain(), int32_to_negative(lgnd.GetNum()))]
-        rname, rchain, rnum = sorted(members)[0]  # representative name, chain, and number
-        members = sorted(members, key=lambda x: (x[1], x[2]))
-        longname = '-'.join([x[0] for x in members])
-        if lgnd.GetName() in config.METAL_IONS:
-            ligtype = 'ION'
-        else:
-            ligtype = 'SMALLMOLECULE/FRAGMENT'
-        hetatoms = set()
-        hetatoms_res = set([(obatom.GetIdx(), obatom) for obatom in pybel.ob.OBResidueAtomIter(lgnd)
-                            if not obatom.IsHydrogen()])
-
-        # Remove alternative conformations
-        hetatoms_res = set([atm for atm in hetatoms_res
-                            if not mapper.mapid(atm[0], mtype='protein', to='internal') in altconf])
-        hetatoms.update(hetatoms_res)
-        if len(hetatoms) == 0:
-            continue
-        hetatoms = dict(hetatoms)  # make it a dict with idx as key and OBAtom as value
-        lig = pybel.ob.OBMol()  # new ligand mol
-        neighbours = dict()
-        for obatom in hetatoms.values():  # iterate over atom objects
-            idx = obatom.GetIdx()
-            lig.AddAtom(obatom)
-            # ids of all neighbours of obatom
-            neighbours[idx] = set([neighbour_atom.GetIdx() for neighbour_atom
-                                   in pybel.ob.OBAtomAtomIter(obatom)]) & set(hetatoms.keys())
-
-        ##############################################################
-        # map the old atom idx of OBMol to the new idx of the ligand #
-        ##############################################################
-
-        newidx = dict(zip(hetatoms.keys(), [obatom.GetIdx() for obatom in pybel.ob.OBMolAtomIter(lig)]))
-        mapold = dict(zip(newidx.values(), newidx))
-        # copy the bonds
-        for obatom in hetatoms:
-            for neighbour_atom in neighbours[obatom]:
-                bond = hetatoms[obatom].GetBond(hetatoms[neighbour_atom])
-                lig.AddBond(newidx[obatom], newidx[neighbour_atom], bond.GetBondOrder())
-        lig = pybel.Molecule(lig)
-        # For kmers, the representative ids are chosen (first residue of kmer)
-        lig.data.update({'Name': rname,
-                         'Chain': rchain,
-                         'ResNr': rnum})
-
-        # Check if a negative residue number is represented as a 32 bit integer
-        if rnum > 10 ** 5:
-            rnum = int32_to_negative(rnum)
-
-        lig.title = ':'.join((rname, rchain, str(rnum)))
-        mapper.ligandmaps[lig.title] = mapold
-        ligands.append(data(mol=lig, hetid=rname, chain=rchain, position=rnum, water=water,
-                            members=members, longname=longname, type=ligtype))
-    excluded = sorted(list(all_lignames.difference(set(lignames))))
-    return ligands, excluded
+    else:
+        atomorder = None
+    return atomorder
 
 
 def int32_to_negative(int32):
@@ -687,4 +440,14 @@ def message(msg, indent=False):
     if config.VERBOSE:
         if indent:
             msg = '  ' + msg
+        sys.stdout.write(msg)
+
+
+def debuglog(msg):
+    """Writes debug messages"""
+    if config.DEBUG:
+        msg = '    %% DEBUG: ' + msg
+        if len(msg) > 100:
+            msg = msg[:100] + ' ...'
+        msg += '\n'
         sys.stdout.write(msg)

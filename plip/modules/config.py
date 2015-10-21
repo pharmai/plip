@@ -17,6 +17,7 @@ limitations under the License.
 """
 
 VERBOSE = False  # Set verbose mode
+DEBUG = False  # Set debug mode
 MAXTHREADS = 1  # Maximum number of main threads for binding site visualization
 XML = False
 TXT = False

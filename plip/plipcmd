@@ -105,7 +105,6 @@ def process_pdb(pdbfile, outpath):
     mol.load_pdb(pdbfile)
     # #@todo Offers possibility for filter function from command line (by ligand chain, position, hetid)
     for ligand in mol.ligands:
-        # #@todo e.g. if not ligand.hetid in config.BLACKLIST and is in config.WHITELIST
         mol.characterize_complex(ligand)
     excluded = mol.excluded
     create_folder_if_not_exists(outpath)
@@ -244,6 +243,9 @@ if __name__ == '__main__':
                         help="Don't combine ligand fragments into with covalent bonds but treat them as single ligands"
                              "fot the analysis.",
                         action="store_true")
+    parser.add_argument("--debug", dest="debug", default=False,
+                        help="Turn on DEBUG mode with extended log.",
+                        action="store_true")
     # Optional threshold arguments, not shown in help
     thr = namedtuple('threshold', 'name type')
     thresholds = [thr(name='aromatic_planarity', type='angle'),
@@ -261,7 +263,8 @@ if __name__ == '__main__':
                             help=argparse.SUPPRESS)
 
     arguments = parser.parse_args()
-    config.VERBOSE = True if arguments.verbose else False
+    config.VERBOSE = True if (arguments.verbose or arguments.debug) else False
+    config.DEBUG = True if arguments.debug else False
     config.MAXTHREADS = arguments.maxthreads
     config.XML, config.TXT, config.PICS, config.PYMOL = arguments.xml, arguments.txt, arguments.pics, arguments.pymol
     config.OUTPATH = arguments.outpath
