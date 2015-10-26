@@ -7,7 +7,6 @@ Changelog
 * More robust visualization
 * Handling of negative residue numbers for more cases
 * Composite members in alphabetical order
-
 * Fixes errors in aromatic ring detection
 * Code improvements
 

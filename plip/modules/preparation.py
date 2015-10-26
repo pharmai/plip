@@ -111,7 +111,7 @@ class PDBParser:
             if re.match("[^a-zA-Z0-9_]", ligname.strip()):
                 pdbline = pdbline[:17] + 'LIG ' + pdbline[21:]
                 fixed = True
-        self.num_fixed_lines += 1 if fixed else self.num_fixed_lines
+        self.num_fixed_lines += 1 if fixed else 0
         return pdbline
 
     def get_linkage(self, line):
@@ -1123,6 +1123,7 @@ class PDBComplex:
             # Save modified PDB file
             basename = os.path.basename(pdbpath).split('.')[0]
             pdbpath_fixed = tmpfile(prefix='plipfixed.' + basename + '_', direc=self.output_path)
+            create_folder_if_not_exists(self.output_path)
             self.sourcefiles['pdbcomplex'] = pdbpath_fixed
             with open(pdbpath_fixed, 'w') as f:
                 f.write(self.corrected_pdb)
