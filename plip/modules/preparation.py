@@ -1133,13 +1133,17 @@ class PDBComplex:
         self.protcomplex, self.filetype = read_pdb(self.sourcefiles['pdbcomplex'])
         message('PDB structure successfully read.\n')
 
-        # Determine filename
-        try:
-            self.pymol_name = self.protcomplex.data['HEADER'][56:60].lower()  # Get name from HEADER data
-        except KeyError:  # Extract the PDBID from the filename
-            self.pymol_name = pdbpath.split('/')[-1].split('.')[0] + '-Protein'
-        if self.pymol_name == '':
-            self.pymol_name = self.protcomplex.data['HEADER'].split()[0]
+        # Determine (temporary) PyMOL Name from Filename
+        self.pymol_name = pdbpath.split('/')[-1].split('.')[0] + '-Protein'
+        # Replace characters causing problems in PyMOL
+        self.pymol_name = self.pymol_name.replace(' ', '').replace('(', '').replace(')', '').replace('-','_')
+        # But if possible, name it after PDBID in Header
+        if 'HEADER' in self.protcomplex.data:  # If the PDB file has a proper header
+            potential_name = self.protcomplex.data['HEADER'][56:60].lower()
+            if extract_pdbid(potential_name) != 'UnknownProtein':
+                self.pymol_name = potential_name
+        debuglog("Pymol Name set as: '%s'" % self.pymol_name)
+
         self.protcomplex.OBMol.AddPolarHydrogens()
         for atm in self.protcomplex:
             self.atoms[atm.idx] = atm

@@ -194,13 +194,14 @@ def visualize_in_pymol(plcomplex):
     # Basic visualizations #
     ########################
 
-    start_pymol(run=True, options='-pcq', quiet=True)
+    start_pymol(run=True, options='-pcq', quiet=not config.DEBUG)
     standard_settings()
     cmd.set('dash_gap', 0)  # Show not dashes, but lines for the pliprofiler
     cmd.set('ray_shadow', 0)  # Turn on ray shadows for clearer ray-traced images
     cmd.set('cartoon_color', 'mylightblue')
     cmd.load(plcomplex.sourcefile)
     current_name = cmd.get_object_list(selection='(all)')[0]
+    debuglog('Setting current_name to "%s" and pdbid to "%s"' % (current_name, pdbid))
     cmd.set_name(current_name, pdbid)
     cmd.hide('everything', 'all')
     cmd.select(ligname, 'resn %s and chain %s and resi %s*' % (ligname, chain, plcomplex.position))
