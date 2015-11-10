@@ -23,7 +23,9 @@ To install PLIP, simply run the following command using a terminal
 Code Contributions
 ------------------
 Sebastian Salentin sebastian.salentin (at) biotec.tu-dresden.de
+
 Joachim Haupt joachim.haupt (at) biotec.tu-dresden.de
+
 Melissa F. Adasme Mora melissa.adasme (at) biotec.tu-dresden.de (Testing and Validation)
 
 PLIP Web Server
