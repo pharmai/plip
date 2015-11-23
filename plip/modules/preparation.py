@@ -1125,6 +1125,7 @@ class PDBComplex:
             pdbpath_fixed = tmpfile(prefix='plipfixed.' + basename + '_', direc=self.output_path)
             create_folder_if_not_exists(self.output_path)
             self.sourcefiles['pdbcomplex'] = pdbpath_fixed
+            self.corrected_pdb = re.sub(r'[^\x00-\x7F]+', ' ', self.corrected_pdb)  # Strip non-unicode chars
             with open(pdbpath_fixed, 'w') as f:
                 f.write(self.corrected_pdb)
             self.information['pdbfixes'] = True
