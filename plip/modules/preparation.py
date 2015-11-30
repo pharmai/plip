@@ -136,7 +136,9 @@ class LigandFinder:
         self.excluded = sorted(list(self.lignames_all.difference(set(self.lignames_kept))))
 
     def getligs(self):
-        """Get all ligands from a PDB file and prepare them for analysis."""
+        """Get all ligands from a PDB file and prepare them for analysis.
+        Returns all non-empty ligands.
+        """
         ligands = []
 
         # Filter for ligands using lists
@@ -154,7 +156,7 @@ class LigandFinder:
             res_kmers = [[a, ] for a in ligand_residues]
         for kmer in res_kmers:  # iterate over all ligands and extract molecules + information
             ligands.append(self.extract_ligand(kmer))
-        return ligands
+        return [lig for lig in ligands if len(lig.mol.atoms) != 0]
 
     def extract_ligand(self, kmer):
         """Extract the ligand by copying atoms and bonds and assign all information necessary for later steps."""

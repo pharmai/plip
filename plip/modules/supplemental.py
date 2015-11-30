@@ -335,7 +335,12 @@ def canonicalize(lig):
     lig.DeleteData(pybel.ob.StereoData)
     lig = pybel.Molecule(lig)
     testcan = lig.write(format='can')
+    try:
+        pybel.readstring('can', testcan)
+    except IOError:
+        testcan = ''
     if testcan != '':
+
         reference = pybel.readstring('can', testcan)
         reference.removeh()
 
