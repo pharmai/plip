@@ -1,6 +1,10 @@
 Changelog
 ---------
 
+### 1.2.2
+* Improved handling of broken PDB files and non-standard filenames
+* Improved error handling
+
 ### 1.2.1
 * __Mapping of canonical atom order to PDB atom order for each ligand__
 * __Introduction of debug mode (--debug)__
