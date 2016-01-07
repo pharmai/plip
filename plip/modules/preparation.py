@@ -111,6 +111,9 @@ class PDBParser:
             if re.match("[^a-zA-Z0-9_]", ligname.strip()):
                 pdbline = pdbline[:17] + 'LIG ' + pdbline[21:]
                 fixed = True
+            if len(ligname.strip()) == 0:
+                pdbline = pdbline[:17] + 'LIG ' + pdbline[21:]
+                fixed = True
         self.num_fixed_lines += 1 if fixed else 0
         return pdbline
 
@@ -176,9 +179,11 @@ class LigandFinder:
             hetatoms_res = set([(obatom.GetIdx(), obatom) for obatom in pybel.ob.OBResidueAtomIter(obresidue)
                                 if not obatom.IsHydrogen()])
 
-            # Remove alternative conformations
-            hetatoms_res = set([atm for atm in hetatoms_res
-                                if not self.mapper.mapid(atm[0], mtype='protein', to='internal') in self.altconformations])
+            if not config.ALTLOC:
+                # Remove alternative conformations (standard -> True)
+                hetatoms_res = set([atm for atm in hetatoms_res
+                                    if not self.mapper.mapid(atm[0], mtype='protein',
+                                                             to='internal') in self.altconformations])
             hetatoms.update(hetatoms_res)
 
         hetatoms = dict(hetatoms)  # make it a dict with idx as key and OBAtom as value
@@ -1235,6 +1240,3 @@ class PDBComplex:
     @output_path.setter
     def output_path(self, path):
         self.output_path = tilde_expansion(path)
-
-
-

@@ -1,6 +1,11 @@
 Changelog
 ---------
 
+### 1.2.2
+* __Option to consider alternate atom locations (e.g. for ligands with several conformations)__
+* Automatic fixing of missing ligand names
+
+
 ### 1.2.1
 * __Mapping of canonical atom order to PDB atom order for each ligand__
 * __Introduction of debug mode (--debug)__

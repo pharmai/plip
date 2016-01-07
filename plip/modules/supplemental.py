@@ -325,9 +325,27 @@ def classify_by_name(names):
     return ligtype
 
 
-def canonicalize(lig):
-    # Get canonical atom order
+def get_isomorphisms(reference, lig):
+    """Get all isomorphisms of the ligand."""
+    query = pybel.ob.CompileMoleculeQuery(reference.OBMol)
+    mappr = pybel.ob.OBIsomorphismMapper.GetInstance(query)
+    if all:
+        isomorphs = pybel.ob.vvpairUIntUInt()
+        mappr.MapAll(lig.OBMol, isomorphs)
+    else:
+        isomorphs = pybel.ob.vpairUIntUInt()
+        mappr.MapFirst(lig.OBMol, isomorphs)
+        isomorphs = [isomorphs]
+    debuglog("Number of isomorphisms: %i" % len(isomorphs))
     # #@todo Check which isomorphism to take
+    return isomorphs
+
+
+def canonicalize(lig):
+    """Get the canonical atom order for the ligand."""
+    atomorder = None
+    # Get canonical atom order
+
     lig = pybel.ob.OBMol(lig.OBMol)
     for bond in pybel.ob.OBMolBondIter(lig):
         if bond.GetBondOrder() != 1:
@@ -337,37 +355,20 @@ def canonicalize(lig):
     testcan = lig.write(format='can')
     try:
         pybel.readstring('can', testcan)
-    except IOError:
-        testcan = ''
-    if testcan != '':
-
         reference = pybel.readstring('can', testcan)
+    except IOError:
+        testcan, reference = '', ''
+    if testcan != '':
         reference.removeh()
-
-        query = pybel.ob.CompileMoleculeQuery(reference.OBMol)
-        mappr = pybel.ob.OBIsomorphismMapper.GetInstance(query)
-        if all:
-            isomorphs = pybel.ob.vvpairUIntUInt()
-            mappr.MapAll(lig.OBMol, isomorphs)
-        else:
-            isomorphs = pybel.ob.vpairUIntUInt()
-            mappr.MapFirst(lig.OBMol, isomorphs)
-            isomorphs = [isomorphs]
-        debuglog("Number of isomorphisms: %i" % len(isomorphs))
-
-        # isomorphs now holds all isomorphisms within the molecule
-        # store isomorphisms
+        isomorphs = get_isomorphisms(reference, lig)  # isomorphs now holds all isomorphisms within the molecule
         if not len(isomorphs) == 0:
             smi_dict = {}
             smi_to_can = isomorphs[0]
             for x in smi_to_can:
-                smi_dict[int(x[1])+1] = int(x[0])+1
-            atomorder = [smi_dict[x+1] for x in range(len(lig.atoms))]
+                smi_dict[int(x[1]) + 1] = int(x[0]) + 1
+            atomorder = [smi_dict[x + 1] for x in range(len(lig.atoms))]
         else:
             atomorder = None
-
-    else:
-        atomorder = None
     return atomorder
 
 
