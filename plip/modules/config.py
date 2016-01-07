@@ -24,7 +24,8 @@ TXT = False
 PICS = False
 PYMOL = False
 OUTPATH = './'
-BREAKCOMPOSITE = False
+BREAKCOMPOSITE = False  # Break up composite ligands with covalent bonds
+ALTLOC = False  # Consider alternate locations
 
 # Configuration file for Protein-Ligand Interaction Profiler (PLIP)
 # Set thresholds for detection of interactions

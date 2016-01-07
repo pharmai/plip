@@ -260,8 +260,3 @@ Coordinates of interacting ligand atom or interaction center in ligand
 **protcoo**
 
 Coordinates of interacting protein atom or interaction center in ligand
-
-
-
-
-

@@ -2,6 +2,8 @@ Changelog
 ---------
 
 ### 1.2.2
+* __Option to consider alternate atom locations (e.g. for ligands with several conformations__
+* Automatic fixing of missing ligand names
 * Improved handling of broken PDB files and non-standard filenames
 * Improved error handling
 
