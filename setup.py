@@ -19,7 +19,7 @@ limitations under the License.
 from setuptools import setup
 
 setup(name='plip',
-      version='1.2.2',
+      version='1.2.2a',
       description='PLIP - Fully automated protein-ligand interaction profiler',
       classifiers=[
           'Development Status :: 5 - Production/Stable',
@@ -38,7 +38,6 @@ setup(name='plip',
       install_requires=[
           'openbabel',
           'numpy',
-          'lxml',
-          'pymol',
+          'lxml'
       ],
       zip_safe=False)
