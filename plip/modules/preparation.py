@@ -55,10 +55,19 @@ class PDBParser:
         covalent = []
         alt = []
         previous_ter = False
-        for line in fil:
-            corrected_line = self.fix_pdbline(line)
-            corrected_lines.append(corrected_line)
 
+        #New code : Do fixing first and then do mapping on fixed lines
+        #@TODO Test code
+        lastnum = 0 # Atom numbering (has to be consecutive)
+        for line in fil:
+            corrected_line, newnum = self.fix_pdbline(line, lastnum)
+            if corrected_line is not None:
+                corrected_lines.append(corrected_line)
+                lastnum = newnum
+        corrected_pdb = ''.join(corrected_lines)
+
+
+        for line in corrected_lines:
             if line.startswith(("ATOM", "HETATM")):
                 # Retrieve alternate conformations
                 atomid, location = int(line[6:11]), line[16]
@@ -83,21 +92,42 @@ class PDBParser:
             # Get covalent linkages between ligands
             if line.startswith("LINK"):
                 covalent.append(self.get_linkage(line))
-
-        corrected_pdb = ''.join(corrected_lines)
         return d, modres, covalent, alt, corrected_pdb
 
-    def fix_pdbline(self, pdbline):
+    def fix_pdbline(self, pdbline, lastnum):
         """Fix a PDB line if information is missing."""
-        # #@todo Introduce verbose/log
-        #@ todo Unit tests
         fixed = False
+        newnum = 0
+        pdbline = pdbline.strip('\n')
+        # Some MD / Docking tools produce empty lines, leading to segfaults
+        if len(pdbline.strip()) == 0:
+            self.num_fixed_lines += 1
+            return None, lastnum
+        if len(pdbline) > 100: # Should be 80 long
+            self.num_fixed_lines += 1
+            return None, lastnum
+        # TER Entries also have continuing numbering, consider them as well
+        if pdbline.startswith('TER'):
+            newnum = lastnum + 1
         if pdbline.startswith('ATOM'):
+            newnum = lastnum + 1
+            currentnum = int(pdbline[6:11])
+            if lastnum + 1 != currentnum:
+                pdbline = pdbline[:6] + (5 - len(str(newnum))) * ' ' + str(newnum) + ' ' + pdbline[12:]
+                fixed = True
             # No chain assigned
             if pdbline[21] == ' ':
                 pdbline = pdbline[:21] + 'A' + pdbline[22:]
                 fixed = True
+            if pdbline.endswith('H'):
+                self.num_fixed_lines += 1
+                return None, lastnum
         if pdbline.startswith('HETATM'):
+            newnum = lastnum + 1
+            currentnum = int(pdbline[6:11])
+            if lastnum + 1 != currentnum:
+                pdbline = pdbline[:6] + (5 - len(str(newnum))) * ' ' + str(newnum) + ' ' + pdbline[12:]
+                fixed = True
             # No chain assigned
             if pdbline[21] == ' ':
                 pdbline = pdbline[:21] + 'Z' + pdbline[22:]
@@ -114,8 +144,11 @@ class PDBParser:
             if len(ligname.strip()) == 0:
                 pdbline = pdbline[:17] + 'LIG ' + pdbline[21:]
                 fixed = True
+            if pdbline.endswith('H'):
+                self.num_fixed_lines += 1
+                return None, lastnum
         self.num_fixed_lines += 1 if fixed else 0
-        return pdbline
+        return pdbline + '\n', max(newnum, lastnum)
 
     def get_linkage(self, line):
         """Get the linkage information from a LINK entry PDB line."""

@@ -33,6 +33,18 @@ wbridge_info = namedtuple('wbridge_info', 'don_id acc_id water_id protisdon')
 metal_info = namedtuple('metal_info', 'metal_id, target_id location')
 
 
+def select_by_ids(selname, idlist, selection_exists=False, chunksize=20):
+    """Selection with a large number of ids concatenated into a selection
+    list can cause buffer overflow in PyMOL. This function takes a selection
+    name and and list of IDs (list of integers) as input and makes a careful
+    step-by-step selection (packages of 20 by default)"""
+    idlist = list(set(idlist))  # Remove duplicates
+    if not selection_exists:
+        cmd.select(selname, 'None')  # Empty selection first
+    idchunks = [idlist[i:i+chunksize] for i in xrange(0, len(idlist), chunksize)]
+    for idchunk in idchunks:
+        cmd.select(selname, '%s or (id %s)' % (selname, '+'.join(map(str, idchunk))))
+
 class PyMOLComplex:
     """Contains all information on a complex relevant for visualization. Can be pickled"""
     def __init__(self, mol, site):
@@ -208,7 +220,7 @@ def visualize_in_pymol(plcomplex):
 
     # Visualize and color metal ions if there are any
     if not len(metal_ids) == 0:
-        cmd.select(ligname, '%s or id %s' % (ligname, metal_ids_str))
+        select_by_ids(ligname, metal_ids, selection_exists=True)
         cmd.show('spheres', 'id %s and %s' % (metal_ids_str, pdbid))
 
     # Additionally, select all members of composite ligands
@@ -244,7 +256,7 @@ def visualize_in_pymol(plcomplex):
     if not len(plcomplex.hydrophobic_contacts.bs_ids) == 0:
         for h in [['Hydrophobic-P', plcomplex.hydrophobic_contacts.bs_ids],
                   ['Hydrophobic-L', plcomplex.hydrophobic_contacts.lig_ids]]:
-            cmd.select(h[0], 'id %s' % '+'.join(map(str, h[1])))
+            select_by_ids(h[0], h[1])
         for i in plcomplex.hydrophobic_contacts.pairs_ids:
             cmd.select('tmp_bs', 'id %i' % i[0])
             cmd.select('tmp_lig', 'id %i' % i[1])
@@ -262,7 +274,7 @@ def visualize_in_pymol(plcomplex):
     for group in [['HBondDonor-L', plcomplex.hbonds.lig_don_id], ['HBondDonor-P', plcomplex.hbonds.prot_don_id],
                   ['HBondAccept-L', plcomplex.hbonds.lig_acc_id], ['HBondAccept-P', plcomplex.hbonds.prot_acc_id]]:
         if not len(group[1]) == 0:
-            cmd.select(group[0], 'id %s' % '+'.join(map(str, group[1])))
+            select_by_ids(group[0], group[1])
     for i in plcomplex.hbonds.ldon_id:
         cmd.select('tmp_bs', 'id %i' % i[0])
         cmd.select('tmp_lig', 'id %i' % i[1])
@@ -287,8 +299,9 @@ def visualize_in_pymol(plcomplex):
             cmd.select(group[0], 'id %i' % group[1])
         cmd.distance('HalogenBonds', 'tmp_bs', 'tmp_lig')
     if not len(all_acc_o) == 0:
-        cmd.select('HalogenAccept', 'id %s' % '+'.join(map(str, all_acc_o)))
-        cmd.select('HalogenDonor', 'id %s' % '+'.join(map(str, all_don_x)))
+        select_by_ids('HalogenAccept', all_acc_o)
+        select_by_ids('HalogenDonor', all_don_x)
+        #cmd.select('HalogenDonor', 'id %s' % '+'.join(map(str, all_don_x)))
     if object_exists('HalogenBonds'):
         cmd.set('dash_color', 'greencyan', 'HalogenBonds')
 
@@ -408,7 +421,7 @@ def visualize_in_pymol(plcomplex):
     ###################
 
     if not len(plcomplex.metal_complexes) == 0:
-        cmd.select('Metal-M', 'id %s' % metal_ids_str)
+        select_by_ids('Metal-M', metal_ids)
         for metal_complex in plcomplex.metal_complexes:
             cmd.select('tmp_m', 'id %i' % metal_complex.metal_id)
             cmd.select('tmp_t', 'id %i' % metal_complex.target_id)
@@ -467,8 +480,10 @@ def visualize_in_pymol(plcomplex):
         if object_exists(ligname):
             cmd.zoom(ligname, 3)
 
-    cmd.set('sphere_scale', 0.2, 'resn HOH')  # Needs to be done here because of the copy made
-    cmd.set('sphere_transparency', 0.4, '!resn HOH')
+    # Resize water molecules. Sometimes they are not heteroatoms HOH, but part of the protein
+    cmd.set('sphere_scale', 0.2, 'resn HOH or Water')  # Needs to be done here because of the copy made
+    cmd.set('sphere_transparency', 0.4, '!(resn HOH or Water)')
+
     cmd.origin(ligname)
     if 'Centroids*' in cmd.get_names("selections"):
         cmd.color('grey80', 'Centroids*')
@@ -481,11 +496,11 @@ def visualize_in_pymol(plcomplex):
     # Selections for unpaired groups #
     ##################################
     if not len(plcomplex.unpaired_hba_idx) == 0:
-        cmd.select('Unpaired-HBA', 'Unpaired-HBA or id %s' % '+'.join(str(idx) for idx in plcomplex.unpaired_hba_idx))
+        select_by_ids('Unpaired-HBA', plcomplex.unpaired_hba_idx, selection_exists=True)
     if not len(plcomplex.unpaired_hbd_idx) == 0:
-        cmd.select('Unpaired-HBD', 'Unpaired-HBD or id %s' % '+'.join(str(idx) for idx in plcomplex.unpaired_hbd_idx))
+        select_by_ids('Unpaired-HBD', plcomplex.unpaired_hbd_idx, selection_exists=True)
     if not len(plcomplex.unpaired_hal_idx) == 0:
-        cmd.select('Unpaired-HAL', 'Unpaired-HAL or id %s' % '+'.join(str(idx) for idx in plcomplex.unpaired_hal_idx))
+        select_by_ids('Unpaired-HAL', plcomplex.unpaired_hal_idx, selection_exists=True)
 
     ##############################
     # Organization of selections #

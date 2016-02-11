@@ -45,7 +45,7 @@ import multiprocessing
 # External libraries
 import lxml.etree as et
 
-__version__ = '1.2.2'
+__version__ = '1.2.3'
 descript = "Protein-Ligand Interaction Profiler (PLIP) v%s " \
            "is a command-line based tool to analyze interactions in a protein-ligand complex. " \
            "If you are using PLIP in your work, please cite: " \
@@ -89,11 +89,11 @@ def fetch_pdb(pdbid):
         sysexit(3, 'Invalid PDB ID (Entry does not exist on PDB server)')
     message('Downloading file from PDB ... ')
     pdburl = 'http://www.rcsb.org/pdb/files/%s.pdb' % current_entry  # Get URL for current entry
-    pdbfile = None
-    try:
-        pdbfile = urllib2.urlopen(pdburl).read()
-    except urllib2.HTTPError:
-        sysexit(5, "Error: No file in PDB format available from wwPDB for the given PDB ID.")
+    pdbfile = urllib2.urlopen(pdburl).read()
+    # If no PDB file is available, a text is now shown with "We're sorry, but ..."
+    # Could previously be distinguished by an HTTP error
+    if 'sorry' in pdbfile:
+        sysexit(5, "Error: No file in PDB format available from wwPDB for the given PDB ID.\n")
     return [pdbfile, current_entry]
 
 

@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+### 1.2.3
+* __Better support for files from MD and docking software__
+* __Fixes issues with large and complex structures__
+* Speed optimizations
+
+
 ### 1.2.2
 * __Option to consider alternate atom locations (e.g. for ligands with several conformations__
 * Automatic fixing of missing ligand names
