@@ -196,7 +196,6 @@ def visualize_in_pymol(plcomplex):
 
     pdbid = plcomplex.pdbid
     lig_members = plcomplex.lig_members
-    save_to = plcomplex.outpath
     chain = plcomplex.chain
     ligname = plcomplex.hetid
     metal_ids = plcomplex.metal_ids
@@ -544,9 +543,9 @@ def visualize_in_pymol(plcomplex):
 
     filename = '%s_%s' % (pdbid.upper(), "_".join([ligname, plcomplex.chain, plcomplex.position]))
     if config.PYMOL:
-        cmd.save("".join([save_to, "%s.pse" % filename]))
+        cmd.save("/".join([config.OUTPATH, "%s.pse" % filename]))
 
     # Create output pictures (experimental)
     set_fancy_ray()
     if config.PICS:
-        png_workaround("".join([save_to, filename]))
+        png_workaround("/".join([config.OUTPATH, filename]))

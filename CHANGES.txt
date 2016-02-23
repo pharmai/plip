@@ -1,6 +1,9 @@
 Changelog
 ---------
 
+### 1.3.0
+* __Batch processing__
+
 ### 1.2.3
 * __Better support for files from MD and docking software__
 * __Fixes issues with large and complex structures__

@@ -871,7 +871,7 @@ class Ligand(Mol):
         if not len(self.smiles) == 0:
             self.smiles = self.smiles.split()[0]
         else:
-            message('[Warning] Could not write smile for this ligand.\n', indent=True)
+            message('[Warning] Could not write SMILES for this ligand.\n', indent=True)
             self.smiles = ''
         self.heavy_atoms = self.molecule.OBMol.NumHvyAtoms()  # Heavy atoms count
         self.all_atoms = self.molecule.atoms

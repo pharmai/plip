@@ -45,7 +45,7 @@ import multiprocessing
 # External libraries
 import lxml.etree as et
 
-__version__ = '1.2.3'
+__version__ = '1.3.0'
 descript = "Protein-Ligand Interaction Profiler (PLIP) v%s " \
            "is a command-line based tool to analyze interactions in a protein-ligand complex. " \
            "If you are using PLIP in your work, please cite: " \
@@ -78,7 +78,7 @@ def check_pdb_status(pdbid):
 def fetch_pdb(pdbid):
     """Get the newest entry from the RCSB server for the given PDB ID. Exits with '1' if PDB ID is invalid."""
     pdbid = pdbid.lower()
-    message('Checking status of PDB ID %s ... ' % pdbid)
+    message('\nChecking status of PDB ID %s ... ' % pdbid)
     state, current_entry = check_pdb_status(pdbid)  # Get state and current PDB ID
 
     if state == 'OBSOLETE':
@@ -177,8 +177,26 @@ def process_pdb(pdbfile, outpath):
         with open('%s/report.txt' % outpath, 'w') as f:
             [f.write(textline + '\n') for textline in textlines]
 
+def download_structure(inputpdbid):
+    """Given a PDB ID, downloads the corresponding PDB structure.
+    Checks for validity of ID and handles error while downloading.
+    Returns the path of the downloaded file."""
+    try:
+        if len(inputpdbid) != 4 or extract_pdbid(inputpdbid.lower()) == 'UnknownProtein':
+            sysexit(3, 'Error: Invalid PDB ID (Wrong format)')
+        pdbfile, pdbid = fetch_pdb(inputpdbid.lower())
+        pdbpath = tilde_expansion('%s/%s.pdb' % (config.BASEPATH.rstrip('/'), pdbid))
+        create_folder_if_not_exists(config.BASEPATH)
+        with open(pdbpath, 'w') as g:
+            g.write(pdbfile)
+        message('file downloaded as %s\n\n' % pdbpath)
+        return pdbpath, pdbid
 
-def main(inputstruct, inputpdbid):
+    except ValueError:  # Invalid PDB ID, cannot fetch from RCBS server
+        sysexit(3, 'Error: Invalid PDB ID (Entry does not exist)')
+
+
+def main(inputstructs, inputpdbids):
     """Main function. Calls functions for processing, report generation and visualization."""
     pdbid, pdbpath = None, None
     # #@todo For multiprocessing, implement better stacktracing for errors
@@ -189,31 +207,29 @@ def main(inputstruct, inputpdbid):
     message(title)
     message('\n' + '*' * len(title) + '\n\n')
 
-    if inputstruct is not None:  # Process PDB file
-        if os.path.getsize(inputstruct) == 0:
-            sysexit(2, 'Error: Empty PDB file')  # Exit if input file is empty
-        process_pdb(inputstruct, config.OUTPATH)
-    else:  # Try to fetch the current PDB structure directly from the RCBS server
-        try:
-            if len(inputpdbid) != 4 or extract_pdbid(inputpdbid.lower()) == 'UnknownProtein':
-                sysexit(3, 'Error: Invalid PDB ID (Wrong format)')
-            pdbfile, pdbid = fetch_pdb(inputpdbid.lower())
-            pdbpath = tilde_expansion('%s/%s.pdb' % (config.OUTPATH.rstrip('/'), pdbid))
-            create_folder_if_not_exists(config.OUTPATH)
-            with open(pdbpath, 'w') as g:
-                g.write(pdbfile)
-            message('file downloaded as %s\n\n' % pdbpath)
-        except ValueError:  # Invalid PDB ID, cannot fetch from RCBS server
-            sysexit(3, 'Error: Invalid PDB ID (Entry does not exist)')
+    if inputstructs is not None:  # Process PDB file(s)
+        num_structures = len(inputstructs)
+        for inputstruct in inputstructs:
+            if os.path.getsize(inputstruct) == 0:
+                sysexit(2, 'Error: Empty PDB file')  # Exit if input file is empty
+            if num_structures > 1:
+                basename = inputstruct.split('.')[0]
+                config.OUTPATH = '/'.join([config.BASEPATH, basename])
+            process_pdb(inputstruct, config.OUTPATH)
+    else:  # Try to fetch the current PDB structure(s) directly from the RCBS server
+        num_pdbids = len(inputpdbids)
+        for inputpdbid in inputpdbids:
+            pdbpath, pdbid = download_structure(inputpdbid)
+            if num_pdbids > 1:
+                config.OUTPATH = '/'.join([config.BASEPATH, pdbid[1:3].upper(), pdbid.upper()])
+            process_pdb(pdbpath, config.OUTPATH)
 
-        process_pdb(pdbpath, config.OUTPATH)
-
-    if pdbid is not None and config.OUTPATH is not None:
-        if config.OUTPATH in ['.', './']:
+    if (pdbid is not None or inputstructs is not None) and config.BASEPATH is not None:
+        if config.BASEPATH in ['.', './']:
             message('\nFinished analysis of %s. Find the result files in the working directory.\n\n'
                     % pdbid)
         else:
-            message('\nFinished analysis of %s. Find the result files in %s\n\n' % (pdbid, config.OUTPATH))
+            message('\nFinished analysis of %s. Find the result files in %s\n\n' % (pdbid, config.BASEPATH))
 
 if __name__ == '__main__':
 
@@ -223,8 +239,8 @@ if __name__ == '__main__':
 
     parser = ArgumentParser(prog="PLIP", description=descript)
     pdbstructure = parser.add_mutually_exclusive_group(required=True)  # Needs either PDB ID or file
-    pdbstructure.add_argument("-f", "--file", dest="input")
-    pdbstructure.add_argument("-i", "--input", dest="pdbid")
+    pdbstructure.add_argument("-f", "--file", dest="input", nargs="+")
+    pdbstructure.add_argument("-i", "--input", dest="pdbid", nargs="+")
     parser.add_argument("-o", "--out", dest="outpath", default="./")
     parser.add_argument("-v", "--verbose", dest="verbose", default=False, help="Set verbose mode", action="store_true")
     parser.add_argument("-p", "--pics", dest="pics", default=False, help="Additional pictures", action="store_true")
@@ -272,6 +288,7 @@ if __name__ == '__main__':
     config.OUTPATH = arguments.outpath
     config.OUTPATH = tilde_expansion("".join([config.OUTPATH, '/'])
                                      if not config.OUTPATH.endswith('/') else config.OUTPATH)
+    config.BASEPATH = config.OUTPATH  # Used for batch processing
     config.BREAKCOMPOSITE = arguments.breakcomposite
     config.ALTLOC = arguments.altlocation
     # Assign values to global thresholds
