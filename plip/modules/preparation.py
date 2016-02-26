@@ -1205,7 +1205,7 @@ class PDBComplex:
         elif num_ligs > 1:
             message("Analyzing %i ligands...\n" % num_ligs)
         else:
-            message("Structure contains no ligands.\n")
+            message("Structure contains no ligands.\n\n")
 
     def characterize_complex(self, ligand):
         """Handles all basic functions for characterizing the interactions for one ligand"""
@@ -1219,10 +1219,11 @@ class PDBComplex:
         ligtype = 'Unspecified type' if ligand.type == 'UNSPECIFIED' else ligand.type
         ligtext = "\n%s [%s] -- %s" % (longname, ligtype, site)
         any_in_biolip = len(set([x[0] for x in ligand.members]).intersection(config.biolip_list)) != 0
-        if ligtype not in ['POLYMER', 'DNA', 'ION', 'DNA+ION', 'RNA+ION', 'SMALLMOLECULE+ION'] and any_in_biolip:
-            ligtext += ' (possible artifact/unspecific binder)'
         message(ligtext)
         message('\n' + '-' * len(ligtext) + '\n')
+
+        if ligtype not in ['POLYMER', 'DNA', 'ION', 'DNA+ION', 'RNA+ION', 'SMALLMOLECULE+ION'] and any_in_biolip:
+            message('  -> may be biologically irrelevant <-\n')
 
         lig_obj = Ligand(self, ligand)
         cutoff = lig_obj.max_dist_to_center + config.BS_DIST

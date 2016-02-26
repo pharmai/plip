@@ -99,7 +99,9 @@ def fetch_pdb(pdbid):
 
 def process_pdb(pdbfile, outpath):
     """Analysis of a single PDB file. Can generate textual reports XML, PyMOL session files and images as output."""
-    message('Starting analysis of structure...\n')
+    startmessage = '\nStarting analysis of %s\n' % pdbfile.split('/')[-1]
+    message(startmessage)
+    message('='*len(startmessage)+'\n')
     mol = PDBComplex()
     mol.output_path = outpath
     mol.load_pdb(pdbfile)
@@ -195,6 +197,17 @@ def download_structure(inputpdbid):
     except ValueError:  # Invalid PDB ID, cannot fetch from RCBS server
         sysexit(3, 'Error: Invalid PDB ID (Entry does not exist)')
 
+def remove_duplicates(slist):
+    """Checks input lists for duplicates and returns
+    a list with unique entries"""
+    unique = list(set(slist))
+    difference = len(slist) - len(unique)
+    if difference == 1:
+        message("Removed one duplicate entry from input list.\n")
+    if difference > 1:
+        message("Removed %i duplicate entries from input list.\n" % difference)
+    return unique
+
 
 def main(inputstructs, inputpdbids):
     """Main function. Calls functions for processing, report generation and visualization."""
@@ -209,15 +222,17 @@ def main(inputstructs, inputpdbids):
 
     if inputstructs is not None:  # Process PDB file(s)
         num_structures = len(inputstructs)
+        inputstructs = remove_duplicates(inputstructs)
         for inputstruct in inputstructs:
             if os.path.getsize(inputstruct) == 0:
                 sysexit(2, 'Error: Empty PDB file')  # Exit if input file is empty
             if num_structures > 1:
-                basename = inputstruct.split('.')[0]
+                basename = inputstruct.split('.')[0].split('/')[-1]
                 config.OUTPATH = '/'.join([config.BASEPATH, basename])
             process_pdb(inputstruct, config.OUTPATH)
     else:  # Try to fetch the current PDB structure(s) directly from the RCBS server
         num_pdbids = len(inputpdbids)
+        inputpdbids =remove_duplicates(inputpdbids)
         for inputpdbid in inputpdbids:
             pdbpath, pdbid = download_structure(inputpdbid)
             if num_pdbids > 1:
@@ -226,10 +241,9 @@ def main(inputstructs, inputpdbids):
 
     if (pdbid is not None or inputstructs is not None) and config.BASEPATH is not None:
         if config.BASEPATH in ['.', './']:
-            message('\nFinished analysis of %s. Find the result files in the working directory.\n\n'
-                    % pdbid)
+            message('\nFinished analysis. Find the result files in the working directory.\n\n')
         else:
-            message('\nFinished analysis of %s. Find the result files in %s\n\n' % (pdbid, config.BASEPATH))
+            message('\nFinished analysis. Find the result files in %s\n\n' % config.BASEPATH)
 
 if __name__ == '__main__':
 

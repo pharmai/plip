@@ -225,10 +225,11 @@ class TextOutput:
         """Generates an flat text report for a single binding site"""
 
         txt = []
-        txt.append('%s (%s) - %s' % (self.bsid, self.longname, self.ligtype))
+        titletext = '%s (%s) - %s' % (self.bsid, self.longname, self.ligtype)
+        txt.append(titletext)
         for i, member in enumerate(self.lig_members[1:]):
             txt.append('  + %s' % ":".join(str(element) for element in member))
-        txt.append("-" * len(self.bsid))
+        txt.append("-" * len(titletext))
         txt.append("Interacting chain(s): %s\n" % ','.join([chain for chain in self.interacting_chains]))
         for section in [['Hydrophobic Interactions', self.hydrophobic_features, self.hydrophobic_info],
                         ['Hydrogen Bonds', self.hbond_features, self.hbond_info],

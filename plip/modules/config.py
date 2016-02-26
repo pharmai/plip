@@ -24,7 +24,7 @@ TXT = False
 PICS = False
 PYMOL = False
 OUTPATH = './'
-BASEPATH = '/'
+BASEPATH = './'
 BREAKCOMPOSITE = False  # Break up composite ligands with covalent bonds
 ALTLOC = False  # Consider alternate locations
 
