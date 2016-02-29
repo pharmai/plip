@@ -3,6 +3,7 @@ Changelog
 
 ### 1.3.0
 * __Batch processing__
+* Improvements to verbose mode and textual output
 
 ### 1.2.3
 * __Better support for files from MD and docking software__
