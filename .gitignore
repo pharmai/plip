@@ -47,3 +47,4 @@ target/
 .idea/*
 # Other
 *~
+.nfs*

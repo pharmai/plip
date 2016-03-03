@@ -389,51 +389,33 @@ class Mol:
                 donor_pairs.append(data(d=carbon, d_orig_idx=d_orig_idx, h=pybel.Atom(adj_atom), type='weak'))
         return donor_pairs
 
+
     def find_rings(self, mol, all_atoms):
         """Find rings and return only aromatic.
         Rings have to be sufficiently planar OR be detected by OpenBabel as aromatic."""
         data = namedtuple('aromatic_ring', 'atoms atoms_orig_idx normal obj center type')
-        rings, arings = [], []
+        rings = []
+        aromatic_amino = ['TYR', 'TRP', 'HIS', 'PHE']
+        ring_candidates = mol.OBMol.GetSSSR()
+        debuglog("Number of aromatic ring candidates: %i" % len(ring_candidates))
         # Check here first for ligand rings not being detected as aromatic by Babel and check for planarity
-        for ring in [r for r in mol.OBMol.GetSSSR()]:
+        for ring in ring_candidates:
             r_atoms = [a for a in all_atoms if ring.IsMember(a.OBAtom)]
-            normals = []
-            aromatic = True
-            for a in r_atoms:
-                adj = pybel.ob.OBAtomAtomIter(a.OBAtom)
-                # Check for neighboring atoms in the ring
-                n_coords = [pybel.Atom(neigh).coords for neigh in adj if ring.IsMember(neigh)]
-                vec1, vec2 = vector(a.coords, n_coords[0]), vector(a.coords, n_coords[1])
-                normals.append(np.cross(vec1, vec2))
-            # Given all normals of ring atoms and their neighbors, the angle between any has to be 5.0 deg or less
-            for n1, n2 in itertools.product(normals, repeat=2):
-                arom_angle = vecangle(n1, n2)
-                if all([arom_angle > config.AROMATIC_PLANARITY, arom_angle < 180.0 - config.AROMATIC_PLANARITY]):
-                    aromatic = False
-                    break
-            # Ring is aromatic either by OpenBabel's criteria or if sufficiently planar
-            res = list(set([whichrestype(a) for a in r_atoms]))
-            aromatic_amino = False
-            if not res == []:
-                aromatic_amino = res[0] in ['TYR', 'TRP', 'HIS', 'PHE']
-            if aromatic or ring.IsAromatic() or aromatic_amino:
-                arings.append(ring)
-
-        # Store all rings which are detected as aromatic by Babel or are sufficiently planar
-        for r in arings:
-            r_atoms = [a for a in all_atoms if r.IsMember(a.OBAtom)]
-            # Only consider rings with a minimum size of 5 atoms and restrict selection to avoid problems in
-            # covalently bound ligands
             if 4 < len(r_atoms) <= 6:
-                typ = r.GetType() if not r.GetType() == '' else 'unknown'
-                ring_atms = [r_atoms[a].coords for a in [0, 2, 4]]  # Probe atoms for normals, assuming planarity
-                ringv1 = vector(ring_atms[0], ring_atms[1])
-                ringv2 = vector(ring_atms[2], ring_atms[0])
-                atoms_orig_idx = [self.Mapper.mapid(r_atom.idx, mtype=self.mtype, bsid=self.bsid) for r_atom in r_atoms]
-                rings.append(data(atoms=r_atoms,
+                res = list(set([whichrestype(a) for a in r_atoms]))
+                if ring.IsAromatic() or res[0] in aromatic_amino or ring_is_planar(ring, r_atoms):
+                    # Causes segfault with OpenBabel 2.3.2, so deactivated
+                    #typ = ring.GetType() if not ring.GetType() == '' else 'unknown'
+                    # Alternative typing
+                    typ = '%s-membered' % len(r_atoms)
+                    ring_atms = [r_atoms[a].coords for a in [0, 2, 4]]  # Probe atoms for normals, assuming planarity
+                    ringv1 = vector(ring_atms[0], ring_atms[1])
+                    ringv2 = vector(ring_atms[2], ring_atms[0])
+                    atoms_orig_idx = [self.Mapper.mapid(r_atom.idx, mtype=self.mtype, bsid=self.bsid) for r_atom in r_atoms]
+                    rings.append(data(atoms=r_atoms,
                                   atoms_orig_idx=atoms_orig_idx,
                                   normal=normalize_vector(np.cross(ringv1, ringv2)),
-                                  obj=r,
+                                  obj=ring,
                                   center=centroid([ra.coords for ra in r_atoms]),
                                   type=typ))
         return rings

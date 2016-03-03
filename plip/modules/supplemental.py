@@ -40,6 +40,7 @@ from openbabel import *
 import numpy as np
 from pymol import cmd
 from pymol import finish_launching
+import itertools
 
 # Settings
 np.seterr(all='ignore')  # No runtime warnings
@@ -301,6 +302,23 @@ def nucleotide_linkage(residues):
                 nuc_covalent.append(newlink)
 
     return nuc_covalent
+
+def ring_is_planar(ring, r_atoms):
+    """Given a set of ring atoms, check if the ring is sufficiently planar
+    to be considered aromatic"""
+    normals = []
+    for a in r_atoms:
+        adj = pybel.ob.OBAtomAtomIter(a.OBAtom)
+        # Check for neighboring atoms in the ring
+        n_coords = [pybel.Atom(neigh).coords for neigh in adj if ring.IsMember(neigh)]
+        vec1, vec2 = vector(a.coords, n_coords[0]), vector(a.coords, n_coords[1])
+        normals.append(np.cross(vec1, vec2))
+    # Given all normals of ring atoms and their neighbors, the angle between any has to be 5.0 deg or less
+    for n1, n2 in itertools.product(normals, repeat=2):
+        arom_angle = vecangle(n1, n2)
+        if all([arom_angle > config.AROMATIC_PLANARITY, arom_angle < 180.0 - config.AROMATIC_PLANARITY]):
+            return False
+    return True
 
 
 def classify_by_name(names):
