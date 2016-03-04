@@ -263,11 +263,25 @@ class LigandFinder:
                       can_to_pdb=can_to_pdb)
         return ligand
 
+    def is_het_residue(self, obres):
+        """Given an OBResidue, determines if the residue is indeed a ligand
+        in the PDB file (any atoms has to be a HETATM entry)"""
+        het_atoms = []
+        for atm in pybel.ob.OBResidueAtomIter(obres):
+                het_atoms.append(obres.IsHetAtom(atm))
+        if True in het_atoms:
+            return True
+        else:
+            return False
+
+
     def filter_for_ligands(self):
         """Given an OpenBabel Molecule, get all ligands, their names, and water"""
 
-        candidates1 = [o for o in pybel.ob.OBResidueIter(self.proteincomplex.OBMol) if not (o.GetResidueProperty(9)
-                                                                                         or o.GetResidueProperty(0))]
+        #candidates1 = [o for o in pybel.ob.OBResidueIter(self.proteincomplex.OBMol) if not (o.GetResidueProperty(9)
+        #                                                                                or o.GetResidueProperty(0))]
+
+        candidates1 = [o for o in pybel.ob.OBResidueIter(self.proteincomplex.OBMol) if not o.GetResidueProperty(9) and self.is_het_residue(o)]
         all_lignames = set([a.GetName() for a in candidates1])
 
         water = [o for o in pybel.ob.OBResidueIter(self.proteincomplex.OBMol) if o.GetResidueProperty(9)]
