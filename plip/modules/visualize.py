@@ -212,7 +212,7 @@ def visualize_in_pymol(plcomplex):
     cmd.set('cartoon_color', 'mylightblue')
     cmd.load(plcomplex.sourcefile)
     current_name = cmd.get_object_list(selection='(all)')[0]
-    debuglog('Setting current_name to "%s" and pdbid to "%s"' % (current_name, pdbid))
+    write_message('Setting current_name to "%s" and pdbid to "%s\n"' % (current_name, pdbid), mtype='debug')
     cmd.set_name(current_name, pdbid)
     cmd.hide('everything', 'all')
     cmd.select(ligname, 'resn %s and chain %s and resi %s*' % (ligname, chain, plcomplex.position))

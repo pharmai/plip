@@ -32,6 +32,7 @@ import subprocess
 import codecs
 import gzip
 import zipfile
+import platform
 
 # External libraries
 import pybel
@@ -336,7 +337,7 @@ def get_isomorphisms(reference, lig):
         isomorphs = pybel.ob.vpairUIntUInt()
         mappr.MapFirst(lig.OBMol, isomorphs)
         isomorphs = [isomorphs]
-    debuglog("Number of isomorphisms: %i" % len(isomorphs))
+    write_message("Number of isomorphisms: %i\n" % len(isomorphs), mtype='debug')
     # #@todo Check which isomorphism to take
     return isomorphs
 
@@ -427,33 +428,67 @@ def readmol(path):
         obc.ReadString(mol, filestr)
         if not mol.Empty():
             if sformat == 'pdbqt':
-                message('[EXPERIMENTAL] Input is PDBQT file. Some features (especially visualization) might not '
+                write_message('[EXPERIMENTAL] Input is PDBQT file. Some features (especially visualization) might not '
                         'work as expected. Please consider using PDB format instead.\n')
             if sformat == 'mmcif':
-                message('[EXPERIMENTAL] Input is mmCIF file. Most features do currently not work with this format.\n')
+                write_message('[EXPERIMENTAL] Input is mmCIF file. Most features do currently not work with this format.\n')
             return pybel.Molecule(mol), sformat
     sysexit(4, 'No valid file format provided.')
 
 
 def sysexit(code, msg):
     """Exit using an custom error message and error code."""
-    sys.stderr.write(msg)
+    write_message(msg, mtype='error')
     sys.exit(code)
 
+#####################
+# Verbose and Debug #
+#####################
 
-def message(msg, indent=False):
+def colorlog(msg, color, bold=False, blink=False):
+    """Colors messages on non-Windows systems supporting ANSI escape."""
+
+    ## ANSI Escape Codes ##
+    PINK_COL = '\x1b[35m'
+    GREEN_COL = '\x1b[32m'
+    RED_COL = '\x1b[31m'
+    YELLOW_COL = '\x1b[33m'
+    BLINK = '\x1b[5m'
+    RESET = '\x1b[0m'
+
+    if platform.system() != 'Windows':
+        if blink:
+            msg = BLINK + msg + RESET
+        if color == 'yellow':
+            msg = YELLOW_COL + msg + RESET
+        if color == 'red':
+            msg = RED_COL + msg + RESET
+        if color == 'green':
+            msg = GREEN_COL + msg + RESET
+        if color == 'pink':
+            msg = PINK_COL + msg + RESET
+    return msg
+
+def write_message(msg, indent=False, mtype='standard', caption=False):
+    """Writes message if verbose mode is set."""
+    if (mtype=='debug' and config.DEBUG) or (mtype !='debug' and config.VERBOSE) or mtype=='error':
+        message(msg, indent=indent, mtype=mtype, caption=caption)
+
+def message(msg, indent=False, mtype='standard', caption=False):
     """Writes messages in verbose mode"""
-    if config.VERBOSE:
-        if indent:
-            msg = '  ' + msg
-        sys.stdout.write(msg)
-
-
-def debuglog(msg):
-    """Writes debug messages"""
-    if config.DEBUG:
-        msg = '    %% DEBUG: ' + msg
-        if len(msg) > 100:
-            msg = msg[:100] + ' ...'
-        msg += '\n'
+    if caption:
+        msg = msg + '\n' + '-'*len(msg)
+    if mtype == 'warning':
+        msg = colorlog('Warning:  ' + msg, 'yellow')
+    if mtype == 'error':
+        msg = colorlog('Error:  ' + msg, 'red')
+    if mtype == 'debug':
+        msg = colorlog('Debug:  ' + msg, 'pink')
+    if mtype == 'info':
+        msg = colorlog('Info:  ' + msg, 'green')
+    if indent:
+        msg = '  ' + msg
+    if mtype in ['error', 'warning']:
+        sys.stderr.write(msg)
+    else:
         sys.stdout.write(msg)
