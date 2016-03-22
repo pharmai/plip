@@ -388,14 +388,15 @@ def int32_to_negative(int32):
         return int32
 
 
-def read_pdb(pdbfname):
+def read_pdb(pdbfname, as_string=False):
+    print(as_string)
     """Reads a given PDB file and returns a Pybel Molecule."""
     pybel.ob.obErrorLog.StopLogging()  # Suppress all OpenBabel warnings
     if os.name != 'nt':  # Resource module not available for Windows
         maxsize = resource.getrlimit(resource.RLIMIT_STACK)[-1]
         resource.setrlimit(resource.RLIMIT_STACK, (min(2 ** 28, maxsize), maxsize))
     sys.setrecursionlimit(10 ** 5)  # increase Python recoursion limit
-    return readmol(pdbfname)
+    return readmol(pdbfname, as_string=as_string)
 
 
 def read(fil):
@@ -413,14 +414,17 @@ def read(fil):
             return open(fil, 'r')
 
 
-def readmol(path):
+def readmol(path, as_string=False):
     """Reads the given molecule file and returns the corresponding Pybel molecule as well as the input file type.
     In contrast to the standard Pybel implementation, the file is closed properly."""
     supported_formats = ['pdb', 'pdbqt', 'mmcif']
     obc = pybel.ob.OBConversion()
 
-    with read(path) as f:
-        filestr = str(f.read())
+    if as_string:
+        filestr = path
+    else:
+        with read(path) as f:
+            filestr = str(f.read())
 
     for sformat in supported_formats:
         obc.SetInFormat(sformat)

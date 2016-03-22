@@ -186,9 +186,123 @@ def png_workaround(filepath, width=1200, height=800):
     else:
         sys.stderr.write('Imagemagick not available. Images will not be resized or cropped.')
 
+class Visualizer:
+    def __init__(self, plcomplex):
+        self.plcomplex = plcomplex
+        self.protname = plcomplex.pdbid  # Name of protein with binding site
+        self.ligname = plcomplex.hetid  # Name of ligand
+
+    def set_initial_representations(self):
+        """General settings for PyMOL"""
+        standard_settings()
+        cmd.set('dash_gap', 0)  # Show not dashes, but lines for the pliprofiler
+        cmd.set('ray_shadow', 0)  # Turn on ray shadows for clearer ray-traced images
+        cmd.set('cartoon_color', 'mylightblue')
+
+    def make_initial_selections(self):
+        """Make empty selections for structures and interactions"""
+        for group in ['Hydrophobic-P', 'Hydrophobic-L', 'HBondDonor-P',
+        'HBondDonor-L', 'HBondAccept-P', 'HBondAccept-L',
+        'HalogenAccept', 'HalogenDonor', 'Water', 'MetalIons', 'StackRings-P',
+        'PosCharge-P', 'PosCharge-L', 'NegCharge-P', 'NegCharge-L',
+        'PiCatRing-P', 'StackRings-L', 'PiCatRing-L', 'Metal-M', 'Metal-P',
+        'Metal-W', 'Metal-L', 'Unpaired-HBA', 'Unpaired-HBD', 'Unpaired-HAL',
+        'Unpaired-RINGS']:
+            cmd.select(group, 'None')
+
+    def show_hydrophobic(self):
+        """Visualizes hydrophobic contacts."""
+        hydroph = self.plcomplex.hydrophobic_contacts
+        if not len(hydroph.bs_ids) == 0:
+            for h in [['Hydrophobic-P', hydroph.bs_ids],
+                      ['Hydrophobic-L', hydroph.lig_ids]]:
+                select_by_ids(h[0], h[1])
+            for i in hydroph.pairs_ids:
+                cmd.select('tmp_bs', 'id %i' % i[0])
+                cmd.select('tmp_lig', 'id %i' % i[1])
+                cmd.distance('Hydrophobic', 'tmp_bs', 'tmp_lig')
+            if object_exists('Hydrophobic'):
+                cmd.set('dash_gap', 0.5, 'Hydrophobic')
+                cmd.set('dash_color', 'grey50', 'Hydrophobic')
+        else:
+            cmd.select('Hydrophobic-P', 'None')
+
+    def show_hbonds(self):
+        """Visualizes hydrogen bonds."""
+        hbonds = self.plcomplex.hbonds
+        for group in [['HBondDonor-L', hbonds.lig_don_id],
+        ['HBondDonor-P', hbonds.prot_don_id],
+        ['HBondAccept-L', hbonds.lig_acc_id],
+        ['HBondAccept-P', hbonds.prot_acc_id]]:
+            if not len(group[1]) == 0:
+                select_by_ids(group[0], group[1])
+        for i in hbonds.ldon_id:
+            cmd.select('tmp_bs', 'id %i' % i[0])
+            cmd.select('tmp_lig', 'id %i' % i[1])
+            cmd.distance('HBonds', 'tmp_bs', 'tmp_lig')
+        for i in hbonds.pdon_id:
+            cmd.select('tmp_bs', 'id %i' % i[1])
+            cmd.select('tmp_lig', 'id %i' % i[0])
+            cmd.distance('HBonds', 'tmp_bs', 'tmp_lig')
+        if object_exists('HBonds'):
+            cmd.set('dash_color', 'blue', 'HBonds')
+
+    def show_halogen(self):
+        """Visualize halogen bonds."""
+
+        halogen = self.plcomplex.halogen_bonds
+        all_don_x, all_acc_o = [], []
+        for h in halogen:
+            all_don_x.append(h.don_id)
+            all_acc_o.append(h.acc_id)
+            for group in [['tmp_bs', h.acc_id], ['tmp_lig', h.don_id]]:
+                cmd.select(group[0], 'id %i' % group[1])
+            cmd.distance('HalogenBonds', 'tmp_bs', 'tmp_lig')
+        if not len(all_acc_o) == 0:
+            select_by_ids('HalogenAccept', all_acc_o)
+            select_by_ids('HalogenDonor', all_don_x)
+        if object_exists('HalogenBonds'):
+            cmd.set('dash_color', 'greencyan', 'HalogenBonds')
+
+
+    def selections_cleanup(self):
+        """Cleans up non-used selections"""
+        selections = cmd.get_names("selections")
+        for selection in selections:
+            if len(cmd.get_model(selection).atom) == 0:
+                cmd.delete(selection)
+        cmd.deselect()
+        cmd.delete('tmp*')
+        cmd.delete('ps-*')
+
+    def selections_group(self):
+        """Group all selections"""
+        cmd.group('Structures', '%s %s %sCartoon' % (self.protname, self.ligname, self.protname))
+        cmd.group('Interactions', 'Hydrophobic HBonds HalogenBonds WaterBridges PiCation PiStackingP PiStackingT '
+                                  'Saltbridges MetalComplexes')
+        cmd.group('Atoms', '')
+        cmd.group('Atoms.Protein', 'Hydrophobic-P HBondAccept-P HBondDonor-P HalogenAccept Centroids-P PiCatRing-P '
+                                   'StackRings-P PosCharge-P NegCharge-P AllBSRes Chargecenter-P  Metal-P')
+        cmd.group('Atoms.Ligand', 'Hydrophobic-L HBondAccept-L HBondDonor-L HalogenDonor Centroids-L NegCharge-L '
+                                  'PosCharge-L NegCharge-L ChargeCenter-L StackRings-L PiCatRing-L Metal-L Metal-M '
+                                  'Unpaired-HBA Unpaired-HBD Unpaired-HAL Unpaired-RINGS')
+        cmd.group('Atoms.Other', 'Water Metal-W')
+        cmd.order('*', 'y')
+
+    def additional_cleanup(self):
+        """Cleanup of various representations"""
+
+        cmd.remove('not alt ""+A')  # Remove alternate conformations
+        cmd.hide('labels', 'Interactions')  # Hide labels of lines
+        cmd.disable('%sCartoon' % self.protname)
+        cmd.hide('everything', 'hydrogens')
+
 
 def visualize_in_pymol(plcomplex):
     """Visualizes the protein-ligand pliprofiler at one site in PyMOL."""
+
+    vis = Visualizer(plcomplex)
+
 
     #####################
     # Set everything up #
@@ -206,10 +320,8 @@ def visualize_in_pymol(plcomplex):
     ########################
 
     start_pymol(run=True, options='-pcq', quiet=not config.DEBUG)
-    standard_settings()
-    cmd.set('dash_gap', 0)  # Show not dashes, but lines for the pliprofiler
-    cmd.set('ray_shadow', 0)  # Turn on ray shadows for clearer ray-traced images
-    cmd.set('cartoon_color', 'mylightblue')
+    vis.set_initial_representations()
+
     cmd.load(plcomplex.sourcefile)
     current_name = cmd.get_object_list(selection='(all)')[0]
     write_message('Setting current_name to "%s" and pdbid to "%s\n"' % (current_name, pdbid), mtype='debug')
@@ -236,73 +348,12 @@ def visualize_in_pymol(plcomplex):
         cmd.set('sphere_scale', 0.3, ligname)
     cmd.deselect()
 
-    ###########################
-    # Create empty selections #
-    ###########################
+    vis.make_initial_selections()
 
-    for group in ['Hydrophobic-P', 'Hydrophobic-L', 'HBondDonor-P', 'HBondDonor-L', 'HBondAccept-P', 'HBondAccept-L',
-                  'HalogenAccept', 'HalogenDonor', 'Water', 'MetalIons', 'StackRings-P', 'PosCharge-P', 'PosCharge-L',
-                  'NegCharge-P', 'NegCharge-L', 'PiCatRing-P', 'StackRings-L', 'PiCatRing-L', 'Metal-M', 'Metal-P',
-                  'Metal-W', 'Metal-L', 'Unpaired-HBA', 'Unpaired-HBD', 'Unpaired-HAL', 'Unpaired-RINGS']:
-        cmd.select(group, 'None')
+    vis.show_hydrophobic()
+    vis.show_hbonds()
+    vis.show_halogen()
 
-    # #@todo Up here, define all names necessary for analysis
-
-    ######################################
-    # Visualize hydrophobic interactions #
-    ######################################
-
-    if not len(plcomplex.hydrophobic_contacts.bs_ids) == 0:
-        for h in [['Hydrophobic-P', plcomplex.hydrophobic_contacts.bs_ids],
-                  ['Hydrophobic-L', plcomplex.hydrophobic_contacts.lig_ids]]:
-            select_by_ids(h[0], h[1])
-        for i in plcomplex.hydrophobic_contacts.pairs_ids:
-            cmd.select('tmp_bs', 'id %i' % i[0])
-            cmd.select('tmp_lig', 'id %i' % i[1])
-            cmd.distance('Hydrophobic', 'tmp_bs', 'tmp_lig')
-        if object_exists('Hydrophobic'):
-            cmd.set('dash_gap', 0.5, 'Hydrophobic')
-            cmd.set('dash_color', 'grey50', 'Hydrophobic')
-    else:
-        cmd.select('Hydrophobic-P', 'None')
-
-    #####################
-    # Visualize H-Bonds #
-    #####################
-
-    for group in [['HBondDonor-L', plcomplex.hbonds.lig_don_id], ['HBondDonor-P', plcomplex.hbonds.prot_don_id],
-                  ['HBondAccept-L', plcomplex.hbonds.lig_acc_id], ['HBondAccept-P', plcomplex.hbonds.prot_acc_id]]:
-        if not len(group[1]) == 0:
-            select_by_ids(group[0], group[1])
-    for i in plcomplex.hbonds.ldon_id:
-        cmd.select('tmp_bs', 'id %i' % i[0])
-        cmd.select('tmp_lig', 'id %i' % i[1])
-        cmd.distance('HBonds', 'tmp_bs', 'tmp_lig')
-    for i in plcomplex.hbonds.pdon_id:
-        cmd.select('tmp_bs', 'id %i' % i[1])
-        cmd.select('tmp_lig', 'id %i' % i[0])
-        cmd.distance('HBonds', 'tmp_bs', 'tmp_lig')
-    if object_exists('HBonds'):
-        cmd.set('dash_color', 'blue', 'HBonds')
-
-    ###########################
-    # Visualize Halogen Bonds #
-    ###########################
-
-    halogen = plcomplex.halogen_bonds
-    all_don_x, all_acc_o = [], []
-    for h in halogen:
-        all_don_x.append(h.don_id)
-        all_acc_o.append(h.acc_id)
-        for group in [['tmp_bs', h.acc_id], ['tmp_lig', h.don_id]]:
-            cmd.select(group[0], 'id %i' % group[1])
-        cmd.distance('HalogenBonds', 'tmp_bs', 'tmp_lig')
-    if not len(all_acc_o) == 0:
-        select_by_ids('HalogenAccept', all_acc_o)
-        select_by_ids('HalogenDonor', all_don_x)
-        #cmd.select('HalogenDonor', 'id %s' % '+'.join(map(str, all_don_x)))
-    if object_exists('HalogenBonds'):
-        cmd.set('dash_color', 'greencyan', 'HalogenBonds')
 
     #########################
     # Visualize Pi-Stacking #
@@ -501,45 +552,10 @@ def visualize_in_pymol(plcomplex):
     if not len(plcomplex.unpaired_hal_idx) == 0:
         select_by_ids('Unpaired-HAL', plcomplex.unpaired_hal_idx, selection_exists=True)
 
-    ##############################
-    # Organization of selections #
-    ##############################
 
-    # Delete all empty and temporary selections
-    selections = cmd.get_names("selections")
-    for selection in selections:
-        if len(cmd.get_model(selection).atom) == 0:
-            cmd.delete(selection)
-    cmd.deselect()
-    cmd.delete('tmp*')
-    cmd.delete('ps-*')
-
-    # Group non-empty selections
-    cmd.group('Structures', '%s %s %sCartoon' % (pdbid, ligname, pdbid))
-    cmd.group('Interactions', 'Hydrophobic HBonds HalogenBonds WaterBridges PiCation PiStackingP PiStackingT '
-                              'Saltbridges MetalComplexes')
-    cmd.group('Atoms', '')
-    cmd.group('Atoms.Protein', 'Hydrophobic-P HBondAccept-P HBondDonor-P HalogenAccept Centroids-P PiCatRing-P '
-                               'StackRings-P PosCharge-P NegCharge-P AllBSRes Chargecenter-P  Metal-P')
-    cmd.group('Atoms.Ligand', 'Hydrophobic-L HBondAccept-L HBondDonor-L HalogenDonor Centroids-L NegCharge-L '
-                              'PosCharge-L NegCharge-L ChargeCenter-L StackRings-L PiCatRing-L Metal-L Metal-M '
-                              'Unpaired-HBA Unpaired-HBD Unpaired-HAL Unpaired-RINGS')
-    cmd.group('Atoms.Other', 'Water Metal-W')
-    cmd.order('*', 'y')
-
-    ###############################################
-    # Remove atoms with alternative conformations #
-    ###############################################
-
-    cmd.remove('not alt ""+A')
-
-    ########################################
-    # Clean up and save PyMOL session file #
-    ########################################
-
-    cmd.hide('labels', 'Interactions')
-    cmd.disable('%sCartoon' % pdbid)
-    cmd.hide('everything', 'hydrogens')
+    vis.selections_cleanup()
+    vis.selections_group()
+    vis.additional_cleanup()
 
     filename = '%s_%s' % (pdbid.upper(), "_".join([ligname, plcomplex.chain, plcomplex.position]))
     if config.PYMOL:

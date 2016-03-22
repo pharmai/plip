@@ -31,7 +31,8 @@ import config
 ################
 
 class PDBParser:
-    def __init__(self, pdbpath):
+    def __init__(self, pdbpath, as_string):
+        self.as_string = as_string
         self.pdbpath = pdbpath
         self.num_fixed_lines = 0
         self.covlinkage = namedtuple("covlinkage", "id1 chain1 pos1 conf1 id2 chain2 pos2 conf2")
@@ -46,7 +47,10 @@ class PDBParser:
         III. Furthermore, covalent linkages between ligands and protein residues/other ligands are identified
         IV. Alternative conformations
         """
-        fil = read(self.pdbpath).readlines()
+        if self.as_string:
+            fil = self.pdbpath
+        else:
+            fil = read(self.pdbpath).readlines()
         # #@todo Also consider SSBOND entries here
         corrected_lines = []
         i, j = 0, 0  # idx and PDB numbering
@@ -56,15 +60,18 @@ class PDBParser:
         alt = []
         previous_ter = False
 
-        #New code : Do fixing first and then do mapping on fixed lines
-        #@TODO Test code
-        lastnum = 0 # Atom numbering (has to be consecutive)
-        for line in fil:
-            corrected_line, newnum = self.fix_pdbline(line, lastnum)
-            if corrected_line is not None:
-                corrected_lines.append(corrected_line)
-                lastnum = newnum
-        corrected_pdb = ''.join(corrected_lines)
+
+        if not config.PLUGIN_MODE:
+            lastnum = 0 # Atom numbering (has to be consecutive)
+            for line in fil:
+                corrected_line, newnum = self.fix_pdbline(line, lastnum)
+                if corrected_line is not None:
+                    corrected_lines.append(corrected_line)
+                    lastnum = newnum
+            corrected_pdb = ''.join(corrected_lines)
+        else:
+            corrected_pdb = fil  # Leave it as it is
+            corrected_lines = fil.split('\n')
 
 
         for line in corrected_lines:
@@ -1159,12 +1166,18 @@ class PDBComplex:
         self.Mapper = Mapper()
         self.ligands = []
 
-    def load_pdb(self, pdbpath):
-        """Loads a pdb file with protein AND ligand(s), separates and prepares them."""
-        self.sourcefiles['pdbcomplex.original'] = pdbpath
-        self.sourcefiles['pdbcomplex'] = pdbpath
+    def load_pdb(self, pdbpath, as_string=False):
+        """Loads a pdb file with protein AND ligand(s), separates and prepares them.
+        If specified 'as_string', the input is a PDB string instead of a path."""
+        if as_string:
+            self.sourcefiles['pdbcomplex.original'] = None
+            self.sourcefiles['pdbcomplex'] = None
+            self.sourcefiles['pdbstring'] = pdbpath
+        else:
+            self.sourcefiles['pdbcomplex.original'] = pdbpath
+            self.sourcefiles['pdbcomplex'] = pdbpath
         self.information['pdbfixes'] = False
-        pdbparser = PDBParser(pdbpath)  # Parse PDB file to find errors and get additonal data
+        pdbparser = PDBParser(pdbpath, as_string=as_string)  # Parse PDB file to find errors and get additonal data
         # #@todo Refactor and rename here
         self.Mapper.proteinmap = pdbparser.proteinmap
         self.modres = pdbparser.modres
@@ -1172,20 +1185,24 @@ class PDBComplex:
         self.altconf = pdbparser.altconformations
         self.corrected_pdb = pdbparser.corrected_pdb
 
-        if pdbparser.num_fixed_lines > 0:
-            write_message('%i lines automatically fixed in PDB input file.\n' % pdbparser.num_fixed_lines)
-            # Save modified PDB file
-            basename = os.path.basename(pdbpath).split('.')[0]
-            pdbpath_fixed = tmpfile(prefix='plipfixed.' + basename + '_', direc=self.output_path)
-            create_folder_if_not_exists(self.output_path)
-            self.sourcefiles['pdbcomplex'] = pdbpath_fixed
-            self.corrected_pdb = re.sub(r'[^\x00-\x7F]+', ' ', self.corrected_pdb)  # Strip non-unicode chars
-            with open(pdbpath_fixed, 'w') as f:
-                f.write(self.corrected_pdb)
-            self.information['pdbfixes'] = True
+        if not config.PLUGIN_MODE:
+            if pdbparser.num_fixed_lines > 0:
+                write_message('%i lines automatically fixed in PDB input file.\n' % pdbparser.num_fixed_lines)
+                # Save modified PDB file
+                basename = os.path.basename(pdbpath).split('.')[0]
+                pdbpath_fixed = tmpfile(prefix='plipfixed.' + basename + '_', direc=self.output_path)
+                create_folder_if_not_exists(self.output_path)
+                self.sourcefiles['pdbcomplex'] = pdbpath_fixed
+                self.corrected_pdb = re.sub(r'[^\x00-\x7F]+', ' ', self.corrected_pdb)  # Strip non-unicode chars
+                with open(pdbpath_fixed, 'w') as f:
+                    f.write(self.corrected_pdb)
+                self.information['pdbfixes'] = True
 
-        self.sourcefiles['filename'] = os.path.basename(self.sourcefiles['pdbcomplex'])
-        self.protcomplex, self.filetype = read_pdb(self.sourcefiles['pdbcomplex'])
+        if as_string:
+            self.protcomplex, self.filetype = read_pdb(self.sourcefiles['pdbstring'], as_string=as_string)
+        else:
+            self.sourcefiles['filename'] = os.path.basename(self.sourcefiles['pdbcomplex'])
+            self.protcomplex, self.filetype = read_pdb(self.sourcefiles['pdbcomplex'], as_string=as_string)
         write_message('PDB structure successfully read.\n')
 
         # Determine (temporary) PyMOL Name from Filename
