@@ -191,6 +191,8 @@ class Visualizer:
         self.plcomplex = plcomplex
         self.protname = plcomplex.pdbid  # Name of protein with binding site
         self.ligname = plcomplex.hetid  # Name of ligand
+        self.metal_ids = plcomplex.metal_ids
+        self.metal_ids_str = '+'.join([str(i) for i in self.metal_ids])
 
     def set_initial_representations(self):
         """General settings for PyMOL"""
@@ -264,9 +266,146 @@ class Visualizer:
         if object_exists('HalogenBonds'):
             cmd.set('dash_color', 'greencyan', 'HalogenBonds')
 
+    def show_stacking(self):
+        """Visualize pi-stacking interactions."""
+        stacks = self.plcomplex.pistacking
+        for i, stack in enumerate(stacks):
+            pires_ids = '+'.join(map(str, stack.proteinring_atoms))
+            pilig_ids = '+'.join(map(str, stack.ligandring_atoms))
+            cmd.select('StackRings-P', 'StackRings-P or id %s' % pires_ids)
+            cmd.select('StackRings-L', 'StackRings-L or id %s' % pilig_ids)
+            cmd.select('StackRings-P', 'byres StackRings-P')
+            cmd.show('sticks', 'StackRings-P')
+
+            cmd.pseudoatom('ps-pistack-1-%i' % i, pos=stack.proteinring_center)
+            cmd.pseudoatom('ps-pistack-2-%i' % i, pos=stack.ligandring_center)
+            cmd.pseudoatom('Centroids-P', pos=stack.proteinring_center)
+            cmd.pseudoatom('Centroids-L', pos=stack.ligandring_center)
+
+            if stack.type == 'P':
+                cmd.distance('PiStackingP', 'ps-pistack-1-%i' % i, 'ps-pistack-2-%i' % i)
+            if stack.type == 'T':
+                cmd.distance('PiStackingT', 'ps-pistack-1-%i' % i, 'ps-pistack-2-%i' % i)
+        if object_exists('PiStackingP'):
+            cmd.set('dash_color', 'green', 'PiStackingP')
+            cmd.set('dash_gap', 0.3, 'PiStackingP')
+            cmd.set('dash_length', 0.6, 'PiStackingP')
+        if object_exists('PiStackingT'):
+            cmd.set('dash_color', 'smudge', 'PiStackingT')
+            cmd.set('dash_gap', 0.3, 'PiStackingT')
+            cmd.set('dash_length', 0.6, 'PiStackingT')
+
+    def show_cationpi(self):
+        """Visualize cation-pi interactions."""
+        for i, p in enumerate(self.plcomplex.pication):
+            cmd.pseudoatom('ps-picat-1-%i' % i, pos=p.ring_center)
+            cmd.pseudoatom('ps-picat-2-%i' % i, pos=p.charge_center)
+            if p.protcharged:
+                cmd.pseudoatom('Chargecenter-P', pos=p.charge_center)
+                cmd.pseudoatom('Centroids-L', pos=p.ring_center)
+                pilig_ids = '+'.join(map(str, p.ring_atoms))
+                cmd.select('PiCatRing-L', 'PiCatRing-L or id %s' % pilig_ids)
+                for a in p.charge_atoms:
+                    cmd.select('PosCharge-P', 'PosCharge-P or id %i' % a)
+            else:
+                cmd.pseudoatom('Chargecenter-L', pos=p.charge_center)
+                cmd.pseudoatom('Centroids-P', pos=p.ring_center)
+                pires_ids = '+'.join(map(str, p.ring_atoms))
+                cmd.select('PiCatRing-P', 'PiCatRing-P or id %s' % pires_ids)
+                for a in p.charge_atoms:
+                    cmd.select('PosCharge-L', 'PosCharge-L or id %i' % a)
+            cmd.distance('PiCation', 'ps-picat-1-%i' % i, 'ps-picat-2-%i' % i)
+        if object_exists('PiCation'):
+            cmd.set('dash_color', 'orange', 'PiCation')
+            cmd.set('dash_gap', 0.3, 'PiCation')
+            cmd.set('dash_length', 0.6, 'PiCation')
+
+    def show_sbridges(self):
+        """Visualize salt bridges."""
+        for i, saltb in enumerate(self.plcomplex.saltbridges):
+            if saltb.protispos:
+                for patom in saltb.positive_atoms:
+                    cmd.select('PosCharge-P', 'PosCharge-P or id %i' % patom)
+                for latom in saltb.negative_atoms:
+                    cmd.select('NegCharge-L', 'NegCharge-L or id %i' % latom)
+                for sbgroup in [['ps-sbl-1-%i' % i, 'Chargecenter-P', saltb.positive_center],
+                                ['ps-sbl-2-%i' % i, 'Chargecenter-L', saltb.negative_center]]:
+                    cmd.pseudoatom(sbgroup[0], pos=sbgroup[2])
+                    cmd.pseudoatom(sbgroup[1], pos=sbgroup[2])
+                cmd.distance('Saltbridges', 'ps-sbl-1-%i' % i, 'ps-sbl-2-%i' % i)
+            else:
+                for patom in saltb.negative_atoms:
+                    cmd.select('NegCharge-P', 'NegCharge-P or id %i' % patom)
+                for latom in saltb.positive_atoms:
+                    cmd.select('PosCharge-L', 'PosCharge-L or id %i' % latom)
+                for sbgroup in [['ps-sbp-1-%i' % i, 'Chargecenter-P', saltb.negative_center],
+                                ['ps-sbp-2-%i' % i, 'Chargecenter-L', saltb.positive_center]]:
+                    cmd.pseudoatom(sbgroup[0], pos=sbgroup[2])
+                    cmd.pseudoatom(sbgroup[1], pos=sbgroup[2])
+                cmd.distance('Saltbridges', 'ps-sbp-1-%i' % i, 'ps-sbp-2-%i' % i)
+
+        if object_exists('Saltbridges'):
+            cmd.set('dash_color', 'yellow', 'Saltbridges')
+            cmd.set('dash_gap', 0.5, 'Saltbridges')
+
+    def show_wbridges(self):
+        """Visualize water bridges."""
+        for bridge in self.plcomplex.waterbridges:
+            if bridge.protisdon:
+                cmd.select('HBondDonor-P', 'HBondDonor-P or (id %i & %s)' % (bridge.don_id, self.protname))
+                cmd.select('HBondAccept-L', 'HBondAccept-L or id %i' % bridge.acc_id)
+                cmd.select('tmp_don', 'id %i & %s' % (bridge.don_id, self.protname))
+                cmd.select('tmp_acc', 'id %i' % bridge.acc_id)
+            else:
+                cmd.select('HBondDonor-L', 'HBondDonor-L or (id %i & %s)' % (bridge.don_id, self.protname))
+                cmd.select('HBondAccept-P', 'HBondAccept-P or id %i' % bridge.acc_id)
+                cmd.select('tmp_don', 'id %i' % bridge.don_id)
+                cmd.select('tmp_acc', 'id %i & %s' % (bridge.acc_id, self.protname))
+            cmd.select('Water', 'Water or id %i' % bridge.water_id)
+            cmd.select('tmp_water', 'id %i' % bridge.water_id)
+            cmd.distance('WaterBridges', 'tmp_acc', 'tmp_water')
+            cmd.distance('WaterBridges', 'tmp_don', 'tmp_water')
+        if object_exists('WaterBridges'):
+            cmd.set('dash_color', 'lightblue', 'WaterBridges')
+        cmd.delete('tmp_water or tmp_acc or tmp_don')
+        cmd.color('lightblue', 'Water')
+        cmd.show('spheres', 'Water')
+
+    def show_metal(self):
+        """Visualize metal coordination."""
+        metal_complexes = self.plcomplex.metal_complexes
+        if not len(metal_complexes) == 0:
+            select_by_ids('Metal-M', self.metal_ids)
+            for metal_complex in metal_complexes:
+                cmd.select('tmp_m', 'id %i' % metal_complex.metal_id)
+                cmd.select('tmp_t', 'id %i' % metal_complex.target_id)
+                if metal_complex.location == 'water':
+                    cmd.select('Metal-W', 'Metal-W or id %s' % metal_complex.target_id)
+                if metal_complex.location.startswith('protein'):
+                    cmd.select('Metal-P', 'Metal-P or id %s' % metal_complex.target_id)
+                if metal_complex.location == 'ligand':
+                    cmd.select('Metal-L', 'Metal-L or id %s' % metal_complex.target_id)
+                cmd.distance('MetalComplexes', 'tmp_m', 'tmp_t')
+                cmd.delete('tmp_m or tmp_t')
+        if object_exists('MetalComplexes'):
+            cmd.set('dash_color', 'violetpurple', 'MetalComplexes')
+            cmd.set('dash_gap', 0.5, 'MetalComplexes')
+            # Show water molecules for metal complexes
+            cmd.show('spheres', 'Metal-W')
+            cmd.color('lightblue', 'Metal-W')
+
+
 
     def selections_cleanup(self):
         """Cleans up non-used selections"""
+
+        if not len(self.plcomplex.unpaired_hba_idx) == 0:
+            select_by_ids('Unpaired-HBA', self.plcomplex.unpaired_hba_idx, selection_exists=True)
+        if not len(self.plcomplex.unpaired_hbd_idx) == 0:
+            select_by_ids('Unpaired-HBD', self.plcomplex.unpaired_hbd_idx, selection_exists=True)
+        if not len(self.plcomplex.unpaired_hal_idx) == 0:
+            select_by_ids('Unpaired-HAL', self.plcomplex.unpaired_hal_idx, selection_exists=True)
+
         selections = cmd.get_names("selections")
         for selection in selections:
             if len(cmd.get_model(selection).atom) == 0:
@@ -296,6 +435,65 @@ class Visualizer:
         cmd.hide('labels', 'Interactions')  # Hide labels of lines
         cmd.disable('%sCartoon' % self.protname)
         cmd.hide('everything', 'hydrogens')
+
+    def zoom_to_ligand(self):
+        """Zoom in too ligand and its interactions."""
+        cmd.center(self.ligname)
+        cmd.orient(self.ligname)
+        cmd.turn('x', 110)  # If the ligand is aligned with the longest axis, aromatic rings are hidden
+        if 'AllBSRes' in cmd.get_names("selections"):
+            cmd.zoom('%s or AllBSRes' % self.ligname, 3)
+        else:
+            if object_exists(self.ligname):
+                cmd.zoom(self.ligname, 3)
+        cmd.origin(self.ligname)
+
+    def generate_output(self):
+        """Saves PyMOL session files and images."""
+        filename = '%s_%s' % (self.protname.upper(), "_".join([self.ligname, self.plcomplex.chain, self.plcomplex.position]))
+        if config.PYMOL:
+            cmd.save("/".join([config.OUTPATH, "%s.pse" % filename]))
+
+        # Create output pictures (experimental)
+        set_fancy_ray()
+        if config.PICS:
+            png_workaround("/".join([config.OUTPATH, filename]))
+
+    def refinements(self):
+        """Refinements for the visualization"""
+
+        # Show sticks for all residues interacing with the ligand
+        cmd.select('AllBSRes', 'byres (Hydrophobic-P or HBondDonor-P or HBondAccept-P or PosCharge-P or NegCharge-P or '
+                               'StackRings-P or PiCatRing-P or HalogenAcc or Metal-P)')
+        cmd.show('sticks', 'AllBSRes')
+        # Show spheres for the ring centroids
+        cmd.hide('everything', 'centroids*')
+        cmd.show('nb_spheres', 'centroids*')
+        # Show spheres for centers of charge
+        if object_exists('Chargecenter-P') or object_exists('Chargecenter-L'):
+            cmd.hide('nonbonded', 'chargecenter*')
+            cmd.show('spheres', 'chargecenter*')
+            cmd.set('sphere_scale', 0.4, 'chargecenter*')
+            cmd.color('yellow', 'chargecenter*')
+
+        cmd.set('valence', 1)  # Show bond valency (e.g. double bonds)
+        # Optional cartoon representation of the protein
+        cmd.copy('%sCartoon' % self.protname, self.protname)
+        cmd.show('cartoon', '%sCartoon' % self.protname)
+        cmd.show('sticks', '%sCartoon' % self.protname)
+        cmd.set('stick_transparency', 1, '%sCartoon' % self.protname)
+
+
+        # Resize water molecules. Sometimes they are not heteroatoms HOH, but part of the protein
+        cmd.set('sphere_scale', 0.2, 'resn HOH or Water')  # Needs to be done here because of the copy made
+        cmd.set('sphere_transparency', 0.4, '!(resn HOH or Water)')
+
+        if 'Centroids*' in cmd.get_names("selections"):
+            cmd.color('grey80', 'Centroids*')
+        cmd.hide('spheres', '%sCartoon' % self.protname)
+        cmd.hide('cartoon', '%sCartoon and resn DA+DG+DC+DU+DT+A+G+C+U+T' % self.protname)  # Hide DNA/RNA Cartoon
+        if self.ligname == 'SF4':  # Special case for iron-sulfur clusters, can't be visualized with sticks
+            cmd.show('spheres', '%s' % self.ligname)
 
 
 def visualize_in_pymol(plcomplex):
@@ -350,218 +548,22 @@ def visualize_in_pymol(plcomplex):
 
     vis.make_initial_selections()
 
-    vis.show_hydrophobic()
-    vis.show_hbonds()
-    vis.show_halogen()
+    vis.show_hydrophobic()  # Hydrophobic Contacts
+    vis.show_hbonds()  # Hydrogen Bonds
+    vis.show_halogen()  # Halogen Bonds
+    vis.show_stacking()  # pi-Stacking Interactions
+    vis.show_cationpi()  # pi-Cation Interactions
+    vis.show_sbridges()  # Salt Bridges
+    vis.show_wbridges()  # Water Bridges
+    vis.show_metal()  # Metal Coordination
+
+    vis.refinements()
 
 
-    #########################
-    # Visualize Pi-Stacking #
-    #########################
-
-    stacks = plcomplex.pistacking
-    for i, stack in enumerate(stacks):
-        pires_ids = '+'.join(map(str, stack.proteinring_atoms))
-        pilig_ids = '+'.join(map(str, stack.ligandring_atoms))
-        cmd.select('StackRings-P', 'StackRings-P or id %s' % pires_ids)
-        cmd.select('StackRings-L', 'StackRings-L or id %s' % pilig_ids)
-        cmd.select('StackRings-P', 'byres StackRings-P')
-        cmd.show('sticks', 'StackRings-P')
-
-        cmd.pseudoatom('ps-pistack-1-%i' % i, pos=stack.proteinring_center)
-        cmd.pseudoatom('ps-pistack-2-%i' % i, pos=stack.ligandring_center)
-        cmd.pseudoatom('Centroids-P', pos=stack.proteinring_center)
-        cmd.pseudoatom('Centroids-L', pos=stack.ligandring_center)
-
-        if stack.type == 'P':
-            cmd.distance('PiStackingP', 'ps-pistack-1-%i' % i, 'ps-pistack-2-%i' % i)
-        if stack.type == 'T':
-            cmd.distance('PiStackingT', 'ps-pistack-1-%i' % i, 'ps-pistack-2-%i' % i)
-    if object_exists('PiStackingP'):
-        cmd.set('dash_color', 'green', 'PiStackingP')
-        cmd.set('dash_gap', 0.3, 'PiStackingP')
-        cmd.set('dash_length', 0.6, 'PiStackingP')
-    if object_exists('PiStackingT'):
-        cmd.set('dash_color', 'smudge', 'PiStackingT')
-        cmd.set('dash_gap', 0.3, 'PiStackingT')
-        cmd.set('dash_length', 0.6, 'PiStackingT')
-
-    ####################################
-    # Visualize Cation-pi interactions #
-    ####################################
-
-    for i, p in enumerate(plcomplex.pication):
-        cmd.pseudoatom('ps-picat-1-%i' % i, pos=p.ring_center)
-        cmd.pseudoatom('ps-picat-2-%i' % i, pos=p.charge_center)
-        if p.protcharged:
-            cmd.pseudoatom('Chargecenter-P', pos=p.charge_center)
-            cmd.pseudoatom('Centroids-L', pos=p.ring_center)
-            pilig_ids = '+'.join(map(str, p.ring_atoms))
-            cmd.select('PiCatRing-L', 'PiCatRing-L or id %s' % pilig_ids)
-            for a in p.charge_atoms:
-                cmd.select('PosCharge-P', 'PosCharge-P or id %i' % a)
-        else:
-            cmd.pseudoatom('Chargecenter-L', pos=p.charge_center)
-            cmd.pseudoatom('Centroids-P', pos=p.ring_center)
-            pires_ids = '+'.join(map(str, p.ring_atoms))
-            cmd.select('PiCatRing-P', 'PiCatRing-P or id %s' % pires_ids)
-            for a in p.charge_atoms:
-                cmd.select('PosCharge-L', 'PosCharge-L or id %i' % a)
-        cmd.distance('PiCation', 'ps-picat-1-%i' % i, 'ps-picat-2-%i' % i)
-    if object_exists('PiCation'):
-        cmd.set('dash_color', 'orange', 'PiCation')
-        cmd.set('dash_gap', 0.3, 'PiCation')
-        cmd.set('dash_length', 0.6, 'PiCation')
-
-    ##########################
-    # Visualize salt bridges #
-    ##########################
-
-    for i, saltb in enumerate(plcomplex.saltbridges):
-        if saltb.protispos:
-            for patom in saltb.positive_atoms:
-                cmd.select('PosCharge-P', 'PosCharge-P or id %i' % patom)
-            for latom in saltb.negative_atoms:
-                cmd.select('NegCharge-L', 'NegCharge-L or id %i' % latom)
-            for sbgroup in [['ps-sbl-1-%i' % i, 'Chargecenter-P', saltb.positive_center],
-                            ['ps-sbl-2-%i' % i, 'Chargecenter-L', saltb.negative_center]]:
-                cmd.pseudoatom(sbgroup[0], pos=sbgroup[2])
-                cmd.pseudoatom(sbgroup[1], pos=sbgroup[2])
-            cmd.distance('Saltbridges', 'ps-sbl-1-%i' % i, 'ps-sbl-2-%i' % i)
-        else:
-            for patom in saltb.negative_atoms:
-                cmd.select('NegCharge-P', 'NegCharge-P or id %i' % patom)
-            for latom in saltb.positive_atoms:
-                cmd.select('PosCharge-L', 'PosCharge-L or id %i' % latom)
-            for sbgroup in [['ps-sbp-1-%i' % i, 'Chargecenter-P', saltb.negative_center],
-                            ['ps-sbp-2-%i' % i, 'Chargecenter-L', saltb.positive_center]]:
-                cmd.pseudoatom(sbgroup[0], pos=sbgroup[2])
-                cmd.pseudoatom(sbgroup[1], pos=sbgroup[2])
-            cmd.distance('Saltbridges', 'ps-sbp-1-%i' % i, 'ps-sbp-2-%i' % i)
-
-    if object_exists('Saltbridges'):
-        cmd.set('dash_color', 'yellow', 'Saltbridges')
-        cmd.set('dash_gap', 0.5, 'Saltbridges')
-
-    ########################################
-    # Water-bridged H-Bonds (first degree) #
-    ########################################
-
-    for bridge in plcomplex.waterbridges:
-        if bridge.protisdon:
-            cmd.select('HBondDonor-P', 'HBondDonor-P or id %i' % bridge.don_id)
-            cmd.select('HBondAccept-L', 'HBondAccept-L or id %i' % bridge.acc_id)
-        else:
-            cmd.select('HBondDonor-L', 'HBondDonor-L or id %i' % bridge.don_id)
-            cmd.select('HBondAccept-P', 'HBondAccept-P or id %i' % bridge.acc_id)
-        cmd.select('Water', 'Water or id %i' % bridge.water_id)
-        cmd.select('tmp_don', 'id %i' % bridge.don_id)
-        cmd.select('tmp_water', 'id %i' % bridge.water_id)
-        cmd.select('tmp_acc', 'id %i' % bridge.acc_id)
-        cmd.distance('WaterBridges', 'tmp_acc', 'tmp_water')
-        cmd.distance('WaterBridges', 'tmp_don', 'tmp_water')
-    if object_exists('WaterBridges'):
-        cmd.set('dash_color', 'lightblue', 'WaterBridges')
-    cmd.delete('tmp_water or tmp_acc or tmp_don')
-    cmd.color('lightblue', 'Water')
-    cmd.show('spheres', 'Water')
-
-    ###################
-    # Metal Complexes #
-    ###################
-
-    if not len(plcomplex.metal_complexes) == 0:
-        select_by_ids('Metal-M', metal_ids)
-        for metal_complex in plcomplex.metal_complexes:
-            cmd.select('tmp_m', 'id %i' % metal_complex.metal_id)
-            cmd.select('tmp_t', 'id %i' % metal_complex.target_id)
-            if metal_complex.location == 'water':
-                cmd.select('Metal-W', 'Metal-W or id %s' % metal_complex.target_id)
-            if metal_complex.location.startswith('protein'):
-                cmd.select('Metal-P', 'Metal-P or id %s' % metal_complex.target_id)
-            if metal_complex.location == 'ligand':
-                cmd.select('Metal-L', 'Metal-L or id %s' % metal_complex.target_id)
-            cmd.distance('MetalComplexes', 'tmp_m', 'tmp_t')
-            cmd.delete('tmp_m or tmp_t')
-    if object_exists('MetalComplexes'):
-        cmd.set('dash_color', 'violetpurple', 'MetalComplexes')
-        cmd.set('dash_gap', 0.5, 'MetalComplexes')
-        # Show water molecules for metal complexes
-        cmd.show('spheres', 'Metal-W')
-        cmd.color('lightblue', 'Metal-W')
-
-    ######################
-    # Visualize the rest #
-    ######################
-
-    # Show sticks for all residues interacing with the ligand
-    cmd.select('AllBSRes', 'byres (Hydrophobic-P or HBondDonor-P or HBondAccept-P or PosCharge-P or NegCharge-P or '
-                           'StackRings-P or PiCatRing-P or HalogenAcc or Metal-P)')
-    # #@todo Check, should be HalogenAccept here?
-    cmd.show('sticks', 'AllBSRes')
-    # Show spheres for the ring centroids
-    cmd.hide('everything', 'centroids*')
-    cmd.show('nb_spheres', 'centroids*')
-    # Show spheres for centers of charge
-    if object_exists('Chargecenter-P') or object_exists('Chargecenter-L'):
-        cmd.hide('nonbonded', 'chargecenter*')
-        cmd.show('spheres', 'chargecenter*')
-        cmd.set('sphere_scale', 0.4, 'chargecenter*')
-        cmd.color('yellow', 'chargecenter*')
-
-    ####################
-    # Last refinements #
-    ####################
-
-    cmd.set('valence', 1)  # Show bond valency (e.g. double bonds)
-    # Optional cartoon representation of the protein
-    cmd.copy('%sCartoon' % pdbid, pdbid)
-    cmd.show('cartoon', '%sCartoon' % pdbid)
-    cmd.show('sticks', '%sCartoon' % pdbid)
-    cmd.set('stick_transparency', 1, '%sCartoon' % pdbid)
-    # Set view. Zoom on the ligand (and its pliprofiler)
-
-    cmd.center(ligname)
-    cmd.orient(ligname)
-    cmd.turn('x', 110)  # If the ligand is aligned with the longest axis, aromatic rings are hidden
-    if 'AllBSRes' in cmd.get_names("selections"):
-        cmd.zoom('%s or AllBSRes' % ligname, 3)
-    else:
-        if object_exists(ligname):
-            cmd.zoom(ligname, 3)
-
-    # Resize water molecules. Sometimes they are not heteroatoms HOH, but part of the protein
-    cmd.set('sphere_scale', 0.2, 'resn HOH or Water')  # Needs to be done here because of the copy made
-    cmd.set('sphere_transparency', 0.4, '!(resn HOH or Water)')
-
-    cmd.origin(ligname)
-    if 'Centroids*' in cmd.get_names("selections"):
-        cmd.color('grey80', 'Centroids*')
-    cmd.hide('spheres', '%sCartoon' % pdbid)
-    cmd.hide('cartoon', '%sCartoon and resn DA+DG+DC+DU+DT+A+G+C+U+T' % pdbid)  # Hide DNA/RNA Cartoon
-    if ligname == 'SF4':  # Special case for iron-sulfur clusters, can't be visualized with sticks
-        cmd.show('spheres', '%s' % ligname)
-
-    ##################################
-    # Selections for unpaired groups #
-    ##################################
-    if not len(plcomplex.unpaired_hba_idx) == 0:
-        select_by_ids('Unpaired-HBA', plcomplex.unpaired_hba_idx, selection_exists=True)
-    if not len(plcomplex.unpaired_hbd_idx) == 0:
-        select_by_ids('Unpaired-HBD', plcomplex.unpaired_hbd_idx, selection_exists=True)
-    if not len(plcomplex.unpaired_hal_idx) == 0:
-        select_by_ids('Unpaired-HAL', plcomplex.unpaired_hal_idx, selection_exists=True)
-
+    vis.zoom_to_ligand()
 
     vis.selections_cleanup()
     vis.selections_group()
     vis.additional_cleanup()
 
-    filename = '%s_%s' % (pdbid.upper(), "_".join([ligname, plcomplex.chain, plcomplex.position]))
-    if config.PYMOL:
-        cmd.save("/".join([config.OUTPATH, "%s.pse" % filename]))
-
-    # Create output pictures (experimental)
-    set_fancy_ray()
-    if config.PICS:
-        png_workaround("/".join([config.OUTPATH, filename]))
+    vis.generate_output()
