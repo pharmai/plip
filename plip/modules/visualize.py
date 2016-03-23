@@ -33,7 +33,7 @@ wbridge_info = namedtuple('wbridge_info', 'don_id acc_id water_id protisdon')
 metal_info = namedtuple('metal_info', 'metal_id, target_id location')
 
 
-def select_by_ids(selname, idlist, selection_exists=False, chunksize=20):
+def select_by_ids(selname, idlist, selection_exists=False, chunksize=20, restrict=None):
     """Selection with a large number of ids concatenated into a selection
     list can cause buffer overflow in PyMOL. This function takes a selection
     name and and list of IDs (list of integers) as input and makes a careful
@@ -44,6 +44,8 @@ def select_by_ids(selname, idlist, selection_exists=False, chunksize=20):
     idchunks = [idlist[i:i+chunksize] for i in xrange(0, len(idlist), chunksize)]
     for idchunk in idchunks:
         cmd.select(selname, '%s or (id %s)' % (selname, '+'.join(map(str, idchunk))))
+    if restrict is not None:
+        cmd.select(selname, '%s and %s' % (selname, restrict))
 
 class PyMOLComplex:
     """Contains all information on a complex relevant for visualization. Can be pickled"""
@@ -216,12 +218,11 @@ class Visualizer:
         """Visualizes hydrophobic contacts."""
         hydroph = self.plcomplex.hydrophobic_contacts
         if not len(hydroph.bs_ids) == 0:
-            for h in [['Hydrophobic-P', hydroph.bs_ids],
-                      ['Hydrophobic-L', hydroph.lig_ids]]:
-                select_by_ids(h[0], h[1])
+            select_by_ids('Hydrophobic-P', hydroph.bs_ids, restrict=self.protname)
+            select_by_ids('Hydrophobic-L', hydroph.lig_ids, restrict=self.ligname)
             for i in hydroph.pairs_ids:
-                cmd.select('tmp_bs', 'id %i' % i[0])
-                cmd.select('tmp_lig', 'id %i' % i[1])
+                cmd.select('tmp_bs', 'id %i & %s' % (i[0], self.protname))
+                cmd.select('tmp_lig', 'id %i & %s' % (i[1], self.ligname))
                 cmd.distance('Hydrophobic', 'tmp_bs', 'tmp_lig')
             if object_exists('Hydrophobic'):
                 cmd.set('dash_gap', 0.5, 'Hydrophobic')
@@ -232,37 +233,39 @@ class Visualizer:
     def show_hbonds(self):
         """Visualizes hydrogen bonds."""
         hbonds = self.plcomplex.hbonds
-        for group in [['HBondDonor-L', hbonds.lig_don_id],
-        ['HBondDonor-P', hbonds.prot_don_id],
-        ['HBondAccept-L', hbonds.lig_acc_id],
+        for group in [['HBondDonor-P', hbonds.prot_don_id],
         ['HBondAccept-P', hbonds.prot_acc_id]]:
             if not len(group[1]) == 0:
-                select_by_ids(group[0], group[1])
+                select_by_ids(group[0], group[1], restrict=self.protname)
+        for group in [['HBondDonor-L', hbonds.lig_don_id],
+        ['HBondAccept-L', hbonds.lig_acc_id]]:
+            if not len(group[1]) == 0:
+                select_by_ids(group[0], group[1], restrict=self.ligname)
         for i in hbonds.ldon_id:
-            cmd.select('tmp_bs', 'id %i' % i[0])
-            cmd.select('tmp_lig', 'id %i' % i[1])
+            cmd.select('tmp_bs', 'id %i & %s' % (i[0], self.protname))
+            cmd.select('tmp_lig', 'id %i & %s' % (i[1], self.ligname))
             cmd.distance('HBonds', 'tmp_bs', 'tmp_lig')
         for i in hbonds.pdon_id:
-            cmd.select('tmp_bs', 'id %i' % i[1])
-            cmd.select('tmp_lig', 'id %i' % i[0])
+            cmd.select('tmp_bs', 'id %i & %s' % (i[1], self.protname))
+            cmd.select('tmp_lig', 'id %i & %s' % (i[0], self.ligname))
             cmd.distance('HBonds', 'tmp_bs', 'tmp_lig')
         if object_exists('HBonds'):
             cmd.set('dash_color', 'blue', 'HBonds')
 
     def show_halogen(self):
         """Visualize halogen bonds."""
-
         halogen = self.plcomplex.halogen_bonds
         all_don_x, all_acc_o = [], []
         for h in halogen:
             all_don_x.append(h.don_id)
             all_acc_o.append(h.acc_id)
-            for group in [['tmp_bs', h.acc_id], ['tmp_lig', h.don_id]]:
-                cmd.select(group[0], 'id %i' % group[1])
+            cmd.select('tmp_bs', 'id %i & %s' % (h.acc_id, self.protname))
+            cmd.select('tmp_lig', 'id %i & %s' % (h.don_id, self.ligname))
+
             cmd.distance('HalogenBonds', 'tmp_bs', 'tmp_lig')
         if not len(all_acc_o) == 0:
-            select_by_ids('HalogenAccept', all_acc_o)
-            select_by_ids('HalogenDonor', all_don_x)
+            select_by_ids('HalogenAccept', all_acc_o, restrict=self.protname)
+            select_by_ids('HalogenDonor', all_don_x, restrict=self.ligname)
         if object_exists('HalogenBonds'):
             cmd.set('dash_color', 'greencyan', 'HalogenBonds')
 
@@ -272,8 +275,8 @@ class Visualizer:
         for i, stack in enumerate(stacks):
             pires_ids = '+'.join(map(str, stack.proteinring_atoms))
             pilig_ids = '+'.join(map(str, stack.ligandring_atoms))
-            cmd.select('StackRings-P', 'StackRings-P or id %s' % pires_ids)
-            cmd.select('StackRings-L', 'StackRings-L or id %s' % pilig_ids)
+            cmd.select('StackRings-P', 'StackRings-P or (id %s & %s)' % (pires_ids, self.protname))
+            cmd.select('StackRings-L', 'StackRings-L or (id %s & %s)' % (pilig_ids, self.ligname))
             cmd.select('StackRings-P', 'byres StackRings-P')
             cmd.show('sticks', 'StackRings-P')
 
@@ -304,16 +307,16 @@ class Visualizer:
                 cmd.pseudoatom('Chargecenter-P', pos=p.charge_center)
                 cmd.pseudoatom('Centroids-L', pos=p.ring_center)
                 pilig_ids = '+'.join(map(str, p.ring_atoms))
-                cmd.select('PiCatRing-L', 'PiCatRing-L or id %s' % pilig_ids)
+                cmd.select('PiCatRing-L', 'PiCatRing-L or (id %s & %s)' % (pilig_ids, self.ligname))
                 for a in p.charge_atoms:
-                    cmd.select('PosCharge-P', 'PosCharge-P or id %i' % a)
+                    cmd.select('PosCharge-P', 'PosCharge-P or (id %i & %s)' % (a, self.protname))
             else:
                 cmd.pseudoatom('Chargecenter-L', pos=p.charge_center)
                 cmd.pseudoatom('Centroids-P', pos=p.ring_center)
                 pires_ids = '+'.join(map(str, p.ring_atoms))
-                cmd.select('PiCatRing-P', 'PiCatRing-P or id %s' % pires_ids)
+                cmd.select('PiCatRing-P', 'PiCatRing-P or (id %s & %s)' % (pires_ids, self.protname))
                 for a in p.charge_atoms:
-                    cmd.select('PosCharge-L', 'PosCharge-L or id %i' % a)
+                    cmd.select('PosCharge-L', 'PosCharge-L or (id %i & %s)' % (a, self.ligname))
             cmd.distance('PiCation', 'ps-picat-1-%i' % i, 'ps-picat-2-%i' % i)
         if object_exists('PiCation'):
             cmd.set('dash_color', 'orange', 'PiCation')
@@ -325,9 +328,9 @@ class Visualizer:
         for i, saltb in enumerate(self.plcomplex.saltbridges):
             if saltb.protispos:
                 for patom in saltb.positive_atoms:
-                    cmd.select('PosCharge-P', 'PosCharge-P or id %i' % patom)
+                    cmd.select('PosCharge-P', 'PosCharge-P or (id %i & %s)' % (patom, self.protname))
                 for latom in saltb.negative_atoms:
-                    cmd.select('NegCharge-L', 'NegCharge-L or id %i' % latom)
+                    cmd.select('NegCharge-L', 'NegCharge-L or (id %i & %s)' % (latom, self.ligname))
                 for sbgroup in [['ps-sbl-1-%i' % i, 'Chargecenter-P', saltb.positive_center],
                                 ['ps-sbl-2-%i' % i, 'Chargecenter-L', saltb.negative_center]]:
                     cmd.pseudoatom(sbgroup[0], pos=sbgroup[2])
@@ -335,9 +338,9 @@ class Visualizer:
                 cmd.distance('Saltbridges', 'ps-sbl-1-%i' % i, 'ps-sbl-2-%i' % i)
             else:
                 for patom in saltb.negative_atoms:
-                    cmd.select('NegCharge-P', 'NegCharge-P or id %i' % patom)
+                    cmd.select('NegCharge-P', 'NegCharge-P or (id %i & %s)' % (patom, self.protname))
                 for latom in saltb.positive_atoms:
-                    cmd.select('PosCharge-L', 'PosCharge-L or id %i' % latom)
+                    cmd.select('PosCharge-L', 'PosCharge-L or (id %i & %s)' % (latom, self.ligname))
                 for sbgroup in [['ps-sbp-1-%i' % i, 'Chargecenter-P', saltb.negative_center],
                                 ['ps-sbp-2-%i' % i, 'Chargecenter-L', saltb.positive_center]]:
                     cmd.pseudoatom(sbgroup[0], pos=sbgroup[2])
@@ -353,16 +356,16 @@ class Visualizer:
         for bridge in self.plcomplex.waterbridges:
             if bridge.protisdon:
                 cmd.select('HBondDonor-P', 'HBondDonor-P or (id %i & %s)' % (bridge.don_id, self.protname))
-                cmd.select('HBondAccept-L', 'HBondAccept-L or id %i' % bridge.acc_id)
+                cmd.select('HBondAccept-L', 'HBondAccept-L or (id %i & %s)' % (bridge.acc_id, self.ligname))
                 cmd.select('tmp_don', 'id %i & %s' % (bridge.don_id, self.protname))
-                cmd.select('tmp_acc', 'id %i' % bridge.acc_id)
+                cmd.select('tmp_acc', 'id %i & %s' % (bridge.acc_id, self.ligname))
             else:
-                cmd.select('HBondDonor-L', 'HBondDonor-L or (id %i & %s)' % (bridge.don_id, self.protname))
-                cmd.select('HBondAccept-P', 'HBondAccept-P or id %i' % bridge.acc_id)
-                cmd.select('tmp_don', 'id %i' % bridge.don_id)
+                cmd.select('HBondDonor-L', 'HBondDonor-L or (id %i & %s)' % (bridge.don_id, self.ligname))
+                cmd.select('HBondAccept-P', 'HBondAccept-P or (id %i & %s)' % (bridge.acc_id, self.protname))
+                cmd.select('tmp_don', 'id %i & %s' % (bridge.don_id, self.ligname))
                 cmd.select('tmp_acc', 'id %i & %s' % (bridge.acc_id, self.protname))
-            cmd.select('Water', 'Water or id %i' % bridge.water_id)
-            cmd.select('tmp_water', 'id %i' % bridge.water_id)
+            cmd.select('Water', 'Water or (id %i & resn HOH)' % bridge.water_id)
+            cmd.select('tmp_water', 'id %i & resn HOH' % bridge.water_id)
             cmd.distance('WaterBridges', 'tmp_acc', 'tmp_water')
             cmd.distance('WaterBridges', 'tmp_don', 'tmp_water')
         if object_exists('WaterBridges'):
@@ -382,9 +385,11 @@ class Visualizer:
                 if metal_complex.location == 'water':
                     cmd.select('Metal-W', 'Metal-W or id %s' % metal_complex.target_id)
                 if metal_complex.location.startswith('protein'):
-                    cmd.select('Metal-P', 'Metal-P or id %s' % metal_complex.target_id)
+                    cmd.select('tmp_t', 'tmp_t & %s' % self.protname)
+                    cmd.select('Metal-P', 'Metal-P or (id %s & %s)' % (metal_complex.target_id, self.protname))
                 if metal_complex.location == 'ligand':
-                    cmd.select('Metal-L', 'Metal-L or id %s' % metal_complex.target_id)
+                    cmd.select('tmp_t', 'tmp_t & %s' % self.ligname)
+                    cmd.select('Metal-L', 'Metal-L or (id %s & %s)' % (metal_complex.target_id, self.ligname))
                 cmd.distance('MetalComplexes', 'tmp_m', 'tmp_t')
                 cmd.delete('tmp_m or tmp_t')
         if object_exists('MetalComplexes'):
@@ -494,6 +499,9 @@ class Visualizer:
         cmd.hide('cartoon', '%sCartoon and resn DA+DG+DC+DU+DT+A+G+C+U+T' % self.protname)  # Hide DNA/RNA Cartoon
         if self.ligname == 'SF4':  # Special case for iron-sulfur clusters, can't be visualized with sticks
             cmd.show('spheres', '%s' % self.ligname)
+
+        cmd.hide('everything', 'resn HOH &!Water')  # Hide all non-interacting water molecules
+        cmd.hide('sticks', '%s and !%s and !AllBSRes' % (self.protname, self.ligname))  # Hide all non-interacting residues
 
 
 def visualize_in_pymol(plcomplex):

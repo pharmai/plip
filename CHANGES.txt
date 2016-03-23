@@ -1,5 +1,10 @@
 Changelog
 ---------
+
+### 1.3.2
+* __Plugin Mode__
+* Refactored code for PyMOL visualization
+
 ### 1.3.1
 * __Support for amino acids as ligands__
 * Improved verbose and debug log system
