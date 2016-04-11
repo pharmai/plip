@@ -41,6 +41,7 @@ from argparse import ArgumentParser
 import urllib2
 import time
 import multiprocessing
+import json
 
 # External libraries
 import lxml.etree as et
@@ -138,6 +139,20 @@ def process_pdb(pdbfile, outpath):
         textlines.append('Excluded molecules as ligands: %s\n' % ','.join([lig for lig in excluded]))
 
     config.MAXTHREADS = min(config.MAXTHREADS, len(mol.interaction_sets))
+
+    ####
+    # Create JSON dump of PyMOL helper class
+    ###
+
+    if config.VISJSON:
+        complexes = [PyMOLComplex(mol, site) for site in sorted(mol.interaction_sets)
+        if not len(mol.interaction_sets[site].interacting_res) == 0]
+
+        with open('%s/plipvis.json' % outpath, 'w') as f:
+            cplx_dict = {}
+            for cplx in complexes:
+                cplx_dict[cplx.uid] = cplx.to_json()
+            json.dump(cplx_dict, f)
 
     ######################################
     # PyMOL Visualization (parallelized) #
@@ -277,6 +292,9 @@ if __name__ == '__main__':
     parser.add_argument("--debug", dest="debug", default=False,
                         help="Turn on DEBUG mode with extended log.",
                         action="store_true")
+    parser.add_argument("--visjson", dest="visjson", default=False,
+                        help="Generates JSON string of PyMOL helper classes.",
+                        action="store_true")
     # Optional threshold arguments, not shown in help
     thr = namedtuple('threshold', 'name type')
     thresholds = [thr(name='aromatic_planarity', type='angle'),
@@ -297,13 +315,17 @@ if __name__ == '__main__':
     config.VERBOSE = True if (arguments.verbose or arguments.debug) else False
     config.DEBUG = True if arguments.debug else False
     config.MAXTHREADS = arguments.maxthreads
-    config.XML, config.TXT, config.PICS, config.PYMOL = arguments.xml, arguments.txt, arguments.pics, arguments.pymol
+    config.XML = arguments.xml
+    config.TXT = arguments.txt
+    config.PICS = arguments.pics
+    config.PYMOL = arguments.pymol
     config.OUTPATH = arguments.outpath
     config.OUTPATH = tilde_expansion("".join([config.OUTPATH, '/'])
                                      if not config.OUTPATH.endswith('/') else config.OUTPATH)
     config.BASEPATH = config.OUTPATH  # Used for batch processing
     config.BREAKCOMPOSITE = arguments.breakcomposite
     config.ALTLOC = arguments.altlocation
+    config.VISJSON = arguments.visjson
     # Assign values to global thresholds
     for t in thresholds:
         tvalue = getattr(arguments, t.name)

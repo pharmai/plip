@@ -389,7 +389,6 @@ def int32_to_negative(int32):
 
 
 def read_pdb(pdbfname, as_string=False):
-    print(as_string)
     """Reads a given PDB file and returns a Pybel Molecule."""
     pybel.ob.obErrorLog.StopLogging()  # Suppress all OpenBabel warnings
     if os.name != 'nt':  # Resource module not available for Windows
@@ -425,7 +424,6 @@ def readmol(path, as_string=False):
     else:
         with read(path) as f:
             filestr = str(f.read())
-
     for sformat in supported_formats:
         obc.SetInFormat(sformat)
         mol = pybel.ob.OBMol()

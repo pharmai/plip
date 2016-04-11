@@ -48,7 +48,7 @@ class PDBParser:
         IV. Alternative conformations
         """
         if self.as_string:
-            fil = self.pdbpath
+            fil = self.pdbpath.split('\n')
         else:
             fil = read(self.pdbpath).readlines()
         # #@todo Also consider SSBOND entries here
@@ -70,8 +70,8 @@ class PDBParser:
                     lastnum = newnum
             corrected_pdb = ''.join(corrected_lines)
         else:
-            corrected_pdb = fil  # Leave it as it is
-            corrected_lines = fil.split('\n')
+            corrected_pdb = self.pdbpath  # Leave it as it is
+            corrected_lines = fil
 
 
         for line in corrected_lines:

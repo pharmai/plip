@@ -22,6 +22,9 @@ from supplemental import *
 from time import sleep
 from collections import namedtuple
 
+# Python Standard Library
+import json
+
 hbonds_info = namedtuple('hbonds_info', 'ldon_id lig_don_id prot_acc_id pdon_id prot_don_id lig_acc_id')
 hydrophobic_info = namedtuple('hydrophobic_info', 'bs_ids lig_ids pairs_ids')
 halogen_info = namedtuple('halogen_info', 'don_id acc_id')
@@ -62,6 +65,7 @@ class PyMOLComplex:
         self.hetid = ligand.hetid
         self.chain = ligand.chain if not ligand.chain == "0" else ""  # #@todo Fix this
         self.position = str(ligand.position)
+        self.uid = ":".join([self.pdbid.upper(), self.hetid, self.chain, self.position])
         self.outpath = mol.output_path
         self.metal_ids = [x.m_orig_idx for x in pli.ligand.metals]
         self.unpaired_hba_idx = pli.unpaired_hba_orig_idx
@@ -126,6 +130,13 @@ class PyMOLComplex:
         self.metal_complexes = [metal_info(metal_id=metalc.metal_orig_idx,
                                            target_id=metalc.target_orig_idx,
                                            location=metalc.location) for metalc in pli.metal_complexes]
+
+    def to_json(self):
+        """Generates a JSON dump of the class without the contained PDB string
+        in self.corrected_pdb"""
+        mindict = self.__dict__
+        del mindict['corrected_pdb']
+        return json.dumps(mindict)
 
 
 def set_fancy_ray():
