@@ -23,7 +23,7 @@ from __future__ import print_function
 # Own modules
 try:
     from plip.modules.preparation import *
-    from plip.modules.visualize import visualize_in_pymol, PyMOLComplex
+    from plip.modules.visualize import visualize_in_pymol, VisualizerData
     from plip.modules.report import TextOutput
     from plip.modules import config
     from plip.modules.mp import parallel_fn
@@ -145,7 +145,7 @@ def process_pdb(pdbfile, outpath):
     ###
 
     if config.VISJSON:
-        complexes = [PyMOLComplex(mol, site) for site in sorted(mol.interaction_sets)
+        complexes = [VisualizerData(mol, site) for site in sorted(mol.interaction_sets)
         if not len(mol.interaction_sets[site].interacting_res) == 0]
 
         with open('%s/plipvis.json' % outpath, 'w') as f:
@@ -159,7 +159,7 @@ def process_pdb(pdbfile, outpath):
     ######################################
 
     if config.PYMOL or config.PICS:
-        complexes = [PyMOLComplex(mol, site) for site in sorted(mol.interaction_sets)
+        complexes = [VisualizerData(mol, site) for site in sorted(mol.interaction_sets)
                      if not len(mol.interaction_sets[site].interacting_res) == 0]
         if config.MAXTHREADS > 1:
             write_message('\nGenerating visualizations in parallel on %i cores ...' % config.MAXTHREADS)

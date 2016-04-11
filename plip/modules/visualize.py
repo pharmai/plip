@@ -50,7 +50,7 @@ def select_by_ids(selname, idlist, selection_exists=False, chunksize=20, restric
     if restrict is not None:
         cmd.select(selname, '%s and %s' % (selname, restrict))
 
-class PyMOLComplex:
+class VisualizerData:
     """Contains all information on a complex relevant for visualization. Can be pickled"""
     def __init__(self, mol, site):
         pcomp = mol
@@ -205,7 +205,8 @@ class Visualizer:
         self.protname = plcomplex.pdbid  # Name of protein with binding site
         self.ligname = plcomplex.hetid  # Name of ligand
         self.metal_ids = plcomplex.metal_ids
-        self.metal_ids_str = '+'.join([str(i) for i in self.metal_ids])
+
+class PyMOLVisualizer(Visualizer):
 
     def set_initial_representations(self):
         """General settings for PyMOL"""
@@ -518,7 +519,7 @@ class Visualizer:
 def visualize_in_pymol(plcomplex):
     """Visualizes the protein-ligand pliprofiler at one site in PyMOL."""
 
-    vis = Visualizer(plcomplex)
+    vis = PyMOLVisualizer(plcomplex)
 
 
     #####################
