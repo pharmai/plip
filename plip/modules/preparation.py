@@ -60,17 +60,21 @@ class PDBParser:
         alt = []
         previous_ter = False
 
-
-        if not config.PLUGIN_MODE:
-            lastnum = 0 # Atom numbering (has to be consecutive)
-            for line in fil:
-                corrected_line, newnum = self.fix_pdbline(line, lastnum)
-                if corrected_line is not None:
-                    corrected_lines.append(corrected_line)
-                    lastnum = newnum
-            corrected_pdb = ''.join(corrected_lines)
+        # Standard without fixing
+        if not config.NOFIX:
+            if not config.PLUGIN_MODE:
+                lastnum = 0 # Atom numbering (has to be consecutive)
+                for line in fil:
+                    corrected_line, newnum = self.fix_pdbline(line, lastnum)
+                    if corrected_line is not None:
+                        corrected_lines.append(corrected_line)
+                        lastnum = newnum
+                corrected_pdb = ''.join(corrected_lines)
+            else:
+                corrected_pdb = self.pdbpath
+                corrected_lines = fil
         else:
-            corrected_pdb = self.pdbpath  # Leave it as it is
+            corrected_pdb = self.pdbpath
             corrected_lines = fil
 
 

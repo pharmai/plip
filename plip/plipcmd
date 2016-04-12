@@ -292,8 +292,8 @@ if __name__ == '__main__':
     parser.add_argument("--debug", dest="debug", default=False,
                         help="Turn on DEBUG mode with extended log.",
                         action="store_true")
-    parser.add_argument("--visjson", dest="visjson", default=False,
-                        help="Generates JSON string of PyMOL helper classes.",
+    parser.add_argument("--nofix", dest="nofix", default=False,
+                        help="Turns off fixing of PDB files.",
                         action="store_true")
     # Optional threshold arguments, not shown in help
     thr = namedtuple('threshold', 'name type')
@@ -325,7 +325,7 @@ if __name__ == '__main__':
     config.BASEPATH = config.OUTPATH  # Used for batch processing
     config.BREAKCOMPOSITE = arguments.breakcomposite
     config.ALTLOC = arguments.altlocation
-    config.VISJSON = arguments.visjson
+    config.NOFIX = arguments.nofix
     # Assign values to global thresholds
     for t in thresholds:
         tvalue = getattr(arguments, t.name)

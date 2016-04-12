@@ -538,8 +538,14 @@ class ChimeraVisualizer():
             self.bs_res_ids = []
 
             self.models = self.chimera.openModels
-            self.model = self.models.list()[0]  # Model of interest (ref protein)
+
+            #@TODO Properly select model (new plipmodel)
+            for md in self.models.list():
+                print md.name, len(md.atoms)
+                if md.name.startswith('PLIP'):
+                    self.model = md
             self.helper_mol = Molecule()  # Chimera Molecule
+            self.helper_mol.name = 'PLIPHelper'
             self.models.add([self.helper_mol])
 
             self.atoms = self.atom_by_serialnumber()
@@ -575,10 +581,12 @@ class ChimeraVisualizer():
             b = grp.newPseudoBond(self.atoms[i[0]], self.atoms[i[1]])
             b.color = self.colorbyname('blue')
             self.bs_res_ids.append(i[0])
+            print "HBOND", i
         for i in self.plcomplex.hbonds.pdon_id:
             b = grp.newPseudoBond(self.atoms[i[0]], self.atoms[i[1]])
             b.color = self.colorbyname('blue')
             self.bs_res_ids.append(i[1])
+            print "HBOND", i
 
 
     def show_halogen(self):
@@ -601,18 +609,17 @@ class ChimeraVisualizer():
 
             m = self.helper_mol
             r = m.newResidue("Centroids", " ", 1, " ")
-            centroid_prot = m.newAtom("CENTROID", Element("CENTROID"))
+            centroid_prot = m.newAtom("CENTROID", self.chimera.Element("CENTROID"))
             x, y, z = stack.proteinring_center
-            centroid_prot.setCoord(Coord(x, y, z))
+            centroid_prot.setCoord(self.chimera.Coord(x, y, z))
             r.addAtom(centroid_prot)
 
-            centroid_lig = m.newAtom("CENTROID", Element("CENTROID"))
+            centroid_lig = m.newAtom("CENTROID", self.chimera.Element("CENTROID"))
             x, y, z = stack.ligandring_center
-            centroid_lig.setCoord(Coord(x, y, z))
+            centroid_lig.setCoord(self.chimera.Coord(x, y, z))
             r.addAtom(centroid_lig)
 
 
-            #models.add([m])
             b = grp.newPseudoBond(centroid_lig, centroid_prot)
             b.color = self.colorbyname('forest green')
 
@@ -627,14 +634,14 @@ class ChimeraVisualizer():
 
             m = self.helper_mol
             r = m.newResidue("Centroids2", " ", 1, " ")
-            chargecenter = m.newAtom("CHARGE", Element("CHARGE"))
+            chargecenter = m.newAtom("CHARGE", self.chimera.Element("CHARGE"))
             x, y, z = cat.charge_center
-            chargecenter.setCoord(Coord(x, y, z))
+            chargecenter.setCoord(self.chimera.Coord(x, y, z))
             r.addAtom(chargecenter)
 
-            centroid = m.newAtom("CENTROID", Element("CENTROID"))
+            centroid = m.newAtom("CENTROID", self.chimera.Element("CENTROID"))
             x, y, z = cat.ring_center
-            centroid.setCoord(Coord(x, y, z))
+            centroid.setCoord(self.chimera.Coord(x, y, z))
             r.addAtom(centroid)
 
             b = grp.newPseudoBond(centroid, chargecenter)
@@ -655,14 +662,14 @@ class ChimeraVisualizer():
 
             m = self.helper_mol
             r = m.newResidue("Centroids3", " ", 1, " ")
-            chargecenter1 = m.newAtom("CHARGE", Element("CHARGE"))
+            chargecenter1 = m.newAtom("CHARGE", self.chimera.Element("CHARGE"))
             x, y, z = sbridge.positive_center
-            chargecenter1.setCoord(Coord(x, y, z))
+            chargecenter1.setCoord(self.chimera.Coord(x, y, z))
             r.addAtom(chargecenter1)
 
-            chargecenter2 = m.newAtom("CHARGE", Element("CHARGE"))
+            chargecenter2 = m.newAtom("CHARGE", self.chimera.Element("CHARGE"))
             x, y, z = sbridge.negative_center
-            chargecenter2.setCoord(Coord(x, y, z))
+            chargecenter2.setCoord(self.chimera.Coord(x, y, z))
             r.addAtom(chargecenter2)
 
             b = grp.newPseudoBond(chargecenter1, chargecenter2)
@@ -671,7 +678,7 @@ class ChimeraVisualizer():
             if sbridge.protispos:
                 self.bs_res_ids += sbridge.positive_atoms
             else:
-                self.bs_res_ids += sbridge_negative_atoms
+                self.bs_res_ids += sbridge.negative_atoms
 
     def show_wbridges(self):
         """Visualizes water bridges"""
@@ -707,11 +714,12 @@ class ChimeraVisualizer():
     def cleanup(self):
         """Clean up the visualization."""
 
-        # Hide all non-interacting water molecules
-        water_selection = []
-        for wid in self.water_ids:
-            water_selection.append('serialNumber=%i' % wid)
-        self.rc("~display :HOH & ~:@/%s" % " or ".join(water_selection))
+        if not len(self.water_ids) == 0:
+            # Hide all non-interacting water molecules
+            water_selection = []
+            for wid in self.water_ids:
+                water_selection.append('serialNumber=%i' % wid)
+            self.rc("~display :HOH & ~:@/%s" % " or ".join(water_selection))
 
         # Show all interacting binding site residues
         self.rc("display :%s" % ",".join([str(self.atoms[bsid].residue.id) for bsid in self.bs_res_ids]))
