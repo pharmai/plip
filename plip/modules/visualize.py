@@ -199,14 +199,15 @@ def png_workaround(filepath, width=1200, height=800):
     else:
         sys.stderr.write('Imagemagick not available. Images will not be resized or cropped.')
 
-class Visualizer:
-    def __init__(self, plcomplex):
-        self.plcomplex = plcomplex
-        self.protname = plcomplex.pdbid  # Name of protein with binding site
-        self.ligname = plcomplex.hetid  # Name of ligand
-        self.metal_ids = plcomplex.metal_ids
 
-class PyMOLVisualizer(Visualizer):
+class PyMOLVisualizer:
+
+    def __init__(self, plcomplex):
+        if not plcomplex is None:
+            self.plcomplex = plcomplex
+            self.protname = plcomplex.pdbid  # Name of protein with binding site
+            self.ligname = plcomplex.hetid  # Name of ligand
+            self.metal_ids = plcomplex.metal_ids
 
     def set_initial_representations(self):
         """General settings for PyMOL"""
@@ -214,6 +215,10 @@ class PyMOLVisualizer(Visualizer):
         cmd.set('dash_gap', 0)  # Show not dashes, but lines for the pliprofiler
         cmd.set('ray_shadow', 0)  # Turn on ray shadows for clearer ray-traced images
         cmd.set('cartoon_color', 'mylightblue')
+
+        # Set clipping planes for full view
+        cmd.clip('far', -1000)
+        cmd.clip('near', 1000)
 
     def make_initial_selections(self):
         """Make empty selections for structures and interactions"""
