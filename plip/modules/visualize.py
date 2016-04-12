@@ -65,7 +65,7 @@ class VisualizerData:
         self.hetid = ligand.hetid
         self.chain = ligand.chain if not ligand.chain == "0" else ""  # #@todo Fix this
         self.position = str(ligand.position)
-        self.uid = ":".join([self.pdbid.upper(), self.hetid, self.chain, self.position])
+        self.uid = ":".join([self.hetid, self.chain, self.position])
         self.outpath = mol.output_path
         self.metal_ids = [x.m_orig_idx for x in pli.ligand.metals]
         self.unpaired_hba_idx = pli.unpaired_hba_orig_idx
@@ -519,6 +519,214 @@ class PyMOLVisualizer:
 
         cmd.hide('everything', 'resn HOH &!Water')  # Hide all non-interacting water molecules
         cmd.hide('sticks', '%s and !%s and !AllBSRes' % (self.protname, self.ligname))  # Hide all non-interacting residues
+
+
+class ChimeraVisualizer():
+    """Provides visualization for Chimera."""
+    def __init__(self, plcomplex, chimera_module):
+        self.chimera = chimera_module
+        Molecule = self.chimera.Molecule
+        self.colorbyname = self.chimera.colorTable.getColorByName
+        self.rc = self.chimera.runCommand
+        self.getPseudoBondGroup = self.chimera.misc.getPseudoBondGroup
+        if not plcomplex is None:
+            self.plcomplex = plcomplex
+            self.protname = plcomplex.pdbid  # Name of protein with binding site
+            self.ligname = plcomplex.hetid  # Name of ligand
+            self.metal_ids = plcomplex.metal_ids
+            self.water_ids = []
+            self.bs_res_ids = []
+
+            self.models = self.chimera.openModels
+            self.model = self.models.list()[0]  # Model of interest (ref protein)
+            self.helper_mol = Molecule()  # Chimera Molecule
+            self.models.add([self.helper_mol])
+
+            self.atoms = self.atom_by_serialnumber()
+
+    def set_initial_representations(self):
+        self.rc("background solid white")
+
+    def make_initial_selections(self):
+        pass
+
+    def atom_by_serialnumber(self):
+        """Provides a dictionary mapping serial numbers to their atom objects."""
+        atm_by_snum = {}
+        for atom in self.model.atoms:
+            atm_by_snum[atom.serialNumber] =  atom
+        return atm_by_snum
+
+    def show_hydrophobic(self):
+        """Visualizes hydrophobic contacts."""
+        grp = self.getPseudoBondGroup("Hydrophobic Interactions", associateWith=[self.model])
+        grp.lineType = self.chimera.Dash
+        grp.lineWidth = 3
+        grp.color = self.colorbyname('gray')
+        for i in self.plcomplex.hydrophobic_contacts.pairs_ids:
+            b = grp.newPseudoBond(self.atoms[i[0]], self.atoms[i[1]])
+            self.bs_res_ids.append(i[0])
+
+    def show_hbonds(self):
+        """Visualizes hydrogen bonds."""
+        grp = self.getPseudoBondGroup("Hydrogen Bonds", associateWith=[self.model])
+        grp.lineWidth = 3
+        for i in self.plcomplex.hbonds.ldon_id:
+            b = grp.newPseudoBond(self.atoms[i[0]], self.atoms[i[1]])
+            b.color = self.colorbyname('blue')
+            self.bs_res_ids.append(i[0])
+        for i in self.plcomplex.hbonds.pdon_id:
+            b = grp.newPseudoBond(self.atoms[i[0]], self.atoms[i[1]])
+            b.color = self.colorbyname('blue')
+            self.bs_res_ids.append(i[1])
+
+
+    def show_halogen(self):
+        """Visualizes halogen bonds."""
+        grp = self.getPseudoBondGroup("HalogenBonds", associateWith=[self.model])
+        grp.lineWidth = 3
+        for i in self.plcomplex.halogen_bonds:
+            b = grp.newPseudoBond(self.atoms[i[0]], self.atoms[i[1]])
+            b.color = self.colorbyname('turquoise')
+
+            self.bs_res_ids.append(i.acc_id)
+
+    def show_stacking(self):
+        """Visualizes pi-stacking interactions."""
+        grp = self.getPseudoBondGroup("pi-Stacking", associateWith=[self.model])
+        grp.lineWidth = 3
+        grp.lineType = self.chimera.Dash
+        for i, stack in enumerate(self.plcomplex.pistacking):
+            #@TODO Only one new model for centroids, chargecenters etc.
+
+            m = self.helper_mol
+            r = m.newResidue("Centroids", " ", 1, " ")
+            centroid_prot = m.newAtom("CENTROID", Element("CENTROID"))
+            x, y, z = stack.proteinring_center
+            centroid_prot.setCoord(Coord(x, y, z))
+            r.addAtom(centroid_prot)
+
+            centroid_lig = m.newAtom("CENTROID", Element("CENTROID"))
+            x, y, z = stack.ligandring_center
+            centroid_lig.setCoord(Coord(x, y, z))
+            r.addAtom(centroid_lig)
+
+
+            #models.add([m])
+            b = grp.newPseudoBond(centroid_lig, centroid_prot)
+            b.color = self.colorbyname('forest green')
+
+            self.bs_res_ids += stack.proteinring_atoms
+
+    def show_cationpi(self):
+        """Visualizes cation-pi interactions"""
+        grp = self.getPseudoBondGroup("Cation-Pi", associateWith=[self.model])
+        grp.lineWidth = 3
+        grp.lineType = self.chimera.Dash
+        for i, cat in enumerate(self.plcomplex.pication):
+
+            m = self.helper_mol
+            r = m.newResidue("Centroids2", " ", 1, " ")
+            chargecenter = m.newAtom("CHARGE", Element("CHARGE"))
+            x, y, z = cat.charge_center
+            chargecenter.setCoord(Coord(x, y, z))
+            r.addAtom(chargecenter)
+
+            centroid = m.newAtom("CENTROID", Element("CENTROID"))
+            x, y, z = cat.ring_center
+            centroid.setCoord(Coord(x, y, z))
+            r.addAtom(centroid)
+
+            b = grp.newPseudoBond(centroid, chargecenter)
+            b.color = self.colorbyname('orange')
+
+            if cat.protcharged:
+                self.bs_res_ids += cat.charge_atoms
+            else:
+                self.bs_res_ids += cat.ring_atoms
+
+    def show_sbridges(self):
+        """Visualizes salt bridges."""
+        # Salt Bridges
+        grp = self.getPseudoBondGroup("Salt Bridges", associateWith=[self.model])
+        grp.lineWidth = 3
+        grp.lineType = self.chimera.Dash
+        for i, sbridge in enumerate(self.plcomplex.saltbridges):
+
+            m = self.helper_mol
+            r = m.newResidue("Centroids3", " ", 1, " ")
+            chargecenter1 = m.newAtom("CHARGE", Element("CHARGE"))
+            x, y, z = sbridge.positive_center
+            chargecenter1.setCoord(Coord(x, y, z))
+            r.addAtom(chargecenter1)
+
+            chargecenter2 = m.newAtom("CHARGE", Element("CHARGE"))
+            x, y, z = sbridge.negative_center
+            chargecenter2.setCoord(Coord(x, y, z))
+            r.addAtom(chargecenter2)
+
+            b = grp.newPseudoBond(chargecenter1, chargecenter2)
+            b.color = self.colorbyname('yellow')
+
+            if sbridge.protispos:
+                self.bs_res_ids += sbridge.positive_atoms
+            else:
+                self.bs_res_ids += sbridge_negative_atoms
+
+    def show_wbridges(self):
+        """Visualizes water bridges"""
+        grp = self.getPseudoBondGroup("Water Bridges", associateWith=[self.model])
+        grp.lineWidth = 3
+        for i, wbridge in enumerate(self.plcomplex.waterbridges):
+            c = grp.newPseudoBond(self.atoms[wbridge.water_id], self.atoms[wbridge.acc_id])
+            c.color = self.colorbyname('cornflower blue')
+            self.water_ids.append(wbridge.water_id)
+            b = grp.newPseudoBond(self.atoms[wbridge.don_id], self.atoms[wbridge.water_id])
+            b.color = self.colorbyname('cornflower blue')
+            self.water_ids.append(wbridge.water_id)
+            if wbridge.protisdon:
+                self.bs_res_ids.append(wbridge.don_id)
+            else:
+                self.bs_res_ids.append(wbridge.acc_id)
+
+    def show_metal(self):
+        """Visualizes metal coordination."""
+        # Metal Coordination
+        grp = self.getPseudoBondGroup("Metal Coordination", associateWith=[self.model])
+        grp.lineWidth = 3
+        for i, metal in enumerate(self.plcomplex.metal_complexes):
+            c = grp.newPseudoBond(self.atoms[metal.metal_id], self.atoms[metal.target_id])
+            c.color = self.colorbyname('magenta')
+
+            if metal.location == 'water':
+                self.water_ids.append(metal.target_id)
+
+            if metal.location.startswith('protein'):
+                self.bs_res_ids.append(metal.target_id)
+
+    def cleanup(self):
+        """Clean up the visualization."""
+
+        # Hide all non-interacting water molecules
+        water_selection = []
+        for wid in self.water_ids:
+            water_selection.append('serialNumber=%i' % wid)
+        self.rc("~display :HOH & ~:@/%s" % " or ".join(water_selection))
+
+        # Show all interacting binding site residues
+        self.rc("display :%s" % ",".join([str(self.atoms[bsid].residue.id) for bsid in self.bs_res_ids]))
+
+
+    def zoom_to_ligand(self):
+        pass
+
+    def refinements(self):
+        """Details for the visualization."""
+        self.rc("setattr a color gray @CENTROID")
+        self.rc("setattr a radius 0.3 @CENTROID")
+        self.rc("setattr a color orange @CHARGE")
+        self.rc("setattr a radius 0.5 @CHARGE")
+
 
 
 def visualize_in_pymol(plcomplex):
