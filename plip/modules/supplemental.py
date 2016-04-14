@@ -228,9 +228,6 @@ def cmd_exists(c):
 ################
 
 
-def object_exists(object_name):
-    """Checks if an object exists in the open PyMOL session."""
-    return object_name in cmd.get_names("objects")
 
 
 def initialize_pymol(options):
@@ -249,28 +246,6 @@ def start_pymol(quiet=False, options='-p', run=False):
         initialize_pymol(options)
     if quiet:
         cmd.feedback('disable', 'all', 'everything')
-
-
-def standard_settings():
-    """Sets up standard settings for a nice visualization."""
-    cmd.set('bg_rgb', [1.0, 1.0, 1.0])  # White background
-    cmd.set('depth_cue', 0)  # Turn off depth cueing (no fog)
-    cmd.set('cartoon_side_chain_helper', 1)  # Improve combined visualization of sticks and cartoon
-    cmd.set('cartoon_fancy_helices', 1)  # Nicer visualization of helices (using tapered ends)
-    cmd.set('transparency_mode', 1)  # Turn on multilayer transparency
-    cmd.set('dash_radius', 0.05)
-    set_custom_colorset()
-
-
-def set_custom_colorset():
-    """Defines a colorset with matching colors. Provided by Joachim."""
-    cmd.set_color('myorange', '[253, 174, 97]')
-    cmd.set_color('mygreen', '[171, 221, 164]')
-    cmd.set_color('myred', '[215, 25, 28]')
-    cmd.set_color('myblue', '[43, 131, 186]')
-    cmd.set_color('mylightblue', '[158, 202, 225]')
-    cmd.set_color('mylightgreen', '[229, 245, 224]')
-
 
 def nucleotide_linkage(residues):
     """Support for DNA/RNA ligands by finding missing covalent linkages to stitch DNA/RNA together."""
