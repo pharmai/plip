@@ -23,13 +23,15 @@ from __future__ import print_function
 # Own modules
 try:
     from plip.modules.preparation import *
-    from plip.modules.visualize import visualize_in_pymol, VisualizerData
+    from plip.modules.visualize import visualize_in_pymol
+    from plip.modules.plipremote import VisualizerData
     from plip.modules.report import TextOutput
     from plip.modules import config
     from plip.modules.mp import parallel_fn
 except ImportError:
     from modules.preparation import *
     from modules.visualize import visualize_in_pymol, PyMOLComplex
+    from modules.plipremote import VisualizerData
     from modules.report import TextOutput
     from modules import config
     from modules.mp import parallel_fn
