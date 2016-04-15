@@ -18,8 +18,7 @@ limitations under the License.
 
 
 # Own modules
-from supplemental import *
-from time import sleep
+#from supplemental import *
 from collections import namedtuple
 import config
 from pymol import cmd
@@ -27,6 +26,53 @@ from pymolplip import PyMOLVisualizer
 
 # Python Standard Library
 import json
+
+###### from supplemental.py
+
+from pymol import finish_launching
+def initialize_pymol(options):
+    """Initializes PyMOL"""
+    # Pass standard arguments of function to prevent PyMOL from printing out PDB headers (workaround)
+    finish_launching(args=['pymol', options, '-K'])
+    cmd.reinitialize()
+
+def start_pymol(quiet=False, options='-p', run=False):
+    """Starts up PyMOL and sets general options. Quiet mode suppresses all PyMOL output.
+    Command line options can be passed as the second argument."""
+    import pymol
+    pymol.pymol_argv = ['pymol', '%s' % options] + sys.argv[1:]
+    if run:
+        initialize_pymol(options)
+    if quiet:
+        cmd.feedback('disable', 'all', 'everything')
+
+def message(msg, indent=False, mtype='standard', caption=False):
+    """Writes messages in verbose mode"""
+    if caption:
+        msg = msg + '\n' + '-'*len(msg)
+    if mtype == 'warning':
+        msg = colorlog('Warning:  ' + msg, 'yellow')
+    if mtype == 'error':
+        msg = colorlog('Error:  ' + msg, 'red')
+    if mtype == 'debug':
+        msg = colorlog('Debug:  ' + msg, 'pink')
+    if mtype == 'info':
+        msg = colorlog('Info:  ' + msg, 'green')
+    if indent:
+        msg = '  ' + msg
+    if mtype in ['error', 'warning']:
+        sys.stderr.write(msg)
+    else:
+        sys.stdout.write(msg)
+
+def write_message(msg, indent=False, mtype='standard', caption=False):
+    """Writes message if verbose mode is set."""
+    if (mtype=='debug' and config.DEBUG) or (mtype !='debug' and config.VERBOSE) or mtype=='error':
+        message(msg, indent=indent, mtype=mtype, caption=caption)
+
+#################
+
+
 
 hbonds_info = namedtuple('hbonds_info', 'ldon_id lig_don_id prot_acc_id pdon_id prot_don_id lig_acc_id')
 hydrophobic_info = namedtuple('hydrophobic_info', 'bs_ids lig_ids pairs_ids')
@@ -143,15 +189,11 @@ class VisualizerData:
 
 
 
-
-
-
-
-
 def visualize_in_pymol(plcomplex):
     """Visualizes the protein-ligand pliprofiler at one site in PyMOL."""
 
     vis = PyMOLVisualizer(plcomplex)
+
 
 
     #####################
