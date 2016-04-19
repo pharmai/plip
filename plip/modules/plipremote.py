@@ -16,7 +16,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+# Python Standard Library
 from collections import namedtuple
+
+hbonds_info = namedtuple('hbonds_info', 'ldon_id lig_don_id prot_acc_id pdon_id prot_don_id lig_acc_id')
+hydrophobic_info = namedtuple('hydrophobic_info', 'bs_ids lig_ids pairs_ids')
+halogen_info = namedtuple('halogen_info', 'don_id acc_id')
+pistack_info = namedtuple('pistack_info', 'proteinring_atoms, proteinring_center ligandring_atoms '
+                                          'ligandring_center type')
+pication_info = namedtuple('pication_info', 'ring_center charge_center ring_atoms charge_atoms, protcharged')
+sbridge_info = namedtuple('sbridge_info', 'positive_atoms negative_atoms positive_center negative_center protispos')
+wbridge_info = namedtuple('wbridge_info', 'don_id acc_id water_id protisdon')
+metal_info = namedtuple('metal_info', 'metal_id, target_id location')
 
 class VisualizerData:
     """Contains all information on a complex relevant for visualization. Can be pickled"""
@@ -25,15 +36,7 @@ class VisualizerData:
         pli = mol.interaction_sets[site]
         ligand = pli.ligand
 
-        self.hbonds_info = namedtuple('hbonds_info', 'ldon_id lig_don_id prot_acc_id pdon_id prot_don_id lig_acc_id')
-        self.hydrophobic_info = namedtuple('hydrophobic_info', 'bs_ids lig_ids pairs_ids')
-        self.halogen_info = namedtuple('halogen_info', 'don_id acc_id')
-        self.pistack_info = namedtuple('pistack_info', 'proteinring_atoms, proteinring_center ligandring_atoms '
-                                                  'ligandring_center type')
-        self.pication_info = namedtuple('pication_info', 'ring_center charge_center ring_atoms charge_atoms, protcharged')
-        self.sbridge_info = namedtuple('sbridge_info', 'positive_atoms negative_atoms positive_center negative_center protispos')
-        self.wbridge_info = namedtuple('wbridge_info', 'don_id acc_id water_id protisdon')
-        self.metal_info = namedtuple('metal_info', 'metal_id, target_id location')
+
 
         # General Information
         self.lig_members = sorted(pli.ligand.members)
@@ -55,56 +58,56 @@ class VisualizerData:
         # Hydrophobic Contacts
         # Contains IDs of contributing binding site, ligand atoms and the pairings
         hydroph_pairs_id = [(h.bsatom_orig_idx, h.ligatom_orig_idx) for h in pli.hydrophobic_contacts]
-        self.hydrophobic_contacts = self.hydrophobic_info(bs_ids=[hp[0] for hp in hydroph_pairs_id],
-                                                          lig_ids=[hp[1] for hp in hydroph_pairs_id],
-                                                          pairs_ids=hydroph_pairs_id)
+        self.hydrophobic_contacts = hydrophobic_info(bs_ids=[hp[0] for hp in hydroph_pairs_id],
+                                                     lig_ids=[hp[1] for hp in hydroph_pairs_id],
+                                                     pairs_ids=hydroph_pairs_id)
 
         # Hydrogen Bonds
         # #@todo Don't use indices, simplify this code here
         hbonds_ldon, hbonds_pdon = pli.hbonds_ldon, pli.hbonds_pdon
         hbonds_ldon_id = [(hb.a_orig_idx, hb.d_orig_idx) for hb in hbonds_ldon]
         hbonds_pdon_id = [(hb.a_orig_idx, hb.d_orig_idx) for hb in hbonds_pdon]
-        self.hbonds = self.hbonds_info(ldon_id=[(hb.a_orig_idx, hb.d_orig_idx) for hb in hbonds_ldon],
-                                       lig_don_id=[hb[1] for hb in hbonds_ldon_id],
-                                       prot_acc_id=[hb[0] for hb in hbonds_ldon_id],
-                                       pdon_id=[(hb.a_orig_idx, hb.d_orig_idx) for hb in hbonds_pdon],
-                                       prot_don_id=[hb[1] for hb in hbonds_pdon_id],
-                                       lig_acc_id=[hb[0] for hb in hbonds_pdon_id])
+        self.hbonds = hbonds_info(ldon_id=[(hb.a_orig_idx, hb.d_orig_idx) for hb in hbonds_ldon],
+                                  lig_don_id=[hb[1] for hb in hbonds_ldon_id],
+                                  prot_acc_id=[hb[0] for hb in hbonds_ldon_id],
+                                  pdon_id=[(hb.a_orig_idx, hb.d_orig_idx) for hb in hbonds_pdon],
+                                  prot_don_id=[hb[1] for hb in hbonds_pdon_id],
+                                  lig_acc_id=[hb[0] for hb in hbonds_pdon_id])
 
         # Halogen Bonds
-        self.halogen_bonds = [self.halogen_info(don_id=h.don_orig_idx, acc_id=h.acc_orig_idx)
+        self.halogen_bonds = [halogen_info(don_id=h.don_orig_idx, acc_id=h.acc_orig_idx)
                               for h in pli.halogen_bonds]
 
         # Pistacking
-        self.pistacking = [self.pistack_info(proteinring_atoms=pistack.proteinring.atoms_orig_idx,
-                                             proteinring_center=pistack.proteinring.center,
-                                             ligandring_atoms=pistack.ligandring.atoms_orig_idx,
-                                             ligandring_center=pistack.ligandring.center,
-                                             type=pistack.type) for pistack in pli.pistacking]
+        self.pistacking = [pistack_info(proteinring_atoms=pistack.proteinring.atoms_orig_idx,
+                                        proteinring_center=pistack.proteinring.center,
+                                        ligandring_atoms=pistack.ligandring.atoms_orig_idx,
+                                        ligandring_center=pistack.ligandring.center,
+                                        type=pistack.type) for pistack in pli.pistacking]
 
         # Pi-cation interactions
-        self.pication = [self.pication_info(ring_center=picat.ring.center,
-                                            charge_center=picat.charge.center,
-                                            ring_atoms=picat.ring.atoms_orig_idx,
-                                            charge_atoms=picat.charge.atoms_orig_idx,
-                                            protcharged=picat.protcharged)
+        self.pication = [pication_info(ring_center=picat.ring.center,
+                                       charge_center=picat.charge.center,
+                                       ring_atoms=picat.ring.atoms_orig_idx,
+                                       charge_atoms=picat.charge.atoms_orig_idx,
+                                       protcharged=picat.protcharged)
                          for picat in pli.pication_paro+pli.pication_laro]
 
         # Salt Bridges
-        self.saltbridges = [self.sbridge_info(positive_atoms=sbridge.positive.atoms_orig_idx,
-                                              negative_atoms=sbridge.negative.atoms_orig_idx,
-                                              positive_center=sbridge.positive.center,
-                                              negative_center=sbridge.negative.center,
-                                              protispos=sbridge.protispos)
+        self.saltbridges = [sbridge_info(positive_atoms=sbridge.positive.atoms_orig_idx,
+                                         negative_atoms=sbridge.negative.atoms_orig_idx,
+                                         positive_center=sbridge.positive.center,
+                                         negative_center=sbridge.negative.center,
+                                         protispos=sbridge.protispos)
                             for sbridge in pli.saltbridge_lneg+pli.saltbridge_pneg]
 
         # Water Bridgese('wbridge_info', 'don_id acc_id water_id protisdon')
-        self.waterbridges = [self.wbridge_info(don_id=wbridge.d_orig_idx,
-                                               acc_id=wbridge.a_orig_idx,
-                                               water_id=wbridge.water_orig_idx,
-                                               protisdon=wbridge.protisdon) for wbridge in pli.water_bridges]
+        self.waterbridges = [wbridge_info(don_id=wbridge.d_orig_idx,
+                                          acc_id=wbridge.a_orig_idx,
+                                          water_id=wbridge.water_orig_idx,
+                                          protisdon=wbridge.protisdon) for wbridge in pli.water_bridges]
 
         # Metal Complexes
-        self.metal_complexes = [self.metal_info(metal_id=metalc.metal_orig_idx,
-                                                target_id=metalc.target_orig_idx,
-                                                location=metalc.location) for metalc in pli.metal_complexes]
+        self.metal_complexes = [metal_info(metal_id=metalc.metal_orig_idx,
+                                           target_id=metalc.target_orig_idx,
+                                           location=metalc.location) for metalc in pli.metal_complexes]
