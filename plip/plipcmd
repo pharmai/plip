@@ -23,13 +23,15 @@ from __future__ import print_function
 # Own modules
 try:
     from plip.modules.preparation import *
-    from plip.modules.visualize import visualize_in_pymol, PyMOLComplex
+    from plip.modules.visualize import visualize_in_pymol
+    from plip.modules.plipremote import VisualizerData
     from plip.modules.report import TextOutput
     from plip.modules import config
     from plip.modules.mp import parallel_fn
 except ImportError:
     from modules.preparation import *
     from modules.visualize import visualize_in_pymol, PyMOLComplex
+    from modules.plipremote import VisualizerData
     from modules.report import TextOutput
     from modules import config
     from modules.mp import parallel_fn
@@ -41,11 +43,12 @@ from argparse import ArgumentParser
 import urllib2
 import time
 import multiprocessing
+import json
 
 # External libraries
 import lxml.etree as et
 
-__version__ = '1.3.0'
+__version__ = '1.3.2'
 descript = "Protein-Ligand Interaction Profiler (PLIP) v%s " \
            "is a command-line based tool to analyze interactions in a protein-ligand complex. " \
            "If you are using PLIP in your work, please cite: " \
@@ -78,30 +81,30 @@ def check_pdb_status(pdbid):
 def fetch_pdb(pdbid):
     """Get the newest entry from the RCSB server for the given PDB ID. Exits with '1' if PDB ID is invalid."""
     pdbid = pdbid.lower()
-    message('\nChecking status of PDB ID %s ... ' % pdbid)
+    write_message('\nChecking status of PDB ID %s ... ' % pdbid)
     state, current_entry = check_pdb_status(pdbid)  # Get state and current PDB ID
 
     if state == 'OBSOLETE':
-        message('entry is obsolete, getting %s instead.\n' % current_entry)
+        write_message('entry is obsolete, getting %s instead.\n' % current_entry)
     elif state == 'CURRENT':
-        message('entry is up to date.\n')
+        write_message('entry is up to date.\n')
     elif state == 'UNKNOWN':
-        sysexit(3, 'Invalid PDB ID (Entry does not exist on PDB server)')
-    message('Downloading file from PDB ... ')
+        sysexit(3, 'Invalid PDB ID (Entry does not exist on PDB server)\n')
+    write_message('Downloading file from PDB ... ')
     pdburl = 'http://www.rcsb.org/pdb/files/%s.pdb' % current_entry  # Get URL for current entry
     pdbfile = urllib2.urlopen(pdburl).read()
     # If no PDB file is available, a text is now shown with "We're sorry, but ..."
     # Could previously be distinguished by an HTTP error
     if 'sorry' in pdbfile:
-        sysexit(5, "Error: No file in PDB format available from wwPDB for the given PDB ID.\n")
+        sysexit(5, "No file in PDB format available from wwPDB for the given PDB ID.\n")
     return [pdbfile, current_entry]
 
 
 def process_pdb(pdbfile, outpath):
     """Analysis of a single PDB file. Can generate textual reports XML, PyMOL session files and images as output."""
     startmessage = '\nStarting analysis of %s\n' % pdbfile.split('/')[-1]
-    message(startmessage)
-    message('='*len(startmessage)+'\n')
+    write_message(startmessage)
+    write_message('='*len(startmessage)+'\n')
     mol = PDBComplex()
     mol.output_path = outpath
     mol.load_pdb(pdbfile)
@@ -139,15 +142,29 @@ def process_pdb(pdbfile, outpath):
 
     config.MAXTHREADS = min(config.MAXTHREADS, len(mol.interaction_sets))
 
+    ####
+    # Create JSON dump of PyMOL helper class
+    ###
+
+    if config.VISJSON:
+        complexes = [VisualizerData(mol, site) for site in sorted(mol.interaction_sets)
+        if not len(mol.interaction_sets[site].interacting_res) == 0]
+
+        with open('%s/plipvis.json' % outpath, 'w') as f:
+            cplx_dict = {}
+            for cplx in complexes:
+                cplx_dict[cplx.uid] = cplx.to_json()
+            json.dump(cplx_dict, f)
+
     ######################################
     # PyMOL Visualization (parallelized) #
     ######################################
 
     if config.PYMOL or config.PICS:
-        complexes = [PyMOLComplex(mol, site) for site in sorted(mol.interaction_sets)
+        complexes = [VisualizerData(mol, site) for site in sorted(mol.interaction_sets)
                      if not len(mol.interaction_sets[site].interacting_res) == 0]
         if config.MAXTHREADS > 1:
-            message('\nGenerating visualizations in parallel on %i cores ...' % config.MAXTHREADS)
+            write_message('\nGenerating visualizations in parallel on %i cores ...' % config.MAXTHREADS)
             parfn = parallel_fn(visualize_in_pymol)
             parfn(complexes, processes=config.MAXTHREADS)
         else:
@@ -185,17 +202,17 @@ def download_structure(inputpdbid):
     Returns the path of the downloaded file."""
     try:
         if len(inputpdbid) != 4 or extract_pdbid(inputpdbid.lower()) == 'UnknownProtein':
-            sysexit(3, 'Error: Invalid PDB ID (Wrong format)')
+            sysexit(3, 'Invalid PDB ID (Wrong format)\n')
         pdbfile, pdbid = fetch_pdb(inputpdbid.lower())
         pdbpath = tilde_expansion('%s/%s.pdb' % (config.BASEPATH.rstrip('/'), pdbid))
         create_folder_if_not_exists(config.BASEPATH)
         with open(pdbpath, 'w') as g:
             g.write(pdbfile)
-        message('file downloaded as %s\n\n' % pdbpath)
+        write_message('file downloaded as %s\n\n' % pdbpath)
         return pdbpath, pdbid
 
     except ValueError:  # Invalid PDB ID, cannot fetch from RCBS server
-        sysexit(3, 'Error: Invalid PDB ID (Entry does not exist)')
+        sysexit(3, 'Invalid PDB ID (Entry does not exist)\n')
 
 def remove_duplicates(slist):
     """Checks input lists for duplicates and returns
@@ -203,9 +220,9 @@ def remove_duplicates(slist):
     unique = list(set(slist))
     difference = len(slist) - len(unique)
     if difference == 1:
-        message("Removed one duplicate entry from input list.\n")
+        write_message("Removed one duplicate entry from input list.\n")
     if difference > 1:
-        message("Removed %i duplicate entries from input list.\n" % difference)
+        write_message("Removed %i duplicate entries from input list.\n" % difference)
     return unique
 
 
@@ -213,19 +230,18 @@ def main(inputstructs, inputpdbids):
     """Main function. Calls functions for processing, report generation and visualization."""
     pdbid, pdbpath = None, None
     # #@todo For multiprocessing, implement better stacktracing for errors
-
     # Print title and version
     title = "* Protein-Ligand Interaction Profiler v%s *" % __version__
-    message('\n' + '*' * len(title) + '\n')
-    message(title)
-    message('\n' + '*' * len(title) + '\n\n')
+    write_message('\n' + '*' * len(title) + '\n')
+    write_message(title)
+    write_message('\n' + '*' * len(title) + '\n\n')
 
     if inputstructs is not None:  # Process PDB file(s)
         num_structures = len(inputstructs)
         inputstructs = remove_duplicates(inputstructs)
         for inputstruct in inputstructs:
             if os.path.getsize(inputstruct) == 0:
-                sysexit(2, 'Error: Empty PDB file')  # Exit if input file is empty
+                sysexit(2, 'Empty PDB file\n')  # Exit if input file is empty
             if num_structures > 1:
                 basename = inputstruct.split('.')[0].split('/')[-1]
                 config.OUTPATH = '/'.join([config.BASEPATH, basename])
@@ -241,9 +257,9 @@ def main(inputstructs, inputpdbids):
 
     if (pdbid is not None or inputstructs is not None) and config.BASEPATH is not None:
         if config.BASEPATH in ['.', './']:
-            message('\nFinished analysis. Find the result files in the working directory.\n\n')
+            write_message('\nFinished analysis. Find the result files in the working directory.\n\n')
         else:
-            message('\nFinished analysis. Find the result files in %s\n\n' % config.BASEPATH)
+            write_message('\nFinished analysis. Find the result files in %s\n\n' % config.BASEPATH)
 
 if __name__ == '__main__':
 
@@ -278,6 +294,9 @@ if __name__ == '__main__':
     parser.add_argument("--debug", dest="debug", default=False,
                         help="Turn on DEBUG mode with extended log.",
                         action="store_true")
+    parser.add_argument("--nofix", dest="nofix", default=False,
+                        help="Turns off fixing of PDB files.",
+                        action="store_true")
     # Optional threshold arguments, not shown in help
     thr = namedtuple('threshold', 'name type')
     thresholds = [thr(name='aromatic_planarity', type='angle'),
@@ -298,13 +317,17 @@ if __name__ == '__main__':
     config.VERBOSE = True if (arguments.verbose or arguments.debug) else False
     config.DEBUG = True if arguments.debug else False
     config.MAXTHREADS = arguments.maxthreads
-    config.XML, config.TXT, config.PICS, config.PYMOL = arguments.xml, arguments.txt, arguments.pics, arguments.pymol
+    config.XML = arguments.xml
+    config.TXT = arguments.txt
+    config.PICS = arguments.pics
+    config.PYMOL = arguments.pymol
     config.OUTPATH = arguments.outpath
     config.OUTPATH = tilde_expansion("".join([config.OUTPATH, '/'])
                                      if not config.OUTPATH.endswith('/') else config.OUTPATH)
     config.BASEPATH = config.OUTPATH  # Used for batch processing
     config.BREAKCOMPOSITE = arguments.breakcomposite
     config.ALTLOC = arguments.altlocation
+    config.NOFIX = arguments.nofix
     # Assign values to global thresholds
     for t in thresholds:
         tvalue = getattr(arguments, t.name)

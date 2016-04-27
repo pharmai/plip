@@ -32,6 +32,7 @@ import subprocess
 import codecs
 import gzip
 import zipfile
+import platform
 
 # External libraries
 import pybel
@@ -228,9 +229,6 @@ def cmd_exists(c):
 ################
 
 
-def object_exists(object_name):
-    """Checks if an object exists in the open PyMOL session."""
-    return object_name in cmd.get_names("objects")
 
 
 def initialize_pymol(options):
@@ -249,28 +247,6 @@ def start_pymol(quiet=False, options='-p', run=False):
         initialize_pymol(options)
     if quiet:
         cmd.feedback('disable', 'all', 'everything')
-
-
-def standard_settings():
-    """Sets up standard settings for a nice visualization."""
-    cmd.set('bg_rgb', [1.0, 1.0, 1.0])  # White background
-    cmd.set('depth_cue', 0)  # Turn off depth cueing (no fog)
-    cmd.set('cartoon_side_chain_helper', 1)  # Improve combined visualization of sticks and cartoon
-    cmd.set('cartoon_fancy_helices', 1)  # Nicer visualization of helices (using tapered ends)
-    cmd.set('transparency_mode', 1)  # Turn on multilayer transparency
-    cmd.set('dash_radius', 0.05)
-    set_custom_colorset()
-
-
-def set_custom_colorset():
-    """Defines a colorset with matching colors. Provided by Joachim."""
-    cmd.set_color('myorange', '[253, 174, 97]')
-    cmd.set_color('mygreen', '[171, 221, 164]')
-    cmd.set_color('myred', '[215, 25, 28]')
-    cmd.set_color('myblue', '[43, 131, 186]')
-    cmd.set_color('mylightblue', '[158, 202, 225]')
-    cmd.set_color('mylightgreen', '[229, 245, 224]')
-
 
 def nucleotide_linkage(residues):
     """Support for DNA/RNA ligands by finding missing covalent linkages to stitch DNA/RNA together."""
@@ -354,7 +330,7 @@ def get_isomorphisms(reference, lig):
         isomorphs = pybel.ob.vpairUIntUInt()
         mappr.MapFirst(lig.OBMol, isomorphs)
         isomorphs = [isomorphs]
-    debuglog("Number of isomorphisms: %i" % len(isomorphs))
+    write_message("Number of isomorphisms: %i\n" % len(isomorphs), mtype='debug')
     # #@todo Check which isomorphism to take
     return isomorphs
 
@@ -405,14 +381,14 @@ def int32_to_negative(int32):
         return int32
 
 
-def read_pdb(pdbfname):
+def read_pdb(pdbfname, as_string=False):
     """Reads a given PDB file and returns a Pybel Molecule."""
     pybel.ob.obErrorLog.StopLogging()  # Suppress all OpenBabel warnings
     if os.name != 'nt':  # Resource module not available for Windows
         maxsize = resource.getrlimit(resource.RLIMIT_STACK)[-1]
         resource.setrlimit(resource.RLIMIT_STACK, (min(2 ** 28, maxsize), maxsize))
     sys.setrecursionlimit(10 ** 5)  # increase Python recoursion limit
-    return readmol(pdbfname)
+    return readmol(pdbfname, as_string=as_string)
 
 
 def read(fil):
@@ -430,48 +406,84 @@ def read(fil):
             return open(fil, 'r')
 
 
-def readmol(path):
+def readmol(path, as_string=False):
     """Reads the given molecule file and returns the corresponding Pybel molecule as well as the input file type.
     In contrast to the standard Pybel implementation, the file is closed properly."""
     supported_formats = ['pdb', 'pdbqt', 'mmcif']
     obc = pybel.ob.OBConversion()
 
-    with read(path) as f:
-        filestr = str(f.read())
-
+    if as_string:
+        filestr = path
+    else:
+        with read(path) as f:
+            filestr = str(f.read())
     for sformat in supported_formats:
         obc.SetInFormat(sformat)
         mol = pybel.ob.OBMol()
         obc.ReadString(mol, filestr)
         if not mol.Empty():
             if sformat == 'pdbqt':
-                message('[EXPERIMENTAL] Input is PDBQT file. Some features (especially visualization) might not '
+                write_message('[EXPERIMENTAL] Input is PDBQT file. Some features (especially visualization) might not '
                         'work as expected. Please consider using PDB format instead.\n')
             if sformat == 'mmcif':
-                message('[EXPERIMENTAL] Input is mmCIF file. Most features do currently not work with this format.\n')
+                write_message('[EXPERIMENTAL] Input is mmCIF file. Most features do currently not work with this format.\n')
             return pybel.Molecule(mol), sformat
     sysexit(4, 'No valid file format provided.')
 
 
 def sysexit(code, msg):
     """Exit using an custom error message and error code."""
-    sys.stderr.write(msg)
+    write_message(msg, mtype='error')
     sys.exit(code)
 
+#####################
+# Verbose and Debug #
+#####################
 
-def message(msg, indent=False):
+def colorlog(msg, color, bold=False, blink=False):
+    """Colors messages on non-Windows systems supporting ANSI escape."""
+
+    ## ANSI Escape Codes ##
+    PINK_COL = '\x1b[35m'
+    GREEN_COL = '\x1b[32m'
+    RED_COL = '\x1b[31m'
+    YELLOW_COL = '\x1b[33m'
+    BLINK = '\x1b[5m'
+    RESET = '\x1b[0m'
+
+    if platform.system() != 'Windows':
+        if blink:
+            msg = BLINK + msg + RESET
+        if color == 'yellow':
+            msg = YELLOW_COL + msg + RESET
+        if color == 'red':
+            msg = RED_COL + msg + RESET
+        if color == 'green':
+            msg = GREEN_COL + msg + RESET
+        if color == 'pink':
+            msg = PINK_COL + msg + RESET
+    return msg
+
+def write_message(msg, indent=False, mtype='standard', caption=False):
+    """Writes message if verbose mode is set."""
+    if (mtype=='debug' and config.DEBUG) or (mtype !='debug' and config.VERBOSE) or mtype=='error':
+        message(msg, indent=indent, mtype=mtype, caption=caption)
+
+def message(msg, indent=False, mtype='standard', caption=False):
     """Writes messages in verbose mode"""
-    if config.VERBOSE:
-        if indent:
-            msg = '  ' + msg
-        sys.stdout.write(msg)
-
-
-def debuglog(msg):
-    """Writes debug messages"""
-    if config.DEBUG:
-        msg = '    %% DEBUG: ' + msg
-        if len(msg) > 100:
-            msg = msg[:100] + ' ...'
-        msg += '\n'
+    if caption:
+        msg = msg + '\n' + '-'*len(msg)
+    if mtype == 'warning':
+        msg = colorlog('Warning:  ' + msg, 'yellow')
+    if mtype == 'error':
+        msg = colorlog('Error:  ' + msg, 'red')
+    if mtype == 'debug':
+        msg = colorlog('Debug:  ' + msg, 'pink')
+    if mtype == 'info':
+        msg = colorlog('Info:  ' + msg, 'green')
+    if indent:
+        msg = '  ' + msg
+    if mtype in ['error', 'warning']:
+        sys.stderr.write(msg)
+    else:
         sys.stdout.write(msg)

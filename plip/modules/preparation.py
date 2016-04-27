@@ -31,7 +31,8 @@ import config
 ################
 
 class PDBParser:
-    def __init__(self, pdbpath):
+    def __init__(self, pdbpath, as_string):
+        self.as_string = as_string
         self.pdbpath = pdbpath
         self.num_fixed_lines = 0
         self.covlinkage = namedtuple("covlinkage", "id1 chain1 pos1 conf1 id2 chain2 pos2 conf2")
@@ -46,7 +47,10 @@ class PDBParser:
         III. Furthermore, covalent linkages between ligands and protein residues/other ligands are identified
         IV. Alternative conformations
         """
-        fil = read(self.pdbpath).readlines()
+        if self.as_string:
+            fil = self.pdbpath.split('\n')
+        else:
+            fil = read(self.pdbpath).readlines()
         # #@todo Also consider SSBOND entries here
         corrected_lines = []
         i, j = 0, 0  # idx and PDB numbering
@@ -56,15 +60,22 @@ class PDBParser:
         alt = []
         previous_ter = False
 
-        #New code : Do fixing first and then do mapping on fixed lines
-        #@TODO Test code
-        lastnum = 0 # Atom numbering (has to be consecutive)
-        for line in fil:
-            corrected_line, newnum = self.fix_pdbline(line, lastnum)
-            if corrected_line is not None:
-                corrected_lines.append(corrected_line)
-                lastnum = newnum
-        corrected_pdb = ''.join(corrected_lines)
+        # Standard without fixing
+        if not config.NOFIX:
+            if not config.PLUGIN_MODE:
+                lastnum = 0 # Atom numbering (has to be consecutive)
+                for line in fil:
+                    corrected_line, newnum = self.fix_pdbline(line, lastnum)
+                    if corrected_line is not None:
+                        corrected_lines.append(corrected_line)
+                        lastnum = newnum
+                corrected_pdb = ''.join(corrected_lines)
+            else:
+                corrected_pdb = self.pdbpath
+                corrected_lines = fil
+        else:
+            corrected_pdb = self.pdbpath
+            corrected_lines = fil
 
 
         for line in corrected_lines:
@@ -200,7 +211,7 @@ class LigandFinder:
         members = [(res.GetName(), res.GetChain(), int32_to_negative(res.GetNum())) for res in kmer]
         members = sorted(members, key=lambda x: (x[1], x[2]))
         rname, rchain, rnum = members[0]
-        debuglog("Finalizing extraction for ligand %s:%s:%s" % (rname, rchain, rnum))
+        write_message("Finalizing extraction for ligand %s:%s:%s\n" % (rname, rchain, rnum), mtype='debug')
         names = [x[0] for x in members]
         longname = '-'.join([x[0] for x in members])
 
@@ -263,17 +274,31 @@ class LigandFinder:
                       can_to_pdb=can_to_pdb)
         return ligand
 
+    def is_het_residue(self, obres):
+        """Given an OBResidue, determines if the residue is indeed a ligand
+        in the PDB file (any atoms has to be a HETATM entry)"""
+        het_atoms = []
+        for atm in pybel.ob.OBResidueAtomIter(obres):
+                het_atoms.append(obres.IsHetAtom(atm))
+        if True in het_atoms:
+            return True
+        else:
+            return False
+
+
     def filter_for_ligands(self):
         """Given an OpenBabel Molecule, get all ligands, their names, and water"""
 
-        candidates1 = [o for o in pybel.ob.OBResidueIter(self.proteincomplex.OBMol) if not (o.GetResidueProperty(9)
-                                                                                         or o.GetResidueProperty(0))]
+        #candidates1 = [o for o in pybel.ob.OBResidueIter(self.proteincomplex.OBMol) if not (o.GetResidueProperty(9)
+        #                                                                                or o.GetResidueProperty(0))]
+
+        candidates1 = [o for o in pybel.ob.OBResidueIter(self.proteincomplex.OBMol) if not o.GetResidueProperty(9) and self.is_het_residue(o)]
         all_lignames = set([a.GetName() for a in candidates1])
 
         water = [o for o in pybel.ob.OBResidueIter(self.proteincomplex.OBMol) if o.GetResidueProperty(9)]
         # Filter out non-ligands
         candidates2 = [a for a in candidates1 if is_lig(a.GetName()) and a.GetName() not in self.modresidues]
-        debuglog("%i ligand(s) after first filtering step." % len(candidates2))
+        write_message("%i ligand(s) after first filtering step.\n" % len(candidates2), mtype='debug')
 
         ############################################
         # Filtering by counting and artifacts list #
@@ -510,7 +535,7 @@ class PLInteraction:
         self.interacting_res = list(set([''.join([str(i.resnr), str(i.reschain)]) for i in self.all_itypes
                                          if i.restype not in ['LIG', 'HOH']]))
         if len(self.interacting_res) != 0:
-            message('Ligand interacts with %i binding site residue(s) in chain(s) %s.\n'
+            write_message('Ligand interacts with %i binding site residue(s) in chain(s) %s.\n'
                     % (len(self.interacting_res), '/'.join(self.interacting_chains)), indent=True)
             interactions_list = []
             num_saltbridges = len(self.saltbridge_lneg + self.saltbridge_pneg)
@@ -532,9 +557,9 @@ class PLInteraction:
             if num_waterbridges != 0:
                 interactions_list.append('%i water bridge(s)' % num_waterbridges)
             if not len(interactions_list) == 0:
-                message('Complex uses %s.\n' % ', '.join(interactions_list), indent=True)
+                write_message('Complex uses %s.\n' % ', '.join(interactions_list), indent=True)
         else:
-            message('No interactions for this ligand.\n', indent=True)
+            write_message('No interactions for this ligand.\n', indent=True)
 
     def find_unpaired_ligand(self):
         """Identify unpaired functional in groups in ligands, involving H-Bond donors, acceptors, halogen bond donors.
@@ -627,7 +652,7 @@ class PLInteraction:
                 hydroph_final.append(min_h)
         before, reduced = len(all_h), len(hydroph_final)
         if not before == 0 and not before == reduced:
-            message('Reduced number of hydrophobic contacts from %i to %i.\n' % (before, reduced), indent=True)
+            write_message('Reduced number of hydrophobic contacts from %i to %i.\n' % (before, reduced), indent=True)
         return hydroph_final
 
     def refine_hbonds_ldon(self, all_hbonds, salt_lneg, salt_pneg):
@@ -853,7 +878,7 @@ class Ligand(Mol):
         if not len(self.smiles) == 0:
             self.smiles = self.smiles.split()[0]
         else:
-            message('[Warning] Could not write SMILES for this ligand.\n', indent=True)
+            write_message('Could not write SMILES for this ligand.\n', indent=True, mtype='warning')
             self.smiles = ''
         self.heavy_atoms = self.molecule.OBMol.NumHvyAtoms()  # Heavy atoms count
         self.all_atoms = self.molecule.atoms
@@ -863,7 +888,7 @@ class Ligand(Mol):
         self.hbond_acc_atoms = self.find_hba(self.all_atoms)
         self.num_rings = len(self.rings)
         if self.num_rings != 0:
-            message('Contains %i aromatic ring(s).\n' % self.num_rings, indent=True)
+            write_message('Contains %i aromatic ring(s).\n' % self.num_rings, indent=True)
         descvalues = self.molecule.calcdesc()
         self.molweight, self.logp = float(descvalues['MW']), float(descvalues['logP'])
         self.num_rot_bonds = int(self.molecule.OBMol.NumRotors())
@@ -971,7 +996,7 @@ class Ligand(Mol):
                 c_orig_idx = [self.Mapper.mapid(na.GetIdx(), mtype=self.mtype, bsid=self.bsid) for na in n_atoms]
                 a_set.append(data(x=a, x_orig_idx=x_orig_idx, c=pybel.Atom(n_atoms[0]), c_orig_idx=c_orig_idx))
         if len(a_set) != 0:
-            message('Ligand contains %i halogen atom(s).\n' % len(a_set), indent=True)
+            write_message('Ligand contains %i halogen atom(s).\n' % len(a_set), indent=True)
         return a_set
 
     def find_charged(self, all_atoms):
@@ -1127,12 +1152,18 @@ class PDBComplex:
         self.Mapper = Mapper()
         self.ligands = []
 
-    def load_pdb(self, pdbpath):
-        """Loads a pdb file with protein AND ligand(s), separates and prepares them."""
-        self.sourcefiles['pdbcomplex.original'] = pdbpath
-        self.sourcefiles['pdbcomplex'] = pdbpath
+    def load_pdb(self, pdbpath, as_string=False):
+        """Loads a pdb file with protein AND ligand(s), separates and prepares them.
+        If specified 'as_string', the input is a PDB string instead of a path."""
+        if as_string:
+            self.sourcefiles['pdbcomplex.original'] = None
+            self.sourcefiles['pdbcomplex'] = None
+            self.sourcefiles['pdbstring'] = pdbpath
+        else:
+            self.sourcefiles['pdbcomplex.original'] = pdbpath
+            self.sourcefiles['pdbcomplex'] = pdbpath
         self.information['pdbfixes'] = False
-        pdbparser = PDBParser(pdbpath)  # Parse PDB file to find errors and get additonal data
+        pdbparser = PDBParser(pdbpath, as_string=as_string)  # Parse PDB file to find errors and get additonal data
         # #@todo Refactor and rename here
         self.Mapper.proteinmap = pdbparser.proteinmap
         self.modres = pdbparser.modres
@@ -1140,21 +1171,25 @@ class PDBComplex:
         self.altconf = pdbparser.altconformations
         self.corrected_pdb = pdbparser.corrected_pdb
 
-        if pdbparser.num_fixed_lines > 0:
-            message('%i lines automatically fixed in PDB input file.\n' % pdbparser.num_fixed_lines)
-            # Save modified PDB file
-            basename = os.path.basename(pdbpath).split('.')[0]
-            pdbpath_fixed = tmpfile(prefix='plipfixed.' + basename + '_', direc=self.output_path)
-            create_folder_if_not_exists(self.output_path)
-            self.sourcefiles['pdbcomplex'] = pdbpath_fixed
-            self.corrected_pdb = re.sub(r'[^\x00-\x7F]+', ' ', self.corrected_pdb)  # Strip non-unicode chars
-            with open(pdbpath_fixed, 'w') as f:
-                f.write(self.corrected_pdb)
-            self.information['pdbfixes'] = True
+        if not config.PLUGIN_MODE:
+            if pdbparser.num_fixed_lines > 0:
+                write_message('%i lines automatically fixed in PDB input file.\n' % pdbparser.num_fixed_lines)
+                # Save modified PDB file
+                basename = os.path.basename(pdbpath).split('.')[0]
+                pdbpath_fixed = tmpfile(prefix='plipfixed.' + basename + '_', direc=self.output_path)
+                create_folder_if_not_exists(self.output_path)
+                self.sourcefiles['pdbcomplex'] = pdbpath_fixed
+                self.corrected_pdb = re.sub(r'[^\x00-\x7F]+', ' ', self.corrected_pdb)  # Strip non-unicode chars
+                with open(pdbpath_fixed, 'w') as f:
+                    f.write(self.corrected_pdb)
+                self.information['pdbfixes'] = True
 
-        self.sourcefiles['filename'] = os.path.basename(self.sourcefiles['pdbcomplex'])
-        self.protcomplex, self.filetype = read_pdb(self.sourcefiles['pdbcomplex'])
-        message('PDB structure successfully read.\n')
+        if as_string:
+            self.protcomplex, self.filetype = read_pdb(self.sourcefiles['pdbstring'], as_string=as_string)
+        else:
+            self.sourcefiles['filename'] = os.path.basename(self.sourcefiles['pdbcomplex'])
+            self.protcomplex, self.filetype = read_pdb(self.sourcefiles['pdbcomplex'], as_string=as_string)
+        write_message('PDB structure successfully read.\n')
 
         # Determine (temporary) PyMOL Name from Filename
         self.pymol_name = pdbpath.split('/')[-1].split('.')[0] + '-Protein'
@@ -1165,7 +1200,7 @@ class PDBComplex:
             potential_name = self.protcomplex.data['HEADER'][56:60].lower()
             if extract_pdbid(potential_name) != 'UnknownProtein':
                 self.pymol_name = potential_name
-        debuglog("Pymol Name set as: '%s'" % self.pymol_name)
+        write_message("Pymol Name set as: '%s'\n" % self.pymol_name, mtype='debug')
 
         self.protcomplex.OBMol.AddPolarHydrogens()
         for atm in self.protcomplex:
@@ -1177,17 +1212,17 @@ class PDBComplex:
         self.excluded = ligandfinder.excluded
 
         if len(self.excluded) != 0:
-            message("Excluded molecules as ligands: %s\n" % ','.join([lig for lig in self.excluded]))
+            write_message("Excluded molecules as ligands: %s\n" % ','.join([lig for lig in self.excluded]))
 
         self.resis = [obres for obres in pybel.ob.OBResidueIter(self.protcomplex.OBMol) if obres.GetResidueProperty(0)]
 
         num_ligs = len(self.ligands)
         if num_ligs == 1:
-            message("Analyzing one ligand...\n")
+            write_message("Analyzing one ligand...\n")
         elif num_ligs > 1:
-            message("Analyzing %i ligands...\n" % num_ligs)
+            write_message("Analyzing %i ligands...\n" % num_ligs)
         else:
-            message("Structure contains no ligands.\n\n")
+            write_message("Structure contains no ligands.\n\n")
 
     def characterize_complex(self, ligand):
         """Handles all basic functions for characterizing the interactions for one ligand"""
@@ -1201,11 +1236,11 @@ class PDBComplex:
         ligtype = 'Unspecified type' if ligand.type == 'UNSPECIFIED' else ligand.type
         ligtext = "\n%s [%s] -- %s" % (longname, ligtype, site)
         any_in_biolip = len(set([x[0] for x in ligand.members]).intersection(config.biolip_list)) != 0
-        message(ligtext)
-        message('\n' + '-' * len(ligtext) + '\n')
+        write_message(ligtext)
+        write_message('\n' + '-' * len(ligtext) + '\n')
 
         if ligtype not in ['POLYMER', 'DNA', 'ION', 'DNA+ION', 'RNA+ION', 'SMALLMOLECULE+ION'] and any_in_biolip:
-            message('  -> may be biologically irrelevant <-\n')
+            write_message('may be biologically irrelevant\n', mtype='info', indent=True)
 
         lig_obj = Ligand(self, ligand)
         cutoff = lig_obj.max_dist_to_center + config.BS_DIST
@@ -1230,7 +1265,7 @@ class PDBComplex:
                 if distance <= config.BS_DIST and r not in bs_atoms_refined:
                     bs_atoms_refined.append(r)
         num_bs_atoms = len(bs_atoms_refined)
-        message('Binding site atoms in vicinity (%.1f A max. dist: %i).\n' % (config.BS_DIST, num_bs_atoms),
+        write_message('Binding site atoms in vicinity (%.1f A max. dist: %i).\n' % (config.BS_DIST, num_bs_atoms),
                 indent=True)
 
         bs_obj = BindingSite(bs_atoms_refined, self.protcomplex, self, self.altconf, min_dist, self.Mapper)
