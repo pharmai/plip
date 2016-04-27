@@ -422,7 +422,7 @@ class Mol:
         rings = []
         aromatic_amino = ['TYR', 'TRP', 'HIS', 'PHE']
         ring_candidates = mol.OBMol.GetSSSR()
-        debuglog("Number of aromatic ring candidates: %i" % len(ring_candidates))
+        write_message("Number of aromatic ring candidates: %i\n" % len(ring_candidates), mtype="debug")
         # Check here first for ligand rings not being detected as aromatic by Babel and check for planarity
         for ring in ring_candidates:
             r_atoms = [a for a in all_atoms if ring.IsMember(a.OBAtom)]
