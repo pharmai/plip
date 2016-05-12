@@ -17,7 +17,7 @@ limitations under the License.
 """
 
 # Own modules
-from supplemental import write_message
+from supplemental import write_message, sysexit
 
 # Python standard libary
 import urllib2
@@ -56,9 +56,12 @@ def fetch_pdb(pdbid):
         sysexit(3, 'Invalid PDB ID (Entry does not exist on PDB server)\n')
     write_message('Downloading file from PDB ... ')
     pdburl = 'http://www.rcsb.org/pdb/files/%s.pdb' % current_entry  # Get URL for current entry
-    pdbfile = urllib2.urlopen(pdburl).read()
-    # If no PDB file is available, a text is now shown with "We're sorry, but ..."
-    # Could previously be distinguished by an HTTP error
-    if 'sorry' in pdbfile:
+    try:
+        pdbfile = urllib2.urlopen(pdburl).read()
+        # If no PDB file is available, a text is now shown with "We're sorry, but ..."
+        # Could previously be distinguished by an HTTP error
+        if 'sorry' in pdbfile:
+            sysexit(5, "No file in PDB format available from wwPDB for the given PDB ID.\n")
+    except urllib2.HTTPError:
         sysexit(5, "No file in PDB format available from wwPDB for the given PDB ID.\n")
     return [pdbfile, current_entry]
