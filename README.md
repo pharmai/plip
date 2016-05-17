@@ -54,22 +54,20 @@ print [pistack.resnr for pistack in s.pistacking] # Prints [84, 129]
 ```
 
 #### 3. View and process the results
-
-Interpretation of output files and running options, read README
+PLIP offers various output formats, ranging from renderes images and PyMOL session files to human-readable text files and XML files.
+By default, all files are deposited in the working directory unless and output path is provided.
+For a full documentation of running options and output formats, please refear to the documentation.
 
 ## Versions and Branches
-The latest commits may contain newer, but untested features. The last version marked as release is always stable.
+For production environments, you should use the latest versioned commit from the stable branch.
+Newer commits from the stable and development branch may contains new but untested and not documented features.
 
-## Installation
-Previous to the installation of PLIP, make sure you have the following tools and libraries installed:
-* Python 2.x
+## Requirements
+Previous to using PLIP, make sure you have the following tools and libraries installed:
+* Python 2.7.x
 * OpenBabel >=2.3.2
 * PyMOL 1.7.x with Python bindings
-* pip (Python package managaer)
-* Imagemagick (optional, needed for automatic cropping of images)
-
-To install PLIP, simply run the following command using a terminal
-> python setup.py install
+* Imagemagick >=6.9.x (optional)
 
 ## Contributions
 Sebastian Salentin sebastian.salentin (at) biotec.tu-dresden.de
@@ -86,6 +84,9 @@ Feature requests, bugs, want to use in project ...
 Questions or comments about `PLIP`? Write me an email to sebastian.salentin (at) biotec.tu-dresden.de
 
 ## License Information
+PLIP is published under the Apache License. For more information, please read the LICENSE.txt file.
+Using PLIP in your commercial or non-commercial project is generally possible when giving a proper reference to this project and the publication in NAR.
+If you are unsure about usage options, don't hesitate to contact me.
 
 ## Citation Information
 If you are using PLIP in your work, please cite
