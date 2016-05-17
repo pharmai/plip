@@ -72,7 +72,7 @@ Previous to using PLIP, make sure you have the following tools and libraries ins
 ## Contributions
 Sebastian Salentin sebastian.salentin (at) biotec.tu-dresden.de
 
-Joachim Haupt joachim.haupt (at) biotec.tu-dresden.de | @vjhaupt
+Joachim Haupt joachim.haupt (at) biotec.tu-dresden.de | https://github.com/vjhaupt
 
 Melissa F. Adasme Mora melissa.adasme (at) biotec.tu-dresden.de
 
@@ -80,8 +80,8 @@ Melissa F. Adasme Mora melissa.adasme (at) biotec.tu-dresden.de
 Visit our PLIP Web Server on http://projects.biotec.tu-dresden.de/plip-web
 
 ## Contact Me
-Feature requests, bugs, want to use in project ...
-Questions or comments about `PLIP`? Write me an email to sebastian.salentin (at) biotec.tu-dresden.de
+Do you have feature requests, found a bug or want to use `PLIP` in your project?
+Write me an email to sebastian.salentin (at) biotec.tu-dresden.de
 
 ## License Information
 PLIP is published under the Apache License. For more information, please read the LICENSE.txt file.
