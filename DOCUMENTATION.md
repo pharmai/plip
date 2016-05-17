@@ -1,39 +1,120 @@
-===========
-PLIP v1.2.2
-===========
+# Protein-Ligand Interaction Profiler (PLIP)
 
+## What is PLIP?
 The Protein-Ligand Interaction Profiler (PLIP) is a tool to analyze and visualize protein-ligand interactions in PDB files.
 
+## Why should I use PLIP?
 
-Features
-========
-* Detection of eight different types of noncovalent interactions, including metal complexes
-* Works for complexes of protein with small molecules, ions, polymers, or DNA/RNA (and all combinations)
+#### Comprehensive Detection of Interaction
+* Eight types of noncovalent interactions
+* Interaction between proteins and
+  * small molecules
+  * ions
+  * polymers
+  * DNA / RNA
+* Rich additiona information on binding, e.g. unpaired functional groups
+
+#### Everything Is Automated
+
+* Direct download of PDB structures from PDB server
 * Automatic detection and grouping of relevant ligands in a PDB file
-* Rich additional information on binding, e.g. unpaired functional groups
-* Direct download of PDB structures from wwPDB server if valid PDB ID is given
-* Processing of custom PDB files containing protein-ligand complexes (e.g. from docking)
 * No need for special preparation of a PDB file, works out of the box
+
+#### Flexible Usage
+* Processing of custom PDB files containing protein-ligand complexes (e.g. from docking)
 * Atom-level interaction reports in TXT and XML formats for easy parsing
 * Generation of PyMOL session files (.pse), enabling easy preparation of images for publications and talks
 * Rendering of 3D interaction diagram for each ligand and its interactions with the protein
 
-Quickstart
-==========
-Run the PLIP python script with the option `-h` to list all available command line options.
-To analyze a protein-ligand complex from a Protein Data Bank entry -- e.g. 1vsn --, run
-    `plipcmd -i 1vsn`.
-To analyze a PDB file from your workstation, run
-    `plipcmd -f path_to_pdbfile.pdb`.
-The output format(s) can be chosen freely, ranging from ...
-* XML report files (`-x`, highest level of detail)
-* Text report files (`-t`, medium level of detail)
+## Get PLIP running
+
+#### 1. Install dependencies
+The following instructions work on a unix machine.
+If you are using Windows or OSX, the process may differ.
+Please refer to the webpages of the corresponding tools to get help for installation.
+
+To install all dependencies for PLIP, either just install PyMOL and then use the `pip` installation routine or install all tools and clone from GitHub.
+The current version of PLIP depends on
+* OpenBabel >=2.3.2
+* PyMOL 1.7.x with Python bindings
+* Imagemagick >=6.9.x (optional)
+
+and should be executed with Python 2.7.x.
+
+Example command for Ubuntu using apt-get
+```bash
+sudo apt-get install pymol openbabel python-openbabel imagemagick
+```
+
+
+#### 2. Get PLIP on your machine
+
+There are several options to get PLIP on your machine.
+If you have the Python package manager `pip` installed, you can install PLIP in a terminal via the following command:
+
+```bash
+pip install plip
+```
+If you want to clone from Github, open a new system terminal and clone the repository using
+```bash
+git clone https://github.com/ssalentin/plip.git ~/pliptool
+```
+You can use any other user directory, but we will use the one given above for the documentation.
+
+#### 3. Simplify access to PLIP
+
+The package manager `pip` will create symlinks for you so you can call PLIP using `plip` in the command line. If you cloned from Github, use the following command to do the same:
+
+```bash
+alias plip='~/pliptool/plip/plipcmd'
+```
+
+## Analyze a PDB structure with PLIP
+Havin PLIP installed, you can run
+```bash
+plip -h
+```
+to list all available command line options.
+We will go through all important settings in this section.
+A typical application of PLIP involves the analysis of protein-ligand interactions in a structure from the Protein Data Bank (PDB).
+PLIP can automatically fetch the entry from the PDB server when a valid PDB ID is provided.
+```bash
+plip -i 1vsn -v
+```
+The command above will fetch the PDB entry 1vsn from the server, analyze all interactions and print out the results (verbose mode).
+No output files are produced at this point.
+
+The same can be done for local PDB files.
+
+```bash
+wget http://files.rcsb.org/download/1EVE.pdb
+plip -f 1EVE.pdb -v
+```
+
+The output formats can be added in any combination, currently including:
+* XML report files (`-x`, best for automatic processing)
+* Text report files (`-t`, human-readable)
 * PyMOL session files (`-y`)
 * Ray-traced images (`-p`)
-* Verbose output on command line (`-v`)
 
-Threshold settings
-==================
+```bash
+plip -i 1osn -pyx
+```
+
+The command above will fetch the PDB entry 1osn, analye all interactions and produce one XML result file (`-x`) as well as rendered images (`-p`) and PyMOL session files (`-y`) for each binding site.
+
+## Changing detection thresholds
+The PLIP algorithm uses a rule-based detection to report non-covalent interaction between proteins and their partners.
+The current settings are based on literature values and have been refined based on extensive testing with independent cases from mainly crystallography journals, covering a broad range of structure resolutions.
+For most users, it is not recommended to change the standard settings.
+However, there may be cases where changing detection thresholds is advisable (e.g. sets with multiple very low resolution structures)
+PLIP allows you to change the setting permanently or for one run.
+
+#### Permanent change
+PLIP settings are stored in the file `modules/config.py`, which is loaded in each run.
+
+#### Temporary change
+
 All geometric thresholds used for detection of interactions in PLIP are stored in the `config.py` module and can be
 changed there permanently if desired. Another possibility is to change single parameters via command line options when
 running plip. The naming of the variables is identical to those in the config file, but all lowercase. Specify the
@@ -260,3 +341,11 @@ Coordinates of interacting ligand atom or interaction center in ligand
 **protcoo**
 
 Coordinates of interacting protein atom or interaction center in ligand
+
+## Testing
+
+TODO
+
+## Troubleshooting
+
+TODO
