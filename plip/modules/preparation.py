@@ -1152,6 +1152,10 @@ class PDBComplex:
         self.Mapper = Mapper()
         self.ligands = []
 
+    def __str__(self):
+        formatted_lig_names = [":".join([x.hetid, x.chain, str(x.position)]) for x in self.ligands]
+        return "Protein structure %s with ligands:\n" % (self.pymol_name) + "\n".join([lig for lig in formatted_lig_names])
+
     def load_pdb(self, pdbpath, as_string=False):
         """Loads a pdb file with protein AND ligand(s), separates and prepares them.
         If specified 'as_string', the input is a PDB string instead of a path."""
@@ -1223,6 +1227,11 @@ class PDBComplex:
             write_message("Analyzing %i ligands...\n" % num_ligs)
         else:
             write_message("Structure contains no ligands.\n\n")
+
+    def analyze(self):
+        """Triggers analysis of all complexes in structure"""
+        for ligand in self.ligands:
+            self.characterize_complex(ligand)
 
     def characterize_complex(self, ligand):
         """Handles all basic functions for characterizing the interactions for one ligand"""
