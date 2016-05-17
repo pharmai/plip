@@ -287,29 +287,29 @@ The best fit with the least difference in observed targets is chosen as an estim
 
 #### Structural Elements
 
-| Description  | RGB | PyMOL color | Representation
-| ------------- | ------------- |
-| Protein  | [43, 131, 186] | myblue (custom) | sticks
-| Ligand  | [253, 174, 97] | myorange (custom) | sticks
-| Water  | [191, 191, 255]  | lightblue | nb_spheres
-| Charge Center | [255, 255, 0] | yellow | spheres
-| Aromatic Ring Center  | [230, 230, 230] | grey90 | spheres
-| Ions | [250, 255, 128] | hotpink | spheres
+| Description  | RGB | PyMOL color | Representation |
+| ------------ | --- | ------------| ---------------|
+| Protein  | [43, 131, 186] | myblue (custom) | sticks |
+| Ligand  | [253, 174, 97] | myorange (custom) | sticks |
+| Water  | [191, 191, 255]  | lightblue | nb_spheres |
+| Charge Center | [255, 255, 0] | yellow | spheres |
+| Aromatic Ring Center  | [230, 230, 230] | grey90 | spheres |
+| Ions | [250, 255, 128] | hotpink | spheres |
 
 
 #### Interactions
 
-| Description  | RGB | PyMOL color | Representation
-| ------------- | ------------- |
-| Hydrophobic Interaction  | [128, 128, 128] | grey50 | dashed
-| Hydrogen Bond  | [0, 0, 255] | blue | solid line
-| Water Bridges  | [191, 191, 255]  | lightblue | solid line
-| pi-Stacking (parallel) | [0, 255, 0] | green | dashed line
-| pi-Stacking (perpendicular)  | [140, 179, 102] | smudge | dashed line
-| pi-Cation Interaction | [255, 128, 0] | orange | dashed line
-| Halogen Bond | [54, 255, 191] | greencyan | solid line
-| Salt Bridge | [255, 255, 0] | yellow | dashed line
-| Metal Complex | [140, 64, 153] | violetpurple | dashed line
+| Description  | RGB | PyMOL color | Representation |
+| ------------ | --- | ------------| -------------- |
+| Hydrophobic Interaction  | [128, 128, 128] | grey50 | dashed |
+| Hydrogen Bond  | [0, 0, 255] | blue | solid line |
+| Water Bridges  | [191, 191, 255]  | lightblue | solid line |
+| pi-Stacking (parallel) | [0, 255, 0] | green | dashed line |
+| pi-Stacking (perpendicular)  | [140, 179, 102] | smudge | dashed line |
+| pi-Cation Interaction | [255, 128, 0] | orange | dashed line |
+| Halogen Bond | [54, 255, 191] | greencyan | solid line |
+| Salt Bridge | [255, 255, 0] | yellow | dashed line |
+| Metal Complex | [140, 64, 153] | violetpurple | dashed line |
 
 
 
