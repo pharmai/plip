@@ -79,6 +79,7 @@ other = ['MO', 'RE', 'HO']
 UNSUPPORTED = anions + other
 
 # BioLiP list of suspicious ligands from http://zhanglab.ccmb.med.umich.edu/BioLiP/ligand_list (2014-07-10)
+# Add ligands here to get warnings for possible artifacts.
 biolip_list = ['ACE', 'HEX', 'TMA', 'SOH', 'P25', 'CCN', 'PR', 'PTN', 'NO3', 'TCN', 'BU1', 'BCN', 'CB3', 'HCS', 'NBN',
                'SO2', 'MO6', 'MOH', 'CAC', 'MLT', 'KR', '6PH', 'MOS', 'UNL', 'MO3', 'SR', 'CD3', 'PB', 'ACM', 'LUT',
                'PMS', 'OF3', 'SCN', 'DHB', 'E4N', '13P', '3PG', 'CYC', 'NC', 'BEN', 'NAO', 'PHQ', 'EPE', 'BME', 'TB',
