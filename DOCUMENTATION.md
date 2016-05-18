@@ -19,6 +19,7 @@ The Protein-Ligand Interaction Profiler (PLIP) is a tool to analyze and visualiz
 * Direct download of PDB structures from PDB server
 * Automatic detection and grouping of relevant ligands in a PDB file
 * No need for special preparation of a PDB file, works out of the box
+* Automatic fixiing of errors in PDB files
 
 #### Flexible Usage
 * Processing of custom PDB files containing protein-ligand complexes (e.g. from docking)
@@ -141,6 +142,14 @@ plip -i 1vsn --hydroph_dist_max 5
 ```
 All distance thresholds can be increased to up to 10 Angstrom. Thresholds for angles can be set between 0 and 180 degree.
 If two interdependent thresholds have conflicting values, PLIP will show an error message.
+
+## Further Options
+PLIP offers further command line options which enables you to switch advanced settings.
+* Set number `n` of maximum threads used for parallel processing (`--maxthreads <n>`)
+* Do not automatically combine covalently bound ligands (`--breakcomposite`)
+* Do not discard alternate locations (`--altlocation`)
+* Set debug mode (`--debug`)
+* Turn off automatic fixing of errors in PDB files (`--nofix`)
 
 ## Web Service
 A web service for analysis of protein-ligand complexes using PLIP is available at
