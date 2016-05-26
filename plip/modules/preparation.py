@@ -182,6 +182,23 @@ class LigandFinder:
         self.ligands = self.getligs()
         self.excluded = sorted(list(self.lignames_all.difference(set(self.lignames_kept))))
 
+    def getpeptides(self, chain):
+        """If peptide ligand chains are defined via the command line options,
+        try to extract the underlying ligand formed by all residues in the
+        given chain without water
+        """
+        data = namedtuple('ligand', 'mol hetid chain position water members longname type atomorder can_to_pdb')
+        all_from_chain = [o for o in pybel.ob.OBResidueIter(self.proteincomplex.OBMol) if o.GetChain() == chain] # All residues from chain
+        if len(all_from_chain) == 0:
+            return None
+        else:
+            #TODO Can be done shorter with a split
+            water = [o for o in all_from_chain if o.GetResidueProperty(9)]
+            non_water = water = [o for o in all_from_chain if not o.GetResidueProperty(9)]
+            ligand = self.extract_ligand(all_from_chain)
+            print ligand
+            return ligand
+
     def getligs(self):
         """Get all ligands from a PDB file and prepare them for analysis.
         Returns all non-empty ligands.
@@ -203,12 +220,19 @@ class LigandFinder:
             res_kmers = [[a, ] for a in ligand_residues]
         for kmer in res_kmers:  # iterate over all ligands and extract molecules + information
             ligands.append(self.extract_ligand(kmer))
+
+        #TODO test
+        peptide_ligands = [self.getpeptides(chain) for chain in config.PEPTIDES]
+        peptide_ligands = [p for p in peptide_ligands if p is not None ]
+        ligands += peptide_ligands
         return [lig for lig in ligands if len(lig.mol.atoms) != 0]
 
     def extract_ligand(self, kmer):
         """Extract the ligand by copying atoms and bonds and assign all information necessary for later steps."""
         data = namedtuple('ligand', 'mol hetid chain position water members longname type atomorder can_to_pdb')
+        print kmer
         members = [(res.GetName(), res.GetChain(), int32_to_negative(res.GetNum())) for res in kmer]
+        print members
         members = sorted(members, key=lambda x: (x[1], x[2]))
         rname, rchain, rnum = members[0]
         write_message("Finalizing extraction for ligand %s:%s:%s\n" % (rname, rchain, rnum), mtype='debug')
@@ -288,9 +312,6 @@ class LigandFinder:
 
     def filter_for_ligands(self):
         """Given an OpenBabel Molecule, get all ligands, their names, and water"""
-
-        #candidates1 = [o for o in pybel.ob.OBResidueIter(self.proteincomplex.OBMol) if not (o.GetResidueProperty(9)
-        #                                                                                or o.GetResidueProperty(0))]
 
         candidates1 = [o for o in pybel.ob.OBResidueIter(self.proteincomplex.OBMol) if not o.GetResidueProperty(9) and self.is_het_residue(o)]
         all_lignames = set([a.GetName() for a in candidates1])

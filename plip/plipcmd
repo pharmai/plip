@@ -75,6 +75,7 @@ def process_pdb(pdbfile, outpath):
     mol = PDBComplex()
     mol.output_path = outpath
     mol.load_pdb(pdbfile)
+    # TODO Refactor code in this function
     # #@todo Offers possibility for filter function from command line (by ligand chain, position, hetid)
     for ligand in mol.ligands:
         mol.characterize_complex(ligand)
@@ -264,6 +265,9 @@ if __name__ == '__main__':
     parser.add_argument("--nofix", dest="nofix", default=False,
                         help="Turns off fixing of PDB files.",
                         action="store_true")
+    parser.add_argument("--peptides", dest="peptides", default=[],
+                        help="Allows to define one or multiple chains as peptide ligands",
+                        nargs="+")
     # Optional threshold arguments, not shown in help
     thr = namedtuple('threshold', 'name type')
     thresholds = [thr(name='aromatic_planarity', type='angle'),
@@ -294,6 +298,7 @@ if __name__ == '__main__':
     config.BASEPATH = config.OUTPATH  # Used for batch processing
     config.BREAKCOMPOSITE = arguments.breakcomposite
     config.ALTLOC = arguments.altlocation
+    config.PEPTIDES =arguments.peptides
     config.NOFIX = arguments.nofix
     # Assign values to global thresholds
     for t in thresholds:
