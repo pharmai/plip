@@ -124,5 +124,5 @@ def visualize_in_pymol(plcomplex):
     if config.PYMOL:
         vis.save_session(config.OUTPATH)
     if config.PICS:
-        filename = '%s_%s' % (pdbid.upper(), "_".join([ligname, plcomplex.chain, plcomplex.position]))
+        filename = '%s_%s' % (pdbid.upper(), "_".join([hetid, plcomplex.chain, plcomplex.position]))
         vis.save_picture(config.OUTPATH, filename)

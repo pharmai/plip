@@ -27,7 +27,8 @@ class PyMOLVisualizer:
         if not plcomplex is None:
             self.plcomplex = plcomplex
             self.protname = plcomplex.pdbid  # Name of protein with binding site
-            self.ligname = "Ligand_" + plcomplex.hetid  # Name of ligand
+            self.hetid = plcomplex.hetid
+            self.ligname = "Ligand_" + self.hetid  # Name of ligand
             self.metal_ids = plcomplex.metal_ids
 
     def set_initial_representations(self):
@@ -331,7 +332,7 @@ class PyMOLVisualizer:
 
     def save_session(self, outfolder):
         """Saves a PyMOL session file."""
-        filename = '%s_%s' % (self.protname.upper(), "_".join([self.ligname, self.plcomplex.chain, self.plcomplex.position]))
+        filename = '%s_%s' % (self.protname.upper(), "_".join([self.hetid, self.plcomplex.chain, self.plcomplex.position]))
         cmd.save("/".join([outfolder, "%s.pse" % filename]))
 
     def png_workaround(self, filepath, width=1200, height=800):
