@@ -16,6 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 from pymol import cmd
+from time import sleep
 import sys
 import os
 import subprocess
