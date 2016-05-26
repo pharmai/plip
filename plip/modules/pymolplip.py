@@ -27,7 +27,7 @@ class PyMOLVisualizer:
         if not plcomplex is None:
             self.plcomplex = plcomplex
             self.protname = plcomplex.pdbid  # Name of protein with binding site
-            self.ligname = plcomplex.hetid  # Name of ligand
+            self.ligname = "Ligand_" + plcomplex.hetid  # Name of ligand
             self.metal_ids = plcomplex.metal_ids
 
     def set_initial_representations(self):

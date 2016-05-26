@@ -18,7 +18,7 @@ limitations under the License.
 
 
 # Own modules
-from supplemental import initialize_pymol, start_pymol, write_message, colorlog
+from supplemental import initialize_pymol, start_pymol, write_message, colorlog, sysexit
 import config
 from pymolplip import PyMOLVisualizer
 from plipremote import VisualizerData
@@ -29,6 +29,7 @@ import sys
 
 # Special imports
 from pymol import cmd
+import pymol
 
 
 def select_by_ids(selname, idlist, selection_exists=False, chunksize=20, restrict=None):
@@ -60,7 +61,9 @@ def visualize_in_pymol(plcomplex):
     pdbid = plcomplex.pdbid
     lig_members = plcomplex.lig_members
     chain = plcomplex.chain
-    ligname = plcomplex.hetid
+    ligname = vis.ligname
+    hetid = plcomplex.hetid
+
     metal_ids = plcomplex.metal_ids
     metal_ids_str = '+'.join([str(i) for i in metal_ids])
 
@@ -76,7 +79,7 @@ def visualize_in_pymol(plcomplex):
     write_message('Setting current_name to "%s" and pdbid to "%s\n"' % (current_name, pdbid), mtype='debug')
     cmd.set_name(current_name, pdbid)
     cmd.hide('everything', 'all')
-    cmd.select(ligname, 'resn %s and chain %s and resi %s*' % (ligname, chain, plcomplex.position))
+    cmd.select(ligname, 'resn %s and chain %s and resi %s*' % (hetid, chain, plcomplex.position))
 
     # Visualize and color metal ions if there are any
     if not len(metal_ids) == 0:
@@ -84,9 +87,10 @@ def visualize_in_pymol(plcomplex):
         cmd.show('spheres', 'id %s and %s' % (metal_ids_str, pdbid))
 
     # Additionally, select all members of composite ligands
-    for member in lig_members:
-        resid, chain, resnr = member[0], member[1], str(member[2])
-        cmd.select(ligname, '%s or (resn %s and chain %s and resi %s)' % (ligname, resid, chain, resnr))
+
+    if len(lig_members) > 1:
+        for member in lig_members:
+           resid, chain, resnr = member[0], member[1], str(member[2])
     cmd.show('sticks', ligname)
     cmd.color('myblue')
     cmd.color('myorange', ligname)
@@ -96,6 +100,7 @@ def visualize_in_pymol(plcomplex):
         cmd.hide('sticks', 'id %s' % metal_ids_str)
         cmd.set('sphere_scale', 0.3, ligname)
     cmd.deselect()
+
 
     vis.make_initial_selections()
 
