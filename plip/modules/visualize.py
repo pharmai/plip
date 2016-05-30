@@ -61,6 +61,9 @@ def visualize_in_pymol(plcomplex):
     pdbid = plcomplex.pdbid
     lig_members = plcomplex.lig_members
     chain = plcomplex.chain
+    if config.PEPTIDES != []:
+        vis.ligname = 'PeptideChain%s' % plcomplex.chain
+
     ligname = vis.ligname
     hetid = plcomplex.hetid
 
@@ -79,7 +82,10 @@ def visualize_in_pymol(plcomplex):
     write_message('Setting current_name to "%s" and pdbid to "%s\n"' % (current_name, pdbid), mtype='debug')
     cmd.set_name(current_name, pdbid)
     cmd.hide('everything', 'all')
-    cmd.select(ligname, 'resn %s and chain %s and resi %s*' % (hetid, chain, plcomplex.position))
+    if config.PEPTIDES != []:
+        cmd.select(ligname, 'chain %s and not resn HOH' % plcomplex.chain)
+    else:
+        cmd.select(ligname, 'resn %s and chain %s and resi %s*' % (hetid, chain, plcomplex.position))
 
     # Visualize and color metal ions if there are any
     if not len(metal_ids) == 0:
@@ -121,8 +127,15 @@ def visualize_in_pymol(plcomplex):
     vis.selections_cleanup()
     vis.selections_group()
     vis.additional_cleanup()
-    if config.PYMOL:
-        vis.save_session(config.OUTPATH)
-    if config.PICS:
-        filename = '%s_%s' % (pdbid.upper(), "_".join([hetid, plcomplex.chain, plcomplex.position]))
-        vis.save_picture(config.OUTPATH, filename)
+    if config.PEPTIDES == []:
+        if config.PYMOL:
+            vis.save_session(config.OUTPATH)
+        if config.PICS:
+            filename = '%s_%s' % (pdbid.upper(), "_".join([hetid, plcomplex.chain, plcomplex.position]))
+            vis.save_picture(config.OUTPATH, filename)
+    else:
+        filename = "%s_PeptideChain%s" % (pdbid.upper(), plcomplex.chain)
+        if config.PYMOL:
+            vis.save_session(config.OUTPATH, override=filename)
+        if config.PICS:
+            vis.save_picture(config.OUTPATH, filename)

@@ -195,52 +195,59 @@ class LigandFinder:
             #TODO Can be done shorter with a split
             water = [o for o in all_from_chain if o.GetResidueProperty(9)]
             non_water = water = [o for o in all_from_chain if not o.GetResidueProperty(9)]
-            ligand = self.extract_ligand(all_from_chain)
-            print ligand
+            ligand = self.extract_ligand(non_water)
             return ligand
+
 
     def getligs(self):
         """Get all ligands from a PDB file and prepare them for analysis.
         Returns all non-empty ligands.
         """
-        ligands = []
 
-        # Filter for ligands using lists
-        ligand_residues, self.lignames_all, self.water = self.filter_for_ligands()
+        if config.PEPTIDES == []:
+            # Extract small molecule ligands (default)
+            ligands = []
 
-        all_res_dict = {(a.GetName(), a.GetChain(), a.GetNum()): a for a in ligand_residues}
-        self.lignames_kept = list(set([a.GetName() for a in ligand_residues]))
+            # Filter for ligands using lists
+            ligand_residues, self.lignames_all, self.water = self.filter_for_ligands()
 
-        if not config.BREAKCOMPOSITE:
-            #  Update register of covalent links with those between DNA/RNA subunits
-            self.covalent += nucleotide_linkage(all_res_dict)
-            #  Find fragment linked by covalent bonds
-            res_kmers = self.identify_kmers(all_res_dict)
+            all_res_dict = {(a.GetName(), a.GetChain(), a.GetNum()): a for a in ligand_residues}
+            self.lignames_kept = list(set([a.GetName() for a in ligand_residues]))
+
+            if not config.BREAKCOMPOSITE:
+                #  Update register of covalent links with those between DNA/RNA subunits
+                self.covalent += nucleotide_linkage(all_res_dict)
+                #  Find fragment linked by covalent bonds
+                res_kmers = self.identify_kmers(all_res_dict)
+            else:
+                res_kmers = [[a, ] for a in ligand_residues]
+            for kmer in res_kmers:  # iterate over all ligands and extract molecules + information
+                ligands.append(self.extract_ligand(kmer))
+
         else:
-            res_kmers = [[a, ] for a in ligand_residues]
-        for kmer in res_kmers:  # iterate over all ligands and extract molecules + information
-            ligands.append(self.extract_ligand(kmer))
+            # Extract peptides from given chains
+            self.water = [o for o in pybel.ob.OBResidueIter(self.proteincomplex.OBMol) if o.GetResidueProperty(9)]
+            peptide_ligands = [self.getpeptides(chain) for chain in config.PEPTIDES]
+            ligands = [p for p in peptide_ligands if p is not None ]
+            self.covalent, self.lignames_kept, self.lignames_all = [], [], set()
 
-        #TODO test
-        peptide_ligands = [self.getpeptides(chain) for chain in config.PEPTIDES]
-        peptide_ligands = [p for p in peptide_ligands if p is not None ]
-        ligands += peptide_ligands
         return [lig for lig in ligands if len(lig.mol.atoms) != 0]
 
     def extract_ligand(self, kmer):
         """Extract the ligand by copying atoms and bonds and assign all information necessary for later steps."""
         data = namedtuple('ligand', 'mol hetid chain position water members longname type atomorder can_to_pdb')
-        print kmer
         members = [(res.GetName(), res.GetChain(), int32_to_negative(res.GetNum())) for res in kmer]
-        print members
         members = sorted(members, key=lambda x: (x[1], x[2]))
         rname, rchain, rnum = members[0]
         write_message("Finalizing extraction for ligand %s:%s:%s\n" % (rname, rchain, rnum), mtype='debug')
         names = [x[0] for x in members]
         longname = '-'.join([x[0] for x in members])
 
-        # Classify a ligand by its HETID(s)
-        ligtype = classify_by_name(names)
+        if config.PEPTIDES == []:
+            # Classify a ligand by its HETID(s)
+            ligtype = classify_by_name(names)
+        else:
+            ligtype = 'PEPTIDE'
 
         hetatoms = set()
         for obresidue in kmer:
@@ -1307,9 +1314,14 @@ class PDBComplex:
         return [obres.GetIdx() for obres in resis if self.res_belongs_to_bs(obres, cutoff, ligcentroid)]
 
     def res_belongs_to_bs(self, res, cutoff, ligcentroid):
-        """Check for each residue if its centroid is within a certain distance to the ligand centroid."""
+        """Check for each residue if its centroid is within a certain distance to the ligand centroid.
+        Additionally checks if a residue belongs to a chain restricted by the user (e.g. by defining a peptide chain)"""
         rescentroid = centroid([(atm.x(), atm.y(), atm.z()) for atm in pybel.ob.OBResidueAtomIter(res)])
-        return True if euclidean3d(rescentroid, ligcentroid) < cutoff else False
+        # Check geometry
+        near_enough = True if euclidean3d(rescentroid, ligcentroid) < cutoff else False
+        # Check chain membership
+        restricted_chain = True if res.GetChain() in config.PEPTIDES else False
+        return (near_enough and not restricted_chain)
 
     def get_atom(self, idx):
         return self.atoms[idx]

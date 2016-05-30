@@ -330,9 +330,11 @@ class PyMOLVisualizer:
                 cmd.zoom(self.ligname, 3)
         cmd.origin(self.ligname)
 
-    def save_session(self, outfolder):
+    def save_session(self, outfolder, override=None):
         """Saves a PyMOL session file."""
         filename = '%s_%s' % (self.protname.upper(), "_".join([self.hetid, self.plcomplex.chain, self.plcomplex.position]))
+        if override is not None:
+            filename = override
         cmd.save("/".join([outfolder, "%s.pse" % filename]))
 
     def png_workaround(self, filepath, width=1200, height=800):
