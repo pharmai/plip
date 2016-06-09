@@ -318,6 +318,17 @@ def classify_by_name(names):
                     ligtype += '+ION'
     return ligtype
 
+def sort_members_by_importance(members):
+    """Sort the members of a composite ligand according to two criteria:
+    1. Split up in main and ion group. Ion groups are located behind the main group.
+    2. Within each group, sort by chain and position."""
+    main = [x for x in members if x[0] not in config.METAL_IONS]
+    ion = [x for x in members if x[0] in config.METAL_IONS]
+    sorted_main = sorted(main, key=lambda x: (x[1], x[2]))
+    sorted_main = sorted(main, key=lambda x: (x[1], x[2]))
+    sorted_ion = sorted(ion, key=lambda x: (x[1], x[2]))
+    return sorted_main + sorted_ion
+
 
 def get_isomorphisms(reference, lig):
     """Get all isomorphisms of the ligand."""

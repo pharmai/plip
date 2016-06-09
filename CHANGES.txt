@@ -1,6 +1,9 @@
 Changelog
 ---------
 
+### Next Version
+* Smart ordering of ligand in composite compounds
+
 ### 1.3.1
 * __Support for amino acids as ligands__
 * __Plugin-ready for PyMOL and Chimera__

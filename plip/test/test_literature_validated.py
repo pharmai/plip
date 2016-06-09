@@ -142,7 +142,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         """
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/2w0s.pdb')
-        bsid = 'MG:B:1206'  # Complex of BVDU with Magnesium Cofactor
+        bsid = 'BVP:B:1207'  # Complex of BVDU with Magnesium Cofactor
         for ligand in tmpmol.ligands:
             if ':'.join([ligand.hetid, ligand.chain, str(ligand.position)]) == bsid:
                 tmpmol.characterize_complex(ligand)
@@ -736,5 +736,3 @@ class LiteratureValidatedTest(unittest.TestCase):
         # Hydrogen bonds
         hbonds = {str(hbond.resnr)+hbond.reschain for hbond in s.hbonds_pdon+s.hbonds_ldon}
         self.assertTrue({'594A', '530A'}.issubset(hbonds))
-
-
