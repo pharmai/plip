@@ -209,7 +209,7 @@ class LigandFinder:
         """Extract the ligand by copying atoms and bonds and assign all information necessary for later steps."""
         data = namedtuple('ligand', 'mol hetid chain position water members longname type atomorder can_to_pdb')
         members = [(res.GetName(), res.GetChain(), int32_to_negative(res.GetNum())) for res in kmer]
-        members = sorted(members, key=lambda x: (x[1], x[2]))
+        members = sort_members_by_importance(members)
         rname, rchain, rnum = members[0]
         write_message("Finalizing extraction for ligand %s:%s:%s\n" % (rname, rchain, rnum), mtype='debug')
         names = [x[0] for x in members]
