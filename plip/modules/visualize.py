@@ -86,6 +86,8 @@ def visualize_in_pymol(plcomplex):
         cmd.select(ligname, 'chain %s and not resn HOH' % plcomplex.chain)
     else:
         cmd.select(ligname, 'resn %s and chain %s and resi %s*' % (hetid, chain, plcomplex.position))
+    write_message("Selecting ligand for PDBID %s and ligand name %s with: " % (pdbid, ligname), mtype='debug')
+    write_message('resn %s and chain %s and resi %s*' % (hetid, chain, plcomplex.position), mtype='debug')
 
     # Visualize and color metal ions if there are any
     if not len(metal_ids) == 0:
@@ -93,10 +95,11 @@ def visualize_in_pymol(plcomplex):
         cmd.show('spheres', 'id %s and %s' % (metal_ids_str, pdbid))
 
     # Additionally, select all members of composite ligands
-
     if len(lig_members) > 1:
         for member in lig_members:
            resid, chain, resnr = member[0], member[1], str(member[2])
+           cmd.select(ligname, '%s or (resn %s and chain %s and resi %s)' % (ligname, resid, chain, resnr))
+    
     cmd.show('sticks', ligname)
     cmd.color('myblue')
     cmd.color('myorange', ligname)

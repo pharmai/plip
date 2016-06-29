@@ -3,6 +3,7 @@ Changelog
 
 ### Next Version
 * Smart ordering of ligand in composite compounds
+* Fixes handling and visualization of DNA/RNA
 
 ### 1.3.1
 * __Support for amino acids as ligands__
