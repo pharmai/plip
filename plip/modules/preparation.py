@@ -275,15 +275,23 @@ class LigandFinder:
         return ligand
 
     def is_het_residue(self, obres):
-        """Given an OBResidue, determines if the residue is indeed a ligand
-        in the PDB file (any atoms has to be a HETATM entry)"""
-        het_atoms = []
-        for atm in pybel.ob.OBResidueAtomIter(obres):
-                het_atoms.append(obres.IsHetAtom(atm))
-        if True in het_atoms:
+        """Given an OBResidue, determines if the residue is indeed a possible ligand
+        in the PDB file"""
+        if not obres.GetResidueProperty(0):
+            # If the residue is NOT amino (0)
+            # It can be amino_nucleo, coenzme, ion, nucleo, protein, purine, pyrimidine, solvent
+            # In these cases, it is a ligand candidate
             return True
         else:
-            return False
+            # Here, the residue is classified as amino
+            # Amino acids can still be ligands, so we check for HETATM entries
+            # Only residues with at least one HETATM entry are processed as ligands
+            het_atoms = []
+            for atm in pybel.ob.OBResidueAtomIter(obres):
+                    het_atoms.append(obres.IsHetAtom(atm))
+            if True in het_atoms:
+                return True
+        return False
 
 
     def filter_for_ligands(self):
