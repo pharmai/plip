@@ -2,8 +2,9 @@
 
 **Protein-Ligand Interaction Profiler (PLIP)**
 
-
  Analyze non-covalent protein-ligand interactions in 3D structures
+ 
+ <img src="https://github.com/ssalentin/plip/blob/development/pliplogo.png"  alt="PLIP Logo" height="100">
 
 ## How to use PLIP
 
