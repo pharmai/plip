@@ -96,6 +96,8 @@ class StructureReport:
         if not as_string:
             with open('%s/report.txt' % self.outpath, 'w') as f:
                 [f.write(textline + '\n') for textline in self.txtreport]
+        else:
+            print '\n'.join(self.txtreport)
 
 
 

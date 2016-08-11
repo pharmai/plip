@@ -81,9 +81,6 @@ def process_pdb(pdbfile, outpath):
 
     # Generate the report files
     streport = StructureReport(mol)
-    report = streport.xmlreport
-    textlines = streport.txtreport
-
 
     config.MAXTHREADS = min(config.MAXTHREADS, len(mol.interaction_sets))
 
