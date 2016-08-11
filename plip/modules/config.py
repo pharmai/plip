@@ -23,7 +23,6 @@ XML = False
 TXT = False
 PICS = False
 PYMOL = False
-VISJSON = False  # JSON File of PyMOL helper class (for web service)
 OUTPATH = './'
 BASEPATH = './'
 BREAKCOMPOSITE = False  # Break up composite ligands with covalent bonds

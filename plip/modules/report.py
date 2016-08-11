@@ -20,13 +20,90 @@ limitations under the License.
 # Python Standard Library
 import time
 from operator import itemgetter
+import sys
+
 
 # External libraries
 import lxml.etree as et
 
+__version__ = '1.3.2'
 
-class TextOutput:
-    """Gather report data and generate reports for one binding site in different formats"""
+class StructureReport:
+    """Creates reports (xml or txt) for one structure/"""
+    def __init__(self, mol):
+        self.mol = mol
+        self.excluded = self.mol.excluded
+        self.xmlreport = self.construct_xml_tree()
+        self.txtreport = self.construct_txt_file()
+        self.get_bindingsite_data()
+        self.outpath = mol.output_path
+
+    def construct_xml_tree(self):
+        """Construct the basic XML tree"""
+        report = et.Element('report')
+        plipversion = et.SubElement(report, 'plipversion')
+        plipversion.text = __version__
+        pdbid = et.SubElement(report, 'pdbid')
+        pdbid.text = self.mol.pymol_name.upper()
+        filetype = et.SubElement(report, 'filetype')
+        filetype.text = self.mol.filetype.upper()
+        pdbfile = et.SubElement(report, 'pdbfile')
+        pdbfile.text = self.mol.sourcefiles['pdbcomplex']
+        pdbfixes = et.SubElement(report, 'pdbfixes')
+        pdbfixes.text = str(self.mol.information['pdbfixes'])
+        filename = et.SubElement(report, 'filename')
+        filename.text = str(self.mol.sourcefiles['filename'])
+        exligs = et.SubElement(report, 'excluded_ligands')
+        for i, exlig in enumerate(self.excluded):
+            e = et.SubElement(exligs, 'excluded_ligand', id=str(i + 1))
+            e.text = exlig
+        return report
+
+    def construct_txt_file(self):
+        """Construct the header of the txt file"""
+        textlines = ['Prediction of noncovalent interactions for PDB structure %s' % self.mol.pymol_name.upper(), ]
+        textlines.append("=" * len(textlines[0]))
+        textlines.append('Created on %s using PLIP v%s\n' % (time.strftime("%Y/%m/%d"), __version__))
+        if len(self.excluded) != 0:
+            textlines.append('Excluded molecules as ligands: %s\n' % ','.join([lig for lig in self.excluded]))
+        return textlines
+
+    def get_bindingsite_data(self):
+        """Get the additional data for the binding sites"""
+        for i, site in enumerate(sorted(self.mol.interaction_sets)):
+            s = self.mol.interaction_sets[site]
+            bindingsite = BindingSiteReport(s).generate_xml()
+            bindingsite.set('id', str(i + 1))
+            bindingsite.set('has_interactions', 'False')
+            self.xmlreport.insert(i + 1, bindingsite)
+            for itype in BindingSiteReport(s).generate_txt():
+                self.txtreport.append(itype)
+            if not s.no_interactions:
+                bindingsite.set('has_interactions', 'True')
+            else:
+                self.txtreport.append('No interactions detected.')
+            sys.stdout = sys.__stdout__  # Change back to original stdout, gets changed when PyMOL has been used before
+
+    def write_xml(self, as_string=False):
+        """Write the XML report"""
+        if not as_string:
+            et.ElementTree(self.xmlreport).write('%s/report.xml' % self.outpath, pretty_print=True, xml_declaration=True)
+        else:
+            print et.tostring(self.xmlreport, pretty_print=True)
+
+    def write_txt(self, as_string=False):
+        """Write the TXT report"""
+        if not as_string:
+            with open('%s/report.txt' % self.outpath, 'w') as f:
+                [f.write(textline + '\n') for textline in self.txtreport]
+
+
+
+
+
+
+class BindingSiteReport:
+    """Gather report data and generate reports for one binding site in different formats."""
     def __init__(self, plcomplex):
 
         ################

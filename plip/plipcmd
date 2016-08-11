@@ -25,7 +25,7 @@ try:
     from plip.modules.preparation import *
     from plip.modules.visualize import visualize_in_pymol
     from plip.modules.plipremote import VisualizerData
-    from plip.modules.report import TextOutput
+    from plip.modules.report import StructureReport,__version__
     from plip.modules import config
     from plip.modules.mp import parallel_fn
     from plip.modules.webservices import check_pdb_status, fetch_pdb
@@ -33,7 +33,7 @@ except ImportError:
     from modules.preparation import *
     from modules.visualize import visualize_in_pymol
     from modules.plipremote import VisualizerData
-    from modules.report import TextOutput
+    from modules.report import StructureReport, __version__
     from modules import config
     from modules.mp import parallel_fn
     from modules.webservices import check_pdb_status, fetch_pdb
@@ -45,11 +45,9 @@ from argparse import ArgumentParser
 import time
 import multiprocessing
 import json
-
 # External libraries
 import lxml.etree as et
 
-__version__ = '1.3.1'
 descript = "Protein-Ligand Interaction Profiler (PLIP) v%s " \
            "is a command-line based tool to analyze interactions in a protein-ligand complex. " \
            "If you are using PLIP in your work, please cite: " \
@@ -75,54 +73,20 @@ def process_pdb(pdbfile, outpath):
     mol = PDBComplex()
     mol.output_path = outpath
     mol.load_pdb(pdbfile)
-    # TODO Refactor code in this function
     # #@todo Offers possibility for filter function from command line (by ligand chain, position, hetid)
     for ligand in mol.ligands:
         mol.characterize_complex(ligand)
-    excluded = mol.excluded
+
     create_folder_if_not_exists(outpath)
 
-    # Begin constructing the XML tree
-    report = et.Element('report')
-    plipversion = et.SubElement(report, 'plipversion')
-    plipversion.text = __version__
-    pdbid = et.SubElement(report, 'pdbid')
-    pdbid.text = mol.pymol_name.upper()
-    filetype = et.SubElement(report, 'filetype')
-    filetype.text = mol.filetype.upper()
-    pdbfile = et.SubElement(report, 'pdbfile')
-    pdbfile.text = mol.sourcefiles['pdbcomplex']
-    pdbfixes = et.SubElement(report, 'pdbfixes')
-    pdbfixes.text = str(mol.information['pdbfixes'])
-    filename = et.SubElement(report, 'filename')
-    filename.text = str(mol.sourcefiles['filename'])
-    exligs = et.SubElement(report, 'excluded_ligands')
-    for i, exlig in enumerate(excluded):
-        e = et.SubElement(exligs, 'excluded_ligand', id=str(i + 1))
-        e.text = exlig
+    # Generate the report files
+    streport = StructureReport(mol)
+    report = streport.xmlreport
+    textlines = streport.txtreport
 
-    # Write header of rST file
-    textlines = ['Prediction of noncovalent interactions for PDB structure %s' % mol.pymol_name.upper(), ]
-    textlines.append("=" * len(textlines[0]))
-    textlines.append('Created on %s using PLIP v%s\n' % (time.strftime("%Y/%m/%d"), __version__))
-    if len(excluded) != 0:
-        textlines.append('Excluded molecules as ligands: %s\n' % ','.join([lig for lig in excluded]))
 
     config.MAXTHREADS = min(config.MAXTHREADS, len(mol.interaction_sets))
 
-    ####
-    # Create JSON dump of PyMOL helper class
-    ###
-
-    if config.VISJSON:
-        complexes = [VisualizerData(mol, site) for site in sorted(mol.interaction_sets)
-        if not len(mol.interaction_sets[site].interacting_res) == 0]
-
-        with open('%s/plipvis.json' % outpath, 'w') as f:
-            cplx_dict = {}
-            for cplx in complexes:
-                cplx_dict[cplx.uid] = cplx.to_json()
-            json.dump(cplx_dict, f)
 
     ######################################
     # PyMOL Visualization (parallelized) #
@@ -138,31 +102,11 @@ def process_pdb(pdbfile, outpath):
         else:
             [visualize_in_pymol(plcomplex) for plcomplex in complexes]
 
-    ##################################################################
-    # Generate XML- and rST-formatted reports for each binding site. #
-    ##################################################################
-
-    for i, site in enumerate(sorted(mol.interaction_sets)):
-        s = mol.interaction_sets[site]
-        bindingsite = TextOutput(s).generate_xml()
-        bindingsite.set('id', str(i + 1))
-        bindingsite.set('has_interactions', 'False')
-        report.insert(i + 1, bindingsite)
-        for itype in TextOutput(s).generate_txt():
-            textlines.append(itype)
-        if not s.no_interactions:
-            bindingsite.set('has_interactions', 'True')
-        else:
-            textlines.append('No interactions detected.')
-        sys.stdout = sys.__stdout__  # Change back to original stdout, gets changed when PyMOL has been used before
-
-    tree = et.ElementTree(report)
     if config.XML:  # Generate report in xml format
-        tree.write('%s/report.xml' % outpath, pretty_print=True, xml_declaration=True)
+        streport.write_xml()
 
     if config.TXT:  # Generate report in txt (rst) format
-        with open('%s/report.txt' % outpath, 'w') as f:
-            [f.write(textline + '\n') for textline in textlines]
+        streport.write_txt()
 
 def download_structure(inputpdbid):
     """Given a PDB ID, downloads the corresponding PDB structure.
