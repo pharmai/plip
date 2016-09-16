@@ -212,6 +212,9 @@ if __name__ == '__main__':
     parser.add_argument("--peptides", dest="peptides", default=[],
                         help="Allows to define one or multiple chains as peptide ligands",
                         nargs="+")
+    parser.add_argument("--keepmod", dest="keepmod", default=False,
+                        help="Keep modified residues as ligands",
+                        action="store_true")
     # Optional threshold arguments, not shown in help
     thr = namedtuple('threshold', 'name type')
     thresholds = [thr(name='aromatic_planarity', type='angle'),
@@ -244,6 +247,7 @@ if __name__ == '__main__':
     config.ALTLOC = arguments.altlocation
     config.PEPTIDES =arguments.peptides
     config.NOFIX = arguments.nofix
+    config.KEEPMOD = arguments.keepmod
     # Assign values to global thresholds
     for t in thresholds:
         tvalue = getattr(arguments, t.name)

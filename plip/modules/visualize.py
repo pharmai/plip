@@ -99,7 +99,7 @@ def visualize_in_pymol(plcomplex):
         for member in lig_members:
            resid, chain, resnr = member[0], member[1], str(member[2])
            cmd.select(ligname, '%s or (resn %s and chain %s and resi %s)' % (ligname, resid, chain, resnr))
-    
+
     cmd.show('sticks', ligname)
     cmd.color('myblue')
     cmd.color('myorange', ligname)

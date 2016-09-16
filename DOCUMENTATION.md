@@ -118,6 +118,17 @@ PLIP will create subdirectories for each given structure in the output folder.
 If in PDB ID mode (`i`), the folder structure will be nested and based on the two middle characters of the PDB ID.
 The structure 1vsn in batch processing will have its output files in <outputfolder>/vs/1vsn .
 
+### Detection of protein-peptide interactions
+For the detection of ligands, PLIP relies on the separation of ATOM and HETATM entries in the PDB file.
+The latter are searched for suitable ligands when running in normal mode.
+Peptide ligands, however, are usually deposited as ATOM entries in a separate chain.
+PLIP can not detect these entities automatically.
+To switch into protein-peptide interaction mode, start PLIP with the option `--peptide`, followed by the peptide chain of interest, e.g.:
+
+```bash
+plip -i 5hi4 --peptides I -vx
+```
+
 ## Changing detection thresholds
 The PLIP algorithm uses a rule-based detection to report non-covalent interaction between proteins and their partners.
 The current settings are based on literature values and have been refined based on extensive testing with independent cases from mainly crystallography journals, covering a broad range of structure resolutions.
@@ -150,10 +161,11 @@ PLIP offers further command line options which enables you to switch advanced se
 * Do not discard alternate locations (`--altlocation`)
 * Set debug mode (`--debug`)
 * Turn off automatic fixing of errors in PDB files (`--nofix`)
+* Keep modified residues as ligands (`--keepmod`)
 
 ## Web Service
 A web service for analysis of protein-ligand complexes using PLIP is available at
-http://projects.biotec.tu-dresden.de/plip-web
+http://plip.biotec.tu-dresden.de/
 The web site offers advanced functions to search for specific entries from PDB and lists the interaction results in the browser.
 Additionally, the service used the BioLiP database to annotate biologically relevant ligands.
 The option to change threshold, ligand filtering, and batch processing is only available in the command line tool and with the Python modules.

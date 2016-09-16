@@ -77,7 +77,7 @@ Joachim Haupt joachim.haupt (at) biotec.tu-dresden.de | https://github.com/vjhau
 Melissa F. Adasme Mora melissa.adasme (at) biotec.tu-dresden.de
 
 ## PLIP Web Server
-Visit our PLIP Web Server on http://projects.biotec.tu-dresden.de/plip-web
+Visit our PLIP Web Server on http://plip.biotec.tu-dresden.de/
 
 ## Contact Me
 Do you have feature requests, found a bug or want to use `PLIP` in your project?
