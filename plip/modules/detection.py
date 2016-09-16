@@ -372,8 +372,9 @@ def metal_complexation(metals, metal_binding_lig, metal_binding_bs):
                     final_geom, final_coo, = next_total.geometry, next_total.coordination
                     rms, excluded = next_total.rms, next_total.excluded
                     break
-                elif i == len(all_total) - 1:
-                    final_geom, final_coo, rms, excluded = "NA", "NA", 0.0, []
+                elif i == len(all_total) - 2:
+                    final_geom, final_coo, rms, excluded = "NA", "NA", float('nan'), []
+                    break
 
         # Record all contact pairing, excluding those with targets superfluous for chosen geometry
         only_water = set([x[0].location for x in contact_pairs]) == {'water'}

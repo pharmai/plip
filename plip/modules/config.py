@@ -30,6 +30,7 @@ ALTLOC = False  # Consider alternate locations
 PLUGIN_MODE = False  # Special mode for PLIP in Plugins (e.g. PyMOL)
 NOFIX = False  # Turn off fixing of errors in PDB files
 PEPTIDES = []  # Definition which chains should be considered as peptide ligands
+KEEPMOD = False
 
 # Configuration file for Protein-Ligand Interaction Profiler (PLIP)
 # Set thresholds for detection of interactions

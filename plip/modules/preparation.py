@@ -333,7 +333,10 @@ class LigandFinder:
 
         water = [o for o in pybel.ob.OBResidueIter(self.proteincomplex.OBMol) if o.GetResidueProperty(9)]
         # Filter out non-ligands
-        candidates2 = [a for a in candidates1 if is_lig(a.GetName()) and a.GetName() not in self.modresidues]
+        if not config.KEEPMOD:  # Keep modified residues as ligands
+            candidates2 = [a for a in candidates1 if is_lig(a.GetName()) and a.GetName() not in self.modresidues]
+        else:
+            candidates2 = [a for a in candidates1 if is_lig(a.GetName())]
         write_message("%i ligand(s) after first filtering step.\n" % len(candidates2), mtype='debug')
 
         ############################################
