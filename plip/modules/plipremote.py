@@ -44,6 +44,7 @@ class VisualizerData:
         self.corrected_pdb = pcomp.corrected_pdb
         self.pdbid = mol.pymol_name
         self.hetid = ligand.hetid
+        self.ligandtype = ligand.type
         self.chain = ligand.chain if not ligand.chain == "0" else ""  # #@todo Fix this
         self.position = str(ligand.position)
         self.uid = ":".join([self.hetid, self.chain, self.position])

@@ -220,7 +220,7 @@ class LigandFinder:
         Returns all non-empty ligands.
         """
 
-        if config.PEPTIDES == []:
+        if config.PEPTIDES == [] and config.INTRA is None:
             # Extract small molecule ligands (default)
             ligands = []
 
@@ -243,7 +243,11 @@ class LigandFinder:
         else:
             # Extract peptides from given chains
             self.water = [o for o in pybel.ob.OBResidueIter(self.proteincomplex.OBMol) if o.GetResidueProperty(9)]
-            peptide_ligands = [self.getpeptides(chain) for chain in config.PEPTIDES]
+            if config.PEPTIDES != []:
+                peptide_ligands = [self.getpeptides(chain) for chain in config.PEPTIDES]
+            elif config.INTRA is not None:
+                peptide_ligands = [self.getpeptides(config.INTRA), ]
+
             ligands = [p for p in peptide_ligands if p is not None ]
             self.covalent, self.lignames_kept, self.lignames_all = [], [], set()
 
@@ -259,11 +263,13 @@ class LigandFinder:
         names = [x[0] for x in members]
         longname = '-'.join([x[0] for x in members])
 
-        if config.PEPTIDES == []:
+        if config.PEPTIDES != []:
+            ligtype = 'PEPTIDE'
+        elif config.INTRA is not None:
+            ligtype = 'INTRA'
+        else:
             # Classify a ligand by its HETID(s)
             ligtype = classify_by_name(names)
-        else:
-            ligtype = 'PEPTIDE'
 
         hetatoms = set()
         for obresidue in kmer:
@@ -843,7 +849,10 @@ class BindingSite(Mol):
         """Looks for positive charges in arginine, histidine or lysine, for negative in aspartic and glutamic acid."""
         data = namedtuple('pcharge', 'atoms atoms_orig_idx type center restype resnr reschain')
         a_set = []
-        for res in pybel.ob.OBResidueIter(mol.OBMol):
+        # Iterate through all residue, exclude those in chains defined as peptides
+        for res in [r for r in pybel.ob.OBResidueIter(mol.OBMol) if not r.GetChain() in config.PEPTIDES]:
+            if config.INTRA is not None:
+                if res.GetChain() != config.INTRA: continue
             a_contributing = []
             a_contributing_orig_idx = []
             if res.GetName() in ('ARG', 'HIS', 'LYS'):  # Arginine, Histidine or Lysine have charged sidechains
@@ -1299,6 +1308,10 @@ class PDBComplex:
         longname = ligand.longname if not len(ligand.longname) > 20 else ligand.longname[:20] + '...'
         ligtype = 'Unspecified type' if ligand.type == 'UNSPECIFIED' else ligand.type
         ligtext = "\n%s [%s] -- %s" % (longname, ligtype, site)
+        if ligtype == 'PEPTIDE':
+            ligtext = '\n Chain %s [PEPTIDE / INTER-CHAIN]' % ligand.chain
+        if ligtype == 'INTRA':
+            ligtext = "\n Chain %s [INTRA-CHAIN]" % ligand.chain
         any_in_biolip = len(set([x[0] for x in ligand.members]).intersection(config.biolip_list)) != 0
         write_message(ligtext)
         write_message('\n' + '-' * len(ligtext) + '\n')
@@ -1313,6 +1326,12 @@ class PDBComplex:
         bs_atoms = [self.atoms[idx] for idx in [i for i in self.atoms.keys()
                                                 if self.atoms[i].OBAtom.GetResidue().GetIdx() in bs_res]
                     if idx in self.Mapper.proteinmap and self.Mapper.mapid(idx, mtype='protein') not in self.altconf]
+        if ligand.type == 'PEPTIDE':
+            # If peptide, don't consider the peptide chain as part of the protein binding site
+            bs_atoms = [a for a in bs_atoms if a.OBAtom.GetResidue().GetChain() != lig_obj.chain]
+        if ligand.type == 'INTRA':
+            # Interactions within the chain
+            bs_atoms = [a for a in bs_atoms if a.OBAtom.GetResidue().GetChain() == lig_obj.chain]
         bs_atoms_refined = []
 
         # Create hash with BSRES -> (MINDIST_TO_LIG, AA_TYPE)

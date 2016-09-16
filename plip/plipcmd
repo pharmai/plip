@@ -209,9 +209,11 @@ if __name__ == '__main__':
     parser.add_argument("--nofix", dest="nofix", default=False,
                         help="Turns off fixing of PDB files.",
                         action="store_true")
-    parser.add_argument("--peptides", dest="peptides", default=[],
-                        help="Allows to define one or multiple chains as peptide ligands",
+    ligandtype = parser.add_mutually_exclusive_group()  # Either peptide/inter or intra mode
+    ligandtype.add_argument("--peptides", "--inter", dest="peptides", default=[],
+                        help="Allows to define one or multiple chains as peptide ligands or to detect inter-chain contacts",
                         nargs="+")
+    ligandtype.add_argument("--intra", dest="intra", help="Allows to define one chain to analyze intra-chain contacts.")
     parser.add_argument("--keepmod", dest="keepmod", default=False,
                         help="Keep modified residues as ligands",
                         action="store_true")
@@ -245,7 +247,8 @@ if __name__ == '__main__':
     config.BASEPATH = config.OUTPATH  # Used for batch processing
     config.BREAKCOMPOSITE = arguments.breakcomposite
     config.ALTLOC = arguments.altlocation
-    config.PEPTIDES =arguments.peptides
+    config.PEPTIDES = arguments.peptides
+    config.INTRA = arguments.intra
     config.NOFIX = arguments.nofix
     config.KEEPMOD = arguments.keepmod
     # Assign values to global thresholds

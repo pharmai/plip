@@ -2,6 +2,7 @@ Changelog
 ---------
 
 # Next Version
+* Detection of intramolecular interactions with --intra (experimental feature)
 * improved error correction in PDB files
 
 ### 1.3.2

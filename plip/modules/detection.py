@@ -37,8 +37,10 @@ def hydrophobic_interactions(atom_set_a, atom_set_b):
                                              'distance restype resnr reschain')
     pairings = []
     for a, b in itertools.product(atom_set_a, atom_set_b):
+        if a.orig_idx == b.orig_idx:
+            continue
         e = euclidean3d(a.atom.coords, b.atom.coords)
-        if e < config.HYDROPH_DIST_MAX:
+        if config.MIN_DIST < e < config.HYDROPH_DIST_MAX:
             contact = data(bsatom=a.atom, bsatom_orig_idx=a.orig_idx, ligatom=b.atom, ligatom_orig_idx=b.orig_idx,
                            distance=e, restype=whichrestype(a.atom), resnr=whichresnumber(a.atom),
                            reschain=whichchain(a.atom))
@@ -59,15 +61,20 @@ def hbonds(acceptors, donor_pairs, protisdon, typ):
         if typ == 'strong':  # Regular (strong) hydrogen bonds
             dist_ah = euclidean3d(acc.a.coords, don.h.coords)
             dist_ad = euclidean3d(acc.a.coords, don.d.coords)
-            if dist_ad < config.HBOND_DIST_MAX:
+            if config.MIN_DIST < dist_ad < config.HBOND_DIST_MAX:
                 vec1, vec2 = vector(don.h.coords, don.d.coords), vector(don.h.coords, acc.a.coords)
                 v = vecangle(vec1, vec2)
                 if v > config.HBOND_DON_ANGLE_MIN:
                     restype = whichrestype(don.d) if protisdon else whichrestype(acc.a)
                     reschain = whichchain(don.d) if protisdon else whichchain(acc.a)
                     protatom = don.d.OBAtom if protisdon else acc.a.OBAtom
+                    ligatom = don.d.OBAtom if not protisdon else acc.a.OBAtom
                     is_sidechain_hbond = protatom.GetResidue().GetAtomProperty(protatom, 8)  # Check if sidechain atom
                     resnr = whichresnumber(don.d)if protisdon else whichresnumber(acc.a)
+                    # Next line prevents H-Bonds within amino acids in intermolecular interactions
+                    if config.INTRA is not None and whichresnumber(don.d) == whichresnumber(acc.a): continue
+                    # Next line prevents backbone-backbone H-Bonds
+                    if config.INTRA is not None and protatom.GetResidue().GetAtomProperty(protatom, 8) and ligatom.GetResidue().GetAtomProperty(ligatom, 8): continue
                     contact = data(a=acc.a, a_orig_idx=acc.a_orig_idx, d=don.d, d_orig_idx=don.d_orig_idx, h=don.h,
                                    distance_ah=dist_ah, distance_ad=dist_ad, angle=v, type=typ, protisdon=protisdon,
                                    resnr=resnr, restype=restype, reschain=reschain, sidechain=is_sidechain_hbond,
@@ -95,7 +102,7 @@ def pistacking(rings_bs, rings_lig):
         resnr, restype, reschain = whichresnumber(r.atoms[0]), whichrestype(r.atoms[0]), whichchain(r.atoms[0])
 
         # SELECTION BY DISTANCE, ANGLE AND OFFSET
-        if d < config.PISTACK_DIST_MAX:
+        if config.MIN_DIST < d < config.PISTACK_DIST_MAX:
             if 0 < a < config.PISTACK_ANG_DEV and offset < config.PISTACK_OFFSET_MAX:
                 contact = data(proteinring=r, ligandring=l, distance=d, angle=a, offset=offset,
                                type='P', resnr=resnr, restype=restype, reschain=reschain)
@@ -121,7 +128,7 @@ def pication(rings, pos_charged, protcharged):
                 # Project the center of charge into the ring and measure distance to ring center
                 proj = projection(ring.normal, ring.center, p.center)
                 offset = euclidean3d(proj, ring.center)
-                if d < config.PICATION_DIST_MAX and offset < config.PISTACK_OFFSET_MAX:
+                if config.MIN_DIST < d < config.PICATION_DIST_MAX and offset < config.PISTACK_OFFSET_MAX:
                     if type(p).__name__ == 'lcharge' and p.fgroup == 'tertamine':
                         # Special case here if the ligand has a tertiary amine, check an additional angle
                         # Otherwise, we might have have a pi-cation interaction 'through' the ligand
@@ -153,7 +160,7 @@ def saltbridge(poscenter, negcenter, protispos):
     data = namedtuple('saltbridge', 'positive negative distance protispos resnr restype reschain')
     pairings = []
     for pc, nc in itertools.product(poscenter, negcenter):
-        if euclidean3d(pc.center, nc.center) < config.SALTBRIDGE_DIST_MAX:
+        if config.MIN_DIST < euclidean3d(pc.center, nc.center) < config.SALTBRIDGE_DIST_MAX:
             resnr = pc.resnr if protispos else nc.resnr
             restype = pc.restype if protispos else nc.restype
             reschain = pc.reschain if protispos else nc.reschain
@@ -170,7 +177,7 @@ def halogen(acceptor, donor):
     pairings = []
     for acc, don in itertools.product(acceptor, donor):
         dist = euclidean3d(acc.o.coords, don.x.coords)
-        if dist < config.HALOGEN_DIST_MAX:
+        if config.MIN_DIST < dist < config.HALOGEN_DIST_MAX:
             vec1, vec2 = vector(acc.o.coords, acc.y.coords), vector(acc.o.coords, don.x.coords)
             vec3, vec4 = vector(don.x.coords, acc.o.coords), vector(don.x.coords, don.c.coords)
             acc_angle, don_angle = vecangle(vec1, vec2), vecangle(vec3, vec4)
