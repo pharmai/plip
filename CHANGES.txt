@@ -1,6 +1,9 @@
 Changelog
 ---------
 
+# Next Version
+* improved error correction in PDB files
+
 ### 1.3.2
 * __Processing of protein-peptide interactions via --peptides__
 * option to keep modified residues as ligands (--keepmod)

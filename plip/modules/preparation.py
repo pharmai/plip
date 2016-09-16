@@ -109,6 +109,7 @@ class PDBParser:
         """Fix a PDB line if information is missing."""
         fixed = False
         newnum = 0
+        forbidden_characters = "[^a-zA-Z0-9_]"
         pdbline = pdbline.strip('\n')
         # Some MD / Docking tools produce empty lines, leading to segfaults
         if len(pdbline.strip()) == 0:
@@ -123,6 +124,18 @@ class PDBParser:
         if pdbline.startswith('ATOM'):
             newnum = lastnum + 1
             currentnum = int(pdbline[6:11])
+            resnum = pdbline[22:27].strip()
+            resname = pdbline[17:21].strip()
+            # Invalid residue number
+            try:
+                int(resnum)
+            except ValueError:
+                pdbline = pdbline[:22] + '   0 ' + pdbline[27:]
+                fixed = True
+            # Invalid characters in residue name
+            if re.match(forbidden_characters, resname.strip()):
+                pdbline = pdbline[:17] + 'UNK ' + pdbline[21:]
+                fixed = True
             if lastnum + 1 != currentnum:
                 pdbline = pdbline[:6] + (5 - len(str(newnum))) * ' ' + str(newnum) + ' ' + pdbline[12:]
                 fixed = True
@@ -139,8 +152,8 @@ class PDBParser:
             if lastnum + 1 != currentnum:
                 pdbline = pdbline[:6] + (5 - len(str(newnum))) * ' ' + str(newnum) + ' ' + pdbline[12:]
                 fixed = True
-            # No chain assigned
-            if pdbline[21] == ' ':
+            # No chain assigned or number assigned as chain
+            if pdbline[21] == ' ' or re.match("[0-9]", pdbline[21]):
                 pdbline = pdbline[:21] + 'Z' + pdbline[22:]
                 fixed = True
             # No residue number assigned
@@ -148,8 +161,11 @@ class PDBParser:
                 pdbline = pdbline[:23] + '999' + pdbline[26:]
                 fixed = True
             # Non-standard Ligand Names
-            ligname = pdbline[17:20]
-            if re.match("[^a-zA-Z0-9_]", ligname.strip()):
+            ligname = pdbline[17:21].strip()
+            if len(ligname) > 3:
+                pdbline = pdbline[:17] + ligname[:3] + ' ' + pdbline[21:]
+                fixed = True
+            if re.match(forbidden_characters, ligname.strip()):
                 pdbline = pdbline[:17] + 'LIG ' + pdbline[21:]
                 fixed = True
             if len(ligname.strip()) == 0:
