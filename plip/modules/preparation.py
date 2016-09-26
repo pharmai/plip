@@ -107,6 +107,9 @@ class PDBParser:
 
     def fix_pdbline(self, pdbline, lastnum):
         """Fix a PDB line if information is missing."""
+        pdbqt_conversion = {
+        "HD": "H", "HS": "H", "NA": "N",
+        "NS": "N", "OA": "O", "OS": "O", "SA": "S"}
         fixed = False
         newnum = 0
         forbidden_characters = "[^a-zA-Z0-9_]"
@@ -146,6 +149,11 @@ class PDBParser:
             if pdbline.endswith('H'):
                 self.num_fixed_lines += 1
                 return None, lastnum
+            # Sometimes, converted PDB structures contain PDBQT atom types. Fix that.
+            for pdbqttype in pdbqt_conversion:
+                if pdbline.strip().endswith(pdbqttype):
+                    pdbline = pdbline.strip()[:-2] + ' ' + pdbqt_conversion[pdbqttype] + '\n'
+                    self.num_fixed_lines += 1
         if pdbline.startswith('HETATM'):
             newnum = lastnum + 1
             currentnum = int(pdbline[6:11])
@@ -174,6 +182,11 @@ class PDBParser:
             if pdbline.endswith('H'):
                 self.num_fixed_lines += 1
                 return None, lastnum
+            # Sometimes, converted PDB structures contain PDBQT atom types. Fix that.
+            for pdbqttype in pdbqt_conversion:
+                if pdbline.strip().endswith(pdbqttype):
+                    pdbline = pdbline.strip()[:-2] + ' ' + pdbqt_conversion[pdbqttype] + ' '
+                    self.num_fixed_lines +=1
         self.num_fixed_lines += 1 if fixed else 0
         return pdbline + '\n', max(newnum, lastnum)
 
