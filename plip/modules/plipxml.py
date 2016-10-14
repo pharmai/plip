@@ -17,11 +17,14 @@ limitations under the License.
 """
 
 # Python standard library
-from collections import namedtuple, defaultdict
+from collections import defaultdict
 from lxml import etree
 import itertools
 from itertools import groupby
 import sys
+import urllib2
+
+#TODO True/False values for all corresponding attributes
 
 class XMLStorage:
     """Generic class for storing XML data from PLIP XML files."""
@@ -220,12 +223,10 @@ class BSite(XMLStorage):
 
         # Binding Site residues
         self.bs_res = []
-        bs_res = namedtuple('bs_res', 'resnr, reschain, aa, contact, min_dist')
         for tagpart in bindingsite.xpath('bs_residues/bs_residue'):
             resnumber, reschain = tagpart.text[:-1], tagpart.text[-1]
             aa, contact, min_dist = tagpart.get('aa'), tagpart.get('contact'), tagpart.get('min_dist')
-            new_bs_res = bs_res(resnr=int(resnumber), reschain=reschain, aa=aa, contact=contact,
-                                min_dist=float(min_dist))
+            new_bs_res = {'resnr': int(resnumber), 'reschain': reschain, 'aa': aa, 'contact': contact, 'min_dist': float(min_dist)}
             self.bs_res.append(new_bs_res)
 
         # Interacting chains
@@ -248,6 +249,7 @@ class BSite(XMLStorage):
         self.has_interactions = True if self.num_contacts > 0 else False
 
         self.get_atom_mapping()
+        self.counts = self.get_counts()
 
     def get_atom_mapping(self):
         """Parses the ligand atom mapping."""
@@ -260,10 +262,20 @@ class BSite(XMLStorage):
             self.mappings = {'smiles_to_pdb': smiles_to_pdb_mapping}
             self.mappings['pdb_to_smiles'] = {v: k for k, v in self.mappings['smiles_to_pdb'].items()}
 
+    def get_counts(self):
+        """counts the interaction types and backbone hydrogen bonding in a binding site"""
+
+        hbondsback = len([hb for hb in self.hbonds if hb.sidechain == 'F'])
+        counts = {'hydrophobics': len(self.hydrophobics), 'hbonds': len(self.hbonds),
+                      'wbridges': len(self.wbridges), 'sbridges': len(self.sbridges), 'pistacks': len(self.pi_stacks),
+                      'pications': len(self.pi_cations), 'halogens': len(self.halogens), 'metal': len(self.metal_complexes),
+                      'hbond_back': hbondsback, 'hbond_nonback': (len(self.hbonds) - hbondsback)}
+        return counts
+
 class PLIPXML(XMLStorage):
-    """Parses and stores all information from PLIP XML files."""
+    """Parses and stores all information from a PLIP XML file."""
     def __init__(self, xmlfile):
-        self.doc = etree.fromstring(self.load_xmlfile(xmlfile))
+        self.load_data(xmlfile)
 
         # Parse general information
         self.version = self.getdata(self.doc, '/report/plipversion/')
@@ -278,10 +290,25 @@ class PLIPXML(XMLStorage):
         self.num_bsites = len(self.bsites)
 
 
-    def load_xmlfile(self, xmlfile):
-        """Loads/parses an XML file and writes to a string if successful."""
+    def load_data(self, xmlfile):
+        """Loads/parses an XML file and saves it as a tree if successful."""
         try:
-            return etree.tostring(etree.parse(xmlfile))
+            self.doc = etree.parse(xmlfile)
         except IOError:
             sys.__stderr__.write("XML %s file could not be read." % xmlfile)
+            sys.exit(1)
+
+class PLIPXMLREST(PLIPXML):
+    """Parses and stores all from a PLIP XML file from the PLIP REST service"""
+    def __init__(self, pdbid):
+        PLIPXML.__init__(self, pdbid)
+
+    def load_data(self, pdbid):
+        """Loads and parses an XML resource and saves it as a tree if successful"""
+        #TODO Implement error handling
+        f = urllib2.urlopen("http://projects.biotec.tu-dresden.de/plip-rest/pdb/%s?format=xml" % pdbid.lower())
+        try:
+            self.doc = etree.parse(f)
+        except IOError:
+            sys.__stderr__.write("XML file for PDB ID %s could not be read." % pdbid)
             sys.exit(1)
