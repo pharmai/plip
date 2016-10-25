@@ -29,13 +29,15 @@ import urllib2
 class XMLStorage:
     """Generic class for storing XML data from PLIP XML files."""
 
-    def getdata(self, tree, location):
+    def getdata(self, tree, location, force_string=False):
         """Gets XML data from a specific element and handles types."""
         found = tree.xpath('%s/text()' % location)
         if found == []:
             return None
         else:
             data = found[0]
+        if force_string:
+            return data
         if data == 'True':
             return True
         elif data == 'False':
@@ -205,7 +207,7 @@ class BSite(XMLStorage):
         for member in bindingsite.xpath('identifiers/members/member'):
             self.members += member.xpath('text()')
 
-        self.composite = True if self.getdata(bindingsite, 'identifiers/composite') == 'True' else False
+        self.composite = self.getdata(bindingsite, 'identifiers/composite')
 
         # Ligand Properties
         self.heavy_atoms = self.getdata(bindingsite, 'lig_properties/num_heavy_atoms')
@@ -226,7 +228,7 @@ class BSite(XMLStorage):
         for tagpart in bindingsite.xpath('bs_residues/bs_residue'):
             resnumber, reschain = tagpart.text[:-1], tagpart.text[-1]
             aa, contact, min_dist = tagpart.get('aa'), tagpart.get('contact'), tagpart.get('min_dist')
-            new_bs_res = {'resnr': int(resnumber), 'reschain': reschain, 'aa': aa, 'contact': contact, 'min_dist': float(min_dist)}
+            new_bs_res = {'resnr': int(resnumber), 'reschain': reschain, 'aa': aa, 'contact': True if contact == 'True' else False, 'min_dist': float(min_dist)}
             self.bs_res.append(new_bs_res)
 
         # Interacting chains
@@ -279,7 +281,7 @@ class PLIPXML(XMLStorage):
 
         # Parse general information
         self.version = self.getdata(self.doc, '/report/plipversion/')
-        self.pdbid = self.getdata(self.doc, '/report/pdbid')
+        self.pdbid = self.getdata(self.doc, '/report/pdbid', force_string=True)
         self.filetype = self.getdata(self.doc, '/report/filetype')
         self.fixed = self.getdata(self.doc, '/report/pdbfixes/')
         self.filename = self.getdata(self.doc, '/report/filename')
