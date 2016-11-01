@@ -290,7 +290,7 @@ class PyMOLVisualizer:
 
         selections = cmd.get_names("selections")
         for selection in selections:
-            if len(cmd.get_model(selection).atom) == 0:
+            if cmd.count_atoms(selection) == 0:
                 cmd.delete(selection)
         cmd.deselect()
         cmd.delete('tmp*')
