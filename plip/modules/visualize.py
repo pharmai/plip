@@ -63,6 +63,8 @@ def visualize_in_pymol(plcomplex):
     chain = plcomplex.chain
     if config.PEPTIDES != []:
         vis.ligname = 'PeptideChain%s' % plcomplex.chain
+    if config.INTRA is not None:
+        vis.ligname = 'Intra%s' % plcomplex.chain
 
     ligname = vis.ligname
     hetid = plcomplex.hetid
@@ -112,7 +114,6 @@ def visualize_in_pymol(plcomplex):
 
 
     vis.make_initial_selections()
-
     vis.show_hydrophobic()  # Hydrophobic Contacts
     vis.show_hbonds()  # Hydrogen Bonds
     vis.show_halogen()  # Halogen Bonds
@@ -130,15 +131,17 @@ def visualize_in_pymol(plcomplex):
     vis.selections_cleanup()
     vis.selections_group()
     vis.additional_cleanup()
-    if config.PEPTIDES == []:
-        if config.PYMOL:
-            vis.save_session(config.OUTPATH)
-        if config.PICS:
-            filename = '%s_%s' % (pdbid.upper(), "_".join([hetid, plcomplex.chain, plcomplex.position]))
-            vis.save_picture(config.OUTPATH, filename)
-    else:
+    if config.PEPTIDES != []:
         filename = "%s_PeptideChain%s" % (pdbid.upper(), plcomplex.chain)
         if config.PYMOL:
             vis.save_session(config.OUTPATH, override=filename)
-        if config.PICS:
-            vis.save_picture(config.OUTPATH, filename)
+    elif config.INTRA is not None:
+        filename = "%s_IntraChain%s" % (pdbid.upper(), plcomplex.chain)
+        if config.PYMOL:
+            vis.save_session(config.OUTPATH, override=filename)
+    else:
+        filename = '%s_%s' % (pdbid.upper(), "_".join([hetid, plcomplex.chain, plcomplex.position]))
+        if config.PYMOL:
+            vis.save_session(config.OUTPATH)
+    if config.PICS:
+        vis.save_picture(config.OUTPATH, filename)

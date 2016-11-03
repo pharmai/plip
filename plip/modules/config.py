@@ -30,6 +30,7 @@ ALTLOC = False  # Consider alternate locations
 PLUGIN_MODE = False  # Special mode for PLIP in Plugins (e.g. PyMOL)
 NOFIX = False  # Turn off fixing of errors in PDB files
 PEPTIDES = []  # Definition which chains should be considered as peptide ligands
+INTRA = None
 KEEPMOD = False
 
 # Configuration file for Protein-Ligand Interaction Profiler (PLIP)
@@ -38,7 +39,7 @@ KEEPMOD = False
 # Thresholds for detection (global variables)
 BS_DIST = 7.5  # Determines maximum distance to include binding site residues
 AROMATIC_PLANARITY = 5.0  # Determines allowed deviation from planarity in aromatic rings
-
+MIN_DIST = 0.5 # Minimum distance for all distance thresholds
 # Some distance thresholds were extended (max. 1.0A) if too restrictive too account for low-quality structures
 HYDROPH_DIST_MAX = 4.0  # Distance cutoff for detection of hydrophobic contacts
 HBOND_DIST_MAX = 4.1  # Max. distance between hydrogen bond donor and acceptor (Hubbard & Haider, 2001) + 0.6 A

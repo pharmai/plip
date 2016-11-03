@@ -107,8 +107,12 @@ class PDBParser:
 
     def fix_pdbline(self, pdbline, lastnum):
         """Fix a PDB line if information is missing."""
+        pdbqt_conversion = {
+        "HD": "H", "HS": "H", "NA": "N",
+        "NS": "N", "OA": "O", "OS": "O", "SA": "S"}
         fixed = False
         newnum = 0
+        forbidden_characters = "[^a-zA-Z0-9_]"
         pdbline = pdbline.strip('\n')
         # Some MD / Docking tools produce empty lines, leading to segfaults
         if len(pdbline.strip()) == 0:
@@ -123,6 +127,18 @@ class PDBParser:
         if pdbline.startswith('ATOM'):
             newnum = lastnum + 1
             currentnum = int(pdbline[6:11])
+            resnum = pdbline[22:27].strip()
+            resname = pdbline[17:21].strip()
+            # Invalid residue number
+            try:
+                int(resnum)
+            except ValueError:
+                pdbline = pdbline[:22] + '   0 ' + pdbline[27:]
+                fixed = True
+            # Invalid characters in residue name
+            if re.match(forbidden_characters, resname.strip()):
+                pdbline = pdbline[:17] + 'UNK ' + pdbline[21:]
+                fixed = True
             if lastnum + 1 != currentnum:
                 pdbline = pdbline[:6] + (5 - len(str(newnum))) * ' ' + str(newnum) + ' ' + pdbline[12:]
                 fixed = True
@@ -133,14 +149,19 @@ class PDBParser:
             if pdbline.endswith('H'):
                 self.num_fixed_lines += 1
                 return None, lastnum
+            # Sometimes, converted PDB structures contain PDBQT atom types. Fix that.
+            for pdbqttype in pdbqt_conversion:
+                if pdbline.strip().endswith(pdbqttype):
+                    pdbline = pdbline.strip()[:-2] + ' ' + pdbqt_conversion[pdbqttype] + '\n'
+                    self.num_fixed_lines += 1
         if pdbline.startswith('HETATM'):
             newnum = lastnum + 1
             currentnum = int(pdbline[6:11])
             if lastnum + 1 != currentnum:
                 pdbline = pdbline[:6] + (5 - len(str(newnum))) * ' ' + str(newnum) + ' ' + pdbline[12:]
                 fixed = True
-            # No chain assigned
-            if pdbline[21] == ' ':
+            # No chain assigned or number assigned as chain
+            if pdbline[21] == ' ' or re.match("[0-9]", pdbline[21]):
                 pdbline = pdbline[:21] + 'Z' + pdbline[22:]
                 fixed = True
             # No residue number assigned
@@ -148,8 +169,11 @@ class PDBParser:
                 pdbline = pdbline[:23] + '999' + pdbline[26:]
                 fixed = True
             # Non-standard Ligand Names
-            ligname = pdbline[17:20]
-            if re.match("[^a-zA-Z0-9_]", ligname.strip()):
+            ligname = pdbline[17:21].strip()
+            if len(ligname) > 3:
+                pdbline = pdbline[:17] + ligname[:3] + ' ' + pdbline[21:]
+                fixed = True
+            if re.match(forbidden_characters, ligname.strip()):
                 pdbline = pdbline[:17] + 'LIG ' + pdbline[21:]
                 fixed = True
             if len(ligname.strip()) == 0:
@@ -158,6 +182,11 @@ class PDBParser:
             if pdbline.endswith('H'):
                 self.num_fixed_lines += 1
                 return None, lastnum
+            # Sometimes, converted PDB structures contain PDBQT atom types. Fix that.
+            for pdbqttype in pdbqt_conversion:
+                if pdbline.strip().endswith(pdbqttype):
+                    pdbline = pdbline.strip()[:-2] + ' ' + pdbqt_conversion[pdbqttype] + ' '
+                    self.num_fixed_lines +=1
         self.num_fixed_lines += 1 if fixed else 0
         return pdbline + '\n', max(newnum, lastnum)
 
@@ -204,7 +233,7 @@ class LigandFinder:
         Returns all non-empty ligands.
         """
 
-        if config.PEPTIDES == []:
+        if config.PEPTIDES == [] and config.INTRA is None:
             # Extract small molecule ligands (default)
             ligands = []
 
@@ -227,7 +256,11 @@ class LigandFinder:
         else:
             # Extract peptides from given chains
             self.water = [o for o in pybel.ob.OBResidueIter(self.proteincomplex.OBMol) if o.GetResidueProperty(9)]
-            peptide_ligands = [self.getpeptides(chain) for chain in config.PEPTIDES]
+            if config.PEPTIDES != []:
+                peptide_ligands = [self.getpeptides(chain) for chain in config.PEPTIDES]
+            elif config.INTRA is not None:
+                peptide_ligands = [self.getpeptides(config.INTRA), ]
+
             ligands = [p for p in peptide_ligands if p is not None ]
             self.covalent, self.lignames_kept, self.lignames_all = [], [], set()
 
@@ -243,11 +276,13 @@ class LigandFinder:
         names = [x[0] for x in members]
         longname = '-'.join([x[0] for x in members])
 
-        if config.PEPTIDES == []:
+        if config.PEPTIDES != []:
+            ligtype = 'PEPTIDE'
+        elif config.INTRA is not None:
+            ligtype = 'INTRA'
+        else:
             # Classify a ligand by its HETID(s)
             ligtype = classify_by_name(names)
-        else:
-            ligtype = 'PEPTIDE'
 
         hetatoms = set()
         for obresidue in kmer:
@@ -827,7 +862,10 @@ class BindingSite(Mol):
         """Looks for positive charges in arginine, histidine or lysine, for negative in aspartic and glutamic acid."""
         data = namedtuple('pcharge', 'atoms atoms_orig_idx type center restype resnr reschain')
         a_set = []
-        for res in pybel.ob.OBResidueIter(mol.OBMol):
+        # Iterate through all residue, exclude those in chains defined as peptides
+        for res in [r for r in pybel.ob.OBResidueIter(mol.OBMol) if not r.GetChain() in config.PEPTIDES]:
+            if config.INTRA is not None:
+                if res.GetChain() != config.INTRA: continue
             a_contributing = []
             a_contributing_orig_idx = []
             if res.GetName() in ('ARG', 'HIS', 'LYS'):  # Arginine, Histidine or Lysine have charged sidechains
@@ -1283,6 +1321,10 @@ class PDBComplex:
         longname = ligand.longname if not len(ligand.longname) > 20 else ligand.longname[:20] + '...'
         ligtype = 'Unspecified type' if ligand.type == 'UNSPECIFIED' else ligand.type
         ligtext = "\n%s [%s] -- %s" % (longname, ligtype, site)
+        if ligtype == 'PEPTIDE':
+            ligtext = '\n Chain %s [PEPTIDE / INTER-CHAIN]' % ligand.chain
+        if ligtype == 'INTRA':
+            ligtext = "\n Chain %s [INTRA-CHAIN]" % ligand.chain
         any_in_biolip = len(set([x[0] for x in ligand.members]).intersection(config.biolip_list)) != 0
         write_message(ligtext)
         write_message('\n' + '-' * len(ligtext) + '\n')
@@ -1297,6 +1339,12 @@ class PDBComplex:
         bs_atoms = [self.atoms[idx] for idx in [i for i in self.atoms.keys()
                                                 if self.atoms[i].OBAtom.GetResidue().GetIdx() in bs_res]
                     if idx in self.Mapper.proteinmap and self.Mapper.mapid(idx, mtype='protein') not in self.altconf]
+        if ligand.type == 'PEPTIDE':
+            # If peptide, don't consider the peptide chain as part of the protein binding site
+            bs_atoms = [a for a in bs_atoms if a.OBAtom.GetResidue().GetChain() != lig_obj.chain]
+        if ligand.type == 'INTRA':
+            # Interactions within the chain
+            bs_atoms = [a for a in bs_atoms if a.OBAtom.GetResidue().GetChain() == lig_obj.chain]
         bs_atoms_refined = []
 
         # Create hash with BSRES -> (MINDIST_TO_LIG, AA_TYPE)

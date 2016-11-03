@@ -1,6 +1,11 @@
 Changelog
 ---------
 
+# Next Version
+* __Adds XML Parser module for PLIP XML files__
+* Detection of intramolecular interactions with --intra (experimental feature)
+* improved error correction in PDB files
+
 ### 1.3.2
 * __Processing of protein-peptide interactions via --peptides__
 * option to keep modified residues as ligands (--keepmod)

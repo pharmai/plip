@@ -28,6 +28,7 @@ class PyMOLVisualizer:
             self.plcomplex = plcomplex
             self.protname = plcomplex.pdbid  # Name of protein with binding site
             self.hetid = plcomplex.hetid
+            self.ligandtype = plcomplex.ligandtype
             self.ligname = "Ligand_" + self.hetid  # Name of ligand
             self.metal_ids = plcomplex.metal_ids
 
@@ -401,6 +402,19 @@ class PyMOLVisualizer:
         cmd.set('ray_shadow', 0)  # Gives the molecules a flat, modern look
         cmd.set('ambient_occlusion_mode', 1)
 
+    def adapt_for_peptides(self):
+        """Adapt visualization for peptide ligands and interchain contacts"""
+        cmd.hide('sticks', self.ligname)
+        cmd.set('cartoon_color', 'lightorange', self.ligname)
+        cmd.show('cartoon', self.ligname)
+        cmd.show('sticks', "byres *-L")
+        cmd.util.cnc(self.ligname)
+        cmd.remove('%sCartoon and chain %s' % (self.protname, self.plcomplex.chain))
+        cmd.set('cartoon_side_chain_helper', 0)
+
+
+
+
     def refinements(self):
         """Refinements for the visualization"""
 
@@ -439,3 +453,6 @@ class PyMOLVisualizer:
 
         cmd.hide('everything', 'resn HOH &!Water')  # Hide all non-interacting water molecules
         cmd.hide('sticks', '%s and !%s and !AllBSRes' % (self.protname, self.ligname))  # Hide all non-interacting residues
+
+        if self.ligandtype in ['PEPTIDE', 'INTRA']:
+            self.adapt_for_peptides()

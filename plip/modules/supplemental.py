@@ -483,7 +483,7 @@ def write_message(msg, indent=False, mtype='standard', caption=False):
 def message(msg, indent=False, mtype='standard', caption=False):
     """Writes messages in verbose mode"""
     if caption:
-        msg = msg + '\n' + '-'*len(msg)
+        msg = '\n' + msg + '\n' + '-'*len(msg) + '\n'
     if mtype == 'warning':
         msg = colorlog('Warning:  ' + msg, 'yellow')
     if mtype == 'error':
