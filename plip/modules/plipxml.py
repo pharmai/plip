@@ -267,7 +267,7 @@ class BSite(XMLStorage):
     def get_counts(self):
         """counts the interaction types and backbone hydrogen bonding in a binding site"""
 
-        hbondsback = len([hb for hb in self.hbonds if hb.sidechain == 'F'])
+        hbondsback = len([hb for hb in self.hbonds if not hb.sidechain])
         counts = {'hydrophobics': len(self.hydrophobics), 'hbonds': len(self.hbonds),
                       'wbridges': len(self.wbridges), 'sbridges': len(self.sbridges), 'pistacks': len(self.pi_stacks),
                       'pications': len(self.pi_cations), 'halogens': len(self.halogens), 'metal': len(self.metal_complexes),

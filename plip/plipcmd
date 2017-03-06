@@ -152,7 +152,7 @@ def main(inputstructs, inputpdbids):
             if os.path.getsize(inputstruct) == 0:
                 sysexit(2, 'Empty PDB file\n')  # Exit if input file is empty
             if num_structures > 1:
-                basename = inputstruct.split('.')[0].split('/')[-1]
+                basename = inputstruct.split('.')[-2].split('/')[-1]
                 config.OUTPATH = '/'.join([config.BASEPATH, basename])
             process_pdb(inputstruct, config.OUTPATH)
     else:  # Try to fetch the current PDB structure(s) directly from the RCBS server
