@@ -300,9 +300,9 @@ def ring_is_planar(ring, r_atoms):
 def classify_by_name(names):
     """Classify a (composite) ligand by the HETID(s)"""
     if len(names) > 3:  # Polymer
-        if len({'U', 'A', 'C', 'G'}.intersection(set(names))) != 0:
+        if len(set(config.RNA).intersection(set(names))) != 0:
             ligtype = 'RNA'
-        elif len({'DT', 'DA', 'DC', 'DG'}.intersection(set(names))) != 0:
+        elif len(set(config.DNA).intersection(set(names))) != 0:
             ligtype = 'DNA'
         else:
             ligtype = "POLYMER"

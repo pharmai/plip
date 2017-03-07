@@ -21,6 +21,7 @@ limitations under the License.
 import time
 from operator import itemgetter
 import sys
+import config
 
 
 # External libraries
@@ -43,6 +44,11 @@ class StructureReport:
         report = et.Element('report')
         plipversion = et.SubElement(report, 'plipversion')
         plipversion.text = __version__
+        mode = et.SubElement(report, 'mode')
+        if config.DNARECEPTOR:
+            mode.text = 'dna_receptor'
+        else:
+            mode.text = 'default'
         pdbid = et.SubElement(report, 'pdbid')
         pdbid.text = self.mol.pymol_name.upper()
         filetype = et.SubElement(report, 'filetype')
@@ -66,6 +72,8 @@ class StructureReport:
         textlines.append('Created on %s using PLIP v%s\n' % (time.strftime("%Y/%m/%d"), __version__))
         if len(self.excluded) != 0:
             textlines.append('Excluded molecules as ligands: %s\n' % ','.join([lig for lig in self.excluded]))
+        if config.DNARECEPTOR:
+            textlines.append('DNA/RNA in structure was chosen as the receptor part.\n')
         return textlines
 
     def get_bindingsite_data(self):

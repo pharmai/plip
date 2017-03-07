@@ -364,6 +364,9 @@ class LigandFinder:
         """Given an OpenBabel Molecule, get all ligands, their names, and water"""
 
         candidates1 = [o for o in pybel.ob.OBResidueIter(self.proteincomplex.OBMol) if not o.GetResidueProperty(9) and self.is_het_residue(o)]
+
+        if config.DNARECEPTOR: # If DNA is the receptor, don't consider DNA as a ligand
+            candidates1 = [res for res in candidates1 if res.GetName() not in config.DNA+config.RNA]
         all_lignames = set([a.GetName() for a in candidates1])
 
         water = [o for o in pybel.ob.OBResidueIter(self.proteincomplex.OBMol) if o.GetResidueProperty(9)]
@@ -1295,7 +1298,10 @@ class PDBComplex:
         if len(self.excluded) != 0:
             write_message("Excluded molecules as ligands: %s\n" % ','.join([lig for lig in self.excluded]))
 
-        self.resis = [obres for obres in pybel.ob.OBResidueIter(self.protcomplex.OBMol) if obres.GetResidueProperty(0)]
+        if config.DNARECEPTOR:
+            self.resis = [obres for obres in pybel.ob.OBResidueIter(self.protcomplex.OBMol) if obres.GetName() in config.DNA+config.RNA]
+        else:
+            self.resis = [obres for obres in pybel.ob.OBResidueIter(self.protcomplex.OBMol) if obres.GetResidueProperty(0)]
 
         num_ligs = len(self.ligands)
         if num_ligs == 1:

@@ -114,6 +114,7 @@ def visualize_in_pymol(plcomplex):
 
 
     vis.make_initial_selections()
+
     vis.show_hydrophobic()  # Hydrophobic Contacts
     vis.show_hbonds()  # Hydrogen Bonds
     vis.show_halogen()  # Halogen Bonds
@@ -125,10 +126,10 @@ def visualize_in_pymol(plcomplex):
 
     vis.refinements()
 
-
     vis.zoom_to_ligand()
 
     vis.selections_cleanup()
+
     vis.selections_group()
     vis.additional_cleanup()
     if config.PEPTIDES != []:

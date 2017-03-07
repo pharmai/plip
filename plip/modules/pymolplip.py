@@ -98,6 +98,7 @@ class PyMOLVisualizer:
         if not len(hydroph.bs_ids) == 0:
             self.select_by_ids('Hydrophobic-P', hydroph.bs_ids, restrict=self.protname)
             self.select_by_ids('Hydrophobic-L', hydroph.lig_ids, restrict=self.ligname)
+
             for i in hydroph.pairs_ids:
                 cmd.select('tmp_bs', 'id %i & %s' % (i[0], self.protname))
                 cmd.select('tmp_lig', 'id %i & %s' % (i[1], self.ligname))
@@ -291,7 +292,11 @@ class PyMOLVisualizer:
 
         selections = cmd.get_names("selections")
         for selection in selections:
-            if len(cmd.get_model(selection).atom) == 0:
+            try:
+                empty = len(cmd.get_model(selection).atom) == 0
+            except:
+                empty = True
+            if empty:
                 cmd.delete(selection)
         cmd.deselect()
         cmd.delete('tmp*')

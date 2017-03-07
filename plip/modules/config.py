@@ -32,6 +32,7 @@ NOFIX = False  # Turn off fixing of errors in PDB files
 PEPTIDES = []  # Definition which chains should be considered as peptide ligands
 INTRA = None
 KEEPMOD = False
+DNARECEPTOR = False
 
 # Configuration file for Protein-Ligand Interaction Profiler (PLIP)
 # Set thresholds for detection of interactions
@@ -59,6 +60,14 @@ WATER_BRIDGE_OMEGA_MIN = 75  # Min. angle between acceptor, water oxygen and don
 WATER_BRIDGE_OMEGA_MAX = 140  # Max. angle between acceptor, water oxygen and donor hydrogen (Jiang et al., 2005)
 WATER_BRIDGE_THETA_MIN = 100  # Min. angle between water oxygen, donor hydrogen and donor atom (Jiang et al., 2005)
 METAL_DIST_MAX = 3.0  # Max. distance between metal ion and interacting atom (Harding, 2001)
+
+#########
+# Names #
+#########
+
+# Names of RNA and DNA residues to be considered (detection by name)
+RNA = ['U', 'A', 'C', 'G']
+DNA = ['DT', 'DA', 'DC', 'DG']
 
 #############
 # Whitelist #

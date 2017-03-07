@@ -209,6 +209,9 @@ if __name__ == '__main__':
     parser.add_argument("--nofix", dest="nofix", default=False,
                         help="Turns off fixing of PDB files.",
                         action="store_true")
+    parser.add_argument("--dnareceptor", dest="dnareceptor", default=False,
+                        help="Uses the DNA instead of the protein as a receptor for interactions.",
+                        action="store_true")
     ligandtype = parser.add_mutually_exclusive_group()  # Either peptide/inter or intra mode
     ligandtype.add_argument("--peptides", "--inter", dest="peptides", default=[],
                         help="Allows to define one or multiple chains as peptide ligands or to detect inter-chain contacts",
@@ -251,6 +254,7 @@ if __name__ == '__main__':
     config.INTRA = arguments.intra
     config.NOFIX = arguments.nofix
     config.KEEPMOD = arguments.keepmod
+    config.DNARECEPTOR = arguments.dnareceptor
     # Assign values to global thresholds
     for t in thresholds:
         tvalue = getattr(arguments, t.name)
