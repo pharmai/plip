@@ -64,7 +64,7 @@ class Interaction(XMLStorage):
         self.id = interaction_part.get('id')
         self.resnr = self.getdata(interaction_part, 'resnr')
         self.restype = self.getdata(interaction_part, 'restype')
-        self.reschain = self.getdata(interaction_part, 'reschain')
+        self.reschain = self.getdata(interaction_part, 'reschain', force_string=True)
         self.ligcoo = self.getcoordinates(interaction_part, 'ligcoo')
         self.protcoo = self.getcoordinates(interaction_part, 'protcoo')
 
@@ -267,7 +267,7 @@ class BSite(XMLStorage):
     def get_counts(self):
         """counts the interaction types and backbone hydrogen bonding in a binding site"""
 
-        hbondsback = len([hb for hb in self.hbonds if hb.sidechain == 'F'])
+        hbondsback = len([hb for hb in self.hbonds if not hb.sidechain])
         counts = {'hydrophobics': len(self.hydrophobics), 'hbonds': len(self.hbonds),
                       'wbridges': len(self.wbridges), 'sbridges': len(self.sbridges), 'pistacks': len(self.pi_stacks),
                       'pications': len(self.pi_cations), 'halogens': len(self.halogens), 'metal': len(self.metal_complexes),

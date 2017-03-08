@@ -1,9 +1,9 @@
 Changelog
 ---------
 
-# Next Version
+### 1.3.3
 * __Adds XML Parser module for PLIP XML files__
-* Detection of intramolecular interactions with --intra (experimental feature)
+* Detection of intramolecular interactions with --intra
 * improved error correction in PDB files
 
 ### 1.3.2

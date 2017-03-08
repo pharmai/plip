@@ -27,7 +27,7 @@ import config
 # External libraries
 import lxml.etree as et
 
-__version__ = '1.3.2'
+__version__ = '1.3.3'
 
 class StructureReport:
     """Creates reports (xml or txt) for one structure/"""
@@ -44,6 +44,11 @@ class StructureReport:
         report = et.Element('report')
         plipversion = et.SubElement(report, 'plipversion')
         plipversion.text = __version__
+        date_of_creation = et.SubElement(report, 'date_of_creation')
+        date_of_creation.text = time.strftime("%Y/%m/%d")
+        citation_information = et.SubElement(report, 'citation_information')
+        citation_information.text = "Salentin,S. et al. PLIP: fully automated protein-ligand interaction profiler. " \
+           "Nucl. Acids Res. (1 July 2015) 43 (W1): W443-W447. doi: 10.1093/nar/gkv315"
         mode = et.SubElement(report, 'mode')
         if config.DNARECEPTOR:
             mode.text = 'dna_receptor'
@@ -70,6 +75,9 @@ class StructureReport:
         textlines = ['Prediction of noncovalent interactions for PDB structure %s' % self.mol.pymol_name.upper(), ]
         textlines.append("=" * len(textlines[0]))
         textlines.append('Created on %s using PLIP v%s\n' % (time.strftime("%Y/%m/%d"), __version__))
+        textlines.append('If you are using PLIP in your work, please cite:')
+        textlines.append('Salentin,S. et al. PLIP: fully automated protein-ligand interaction profiler.')
+        textlines.append('Nucl. Acids Res. (1 July 2015) 43 (W1): W443-W447. doi: 10.1093/nar/gkv315\n')
         if len(self.excluded) != 0:
             textlines.append('Excluded molecules as ligands: %s\n' % ','.join([lig for lig in self.excluded]))
         if config.DNARECEPTOR:
@@ -104,10 +112,8 @@ class StructureReport:
         if not as_string:
             with open('%s/report.txt' % self.outpath, 'w') as f:
                 [f.write(textline + '\n') for textline in self.txtreport]
-
-
-
-
+        else:
+            print '\n'.join(self.txtreport)
 
 
 class BindingSiteReport:

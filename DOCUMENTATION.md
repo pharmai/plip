@@ -129,6 +129,17 @@ To switch into protein-peptide interaction mode, start PLIP with the option `--p
 plip -i 5hi4 --peptides I -vx
 ```
 
+### Detection of intra-chain interactions (__beta__)
+Intra-protein interactions are important for the stabilization of a structure and can give valuable insights for protein engineering and drug discovery.
+PLIP now supports detection of interactions within one chain.
+To switch into intra-chain interaction mode, start PLIP with the option `--intra`, followed by the protein chain of interest, e.g.:
+
+```bash
+plip -i 5b2m --intra A -yv
+```
+Please note that detection within a chain takes much longer than detection of protein-ligand interactions,
+especially for large structures.
+
 ## Changing detection thresholds
 The PLIP algorithm uses a rule-based detection to report non-covalent interaction between proteins and their partners.
 The current settings are based on literature values and have been refined based on extensive testing with independent cases from mainly crystallography journals, covering a broad range of structure resolutions.
