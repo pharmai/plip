@@ -1,6 +1,10 @@
 Changelog
 ---------
 
+### Next Version
+* __DNA/RNA can be selected as receptor with --dnareceptor__
+* Improved handling of NMR structures
+
 ### 1.3.3
 * __Adds XML Parser module for PLIP XML files__
 * Detection of intramolecular interactions with --intra

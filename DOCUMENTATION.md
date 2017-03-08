@@ -140,6 +140,12 @@ plip -i 5b2m --intra A -yv
 Please note that detection within a chain takes much longer than detection of protein-ligand interactions,
 especially for large structures.
 
+### Interactions of molecules with DNA/RNA (__beta__)
+PLIP can characterize interactions between ligands and DNA/RNA.
+A special mode allows to switch from protein to DNA/RNA as the receptor molecule in the structure.
+To change the receptor mode, start PLIP with the option `--dnareceptor`.
+
+
 ## Changing detection thresholds
 The PLIP algorithm uses a rule-based detection to report non-covalent interaction between proteins and their partners.
 The current settings are based on literature values and have been refined based on extensive testing with independent cases from mainly crystallography journals, covering a broad range of structure resolutions.
