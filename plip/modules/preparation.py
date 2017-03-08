@@ -64,11 +64,16 @@ class PDBParser:
         if not config.NOFIX:
             if not config.PLUGIN_MODE:
                 lastnum = 0 # Atom numbering (has to be consecutive)
+                other_models = False
                 for line in fil:
-                    corrected_line, newnum = self.fix_pdbline(line, lastnum)
-                    if corrected_line is not None:
-                        corrected_lines.append(corrected_line)
-                        lastnum = newnum
+                    if not other_models: # Only consider the first model in an NRM structure
+                        corrected_line, newnum = self.fix_pdbline(line, lastnum)
+                        if corrected_line is not None:
+                            if corrected_line.startswith('MODEL'):
+                                if int(corrected_line[13]) > 1: # MODEL 2,3,4 etc.
+                                    other_models = True
+                            corrected_lines.append(corrected_line)
+                            lastnum = newnum
                 corrected_pdb = ''.join(corrected_lines)
             else:
                 corrected_pdb = self.pdbpath

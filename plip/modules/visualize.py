@@ -132,6 +132,12 @@ def visualize_in_pymol(plcomplex):
 
     vis.selections_group()
     vis.additional_cleanup()
+    if config.DNARECEPTOR:
+        # Rename Cartoon selection to Line selection and change repr.
+        cmd.set_name('%sCartoon' % plcomplex.pdbid, '%sLines' % plcomplex.pdbid)
+        cmd.hide('cartoon', '%sLines' % plcomplex.pdbid)
+        cmd.show('lines', '%sLines' % plcomplex.pdbid)
+
     if config.PEPTIDES != []:
         filename = "%s_PeptideChain%s" % (pdbid.upper(), plcomplex.chain)
         if config.PYMOL:
