@@ -70,8 +70,12 @@ class PDBParser:
                         corrected_line, newnum = self.fix_pdbline(line, lastnum)
                         if corrected_line is not None:
                             if corrected_line.startswith('MODEL'):
-                                if int(corrected_line[13]) > 1: # MODEL 2,3,4 etc.
-                                    other_models = True
+                                try: # Get number of MODEL (1,2,3)
+                                    model_num = int(corrected_line[10:14])
+                                    if model_num > 1: # MODEL 2,3,4 etc.
+                                        other_models = True
+                                except ValueError:
+                                    write_message("Ignoring invalid MODEL entry: %s\n" % corrected_line, mtype='debug')
                             corrected_lines.append(corrected_line)
                             lastnum = newnum
                 corrected_pdb = ''.join(corrected_lines)
@@ -161,7 +165,11 @@ class PDBParser:
                     self.num_fixed_lines += 1
         if pdbline.startswith('HETATM'):
             newnum = lastnum + 1
-            currentnum = int(pdbline[6:11])
+            try:
+                currentnum = int(pdbline[6:11])
+            except ValueError:
+                currentnum = None
+                write_message("Invalid HETATM entry: %s\n" % pdbline, mtype='debug')
             if lastnum + 1 != currentnum:
                 pdbline = pdbline[:6] + (5 - len(str(newnum))) * ' ' + str(newnum) + ' ' + pdbline[12:]
                 fixed = True
@@ -359,7 +367,7 @@ class LigandFinder:
             # Only residues with at least one HETATM entry are processed as ligands
             het_atoms = []
             for atm in pybel.ob.OBResidueAtomIter(obres):
-                    het_atoms.append(obres.IsHetAtom(atm))
+                het_atoms.append(obres.IsHetAtom(atm))
             if True in het_atoms:
                 return True
         return False
