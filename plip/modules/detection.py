@@ -136,15 +136,19 @@ def pistacking(rings_bs, rings_lig):
         resnr_l, restype_l, reschain_l = whichresnumber(l.orig_atoms[0]), whichrestype(l.orig_atoms[0]), whichchain(l.orig_atoms[0])
 
         # SELECTION BY DISTANCE, ANGLE AND OFFSET
+        passed = False
         if config.MIN_DIST < d < config.PISTACK_DIST_MAX:
             if 0 < a < config.PISTACK_ANG_DEV and offset < config.PISTACK_OFFSET_MAX:
                 ptype = 'P'
+                passed = True
             if 90 - config.PISTACK_ANG_DEV < a < 90 + config.PISTACK_ANG_DEV and offset < config.PISTACK_OFFSET_MAX:
                 ptype = 'T'
-            contact = data(proteinring=r, ligandring=l, distance=d, angle=a, offset=offset,
-                           type='T', resnr=resnr, restype=restype, reschain=reschain,
-                           resnr_l=resnr_l, restype_l=restype_l, reschain_l=reschain_l)
-            pairings.append(contact)
+                passed = True
+            if passed:
+                contact = data(proteinring=r, ligandring=l, distance=d, angle=a, offset=offset,
+                               type='T', resnr=resnr, restype=restype, reschain=reschain,
+                               resnr_l=resnr_l, restype_l=restype_l, reschain_l=reschain_l)
+                pairings.append(contact)
     return filter_contacts(pairings)
 
 

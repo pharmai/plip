@@ -486,6 +486,20 @@ Residue type of interacting amino acid
 
 Residue chain of interacting amino acid
 
+**resnr_ligand**
+
+Residue number of interacting ligand residue
+
+
+**restype_ligand**
+
+Residue type of interacting ligand residue
+
+
+**reschain_ligand**
+
+Residue chain of interacting ligand residue
+
 
 **dist**
 
