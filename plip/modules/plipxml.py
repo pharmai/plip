@@ -65,6 +65,9 @@ class Interaction(XMLStorage):
         self.resnr = self.getdata(interaction_part, 'resnr')
         self.restype = self.getdata(interaction_part, 'restype')
         self.reschain = self.getdata(interaction_part, 'reschain', force_string=True)
+        self.resnr_lig = self.getdata(interaction_part, 'resnr_lig')
+        self.restype_lig = self.getdata(interaction_part, 'restype_lig')
+        self.reschain_lig = self.getdata(interaction_part, 'reschain_lig', force_string=True)
         self.ligcoo = self.getcoordinates(interaction_part, 'ligcoo')
         self.protcoo = self.getcoordinates(interaction_part, 'protcoo')
 

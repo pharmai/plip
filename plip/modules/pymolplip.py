@@ -417,6 +417,10 @@ class PyMOLVisualizer:
         cmd.remove('%sCartoon and chain %s' % (self.protname, self.plcomplex.chain))
         cmd.set('cartoon_side_chain_helper', 0)
 
+    def adapt_for_intra(self):
+        """Adapt visualization for intra-protein interactions"""
+        
+
 
 
 
@@ -461,3 +465,6 @@ class PyMOLVisualizer:
 
         if self.ligandtype in ['PEPTIDE', 'INTRA']:
             self.adapt_for_peptides()
+
+        if self.ligandtype == 'INTRA':
+            self.adapt_for_intra()
