@@ -4,6 +4,9 @@ Changelog
 ### Next Version
 * __DNA/RNA can be selected as receptor with --dnareceptor__
 * Improved handling of NMR structures
+* Filter for extremely large ligands
+* Speed-up for file reading and parallel visualization
+* More debugging messages
 
 ### 1.3.3
 * __Adds XML Parser module for PLIP XML files__

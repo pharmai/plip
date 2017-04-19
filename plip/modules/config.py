@@ -61,6 +61,9 @@ WATER_BRIDGE_OMEGA_MAX = 140  # Max. angle between acceptor, water oxygen and do
 WATER_BRIDGE_THETA_MIN = 100  # Min. angle between water oxygen, donor hydrogen and donor atom (Jiang et al., 2005)
 METAL_DIST_MAX = 3.0  # Max. distance between metal ion and interacting atom (Harding, 2001)
 
+# Other thresholds
+MAX_COMPOSITE_LENGTH = 200 # Filter out ligands with more than 200 fragments
+
 #########
 # Names #
 #########

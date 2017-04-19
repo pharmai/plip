@@ -263,8 +263,12 @@ class LigandFinder:
                 res_kmers = self.identify_kmers(all_res_dict)
             else:
                 res_kmers = [[a, ] for a in ligand_residues]
+            write_message("{} ligand kmer(s) detected for closer inspection.\n".format(len(res_kmers)), mtype='debug')
             for kmer in res_kmers:  # iterate over all ligands and extract molecules + information
-                ligands.append(self.extract_ligand(kmer))
+                if len(kmer) > config.MAX_COMPOSITE_LENGTH:
+                    write_message("Ligand kmer(s) filtered out with a length of {} fragments ({} allowed).\n".format(len(kmer), config.MAX_COMPOSITE_LENGTH), mtype='debug')
+                else:
+                    ligands.append(self.extract_ligand(kmer))
 
         else:
             # Extract peptides from given chains
@@ -285,7 +289,7 @@ class LigandFinder:
         members = [(res.GetName(), res.GetChain(), int32_to_negative(res.GetNum())) for res in kmer]
         members = sort_members_by_importance(members)
         rname, rchain, rnum = members[0]
-        write_message("Finalizing extraction for ligand %s:%s:%s\n" % (rname, rchain, rnum), mtype='debug')
+        write_message("Finalizing extraction for ligand %s:%s:%s with %i elements\n" % (rname, rchain, rnum, len(kmer)), mtype='debug')
         names = [x[0] for x in members]
         longname = '-'.join([x[0] for x in members])
 
@@ -296,6 +300,7 @@ class LigandFinder:
         else:
             # Classify a ligand by its HETID(s)
             ligtype = classify_by_name(names)
+        write_message("Ligand classified as {}\n".format(ligtype), mtype='debug')
 
         hetatoms = set()
         for obresidue in kmer:
@@ -308,6 +313,7 @@ class LigandFinder:
                                     if not self.mapper.mapid(atm[0], mtype='protein',
                                                              to='internal') in self.altconformations])
             hetatoms.update(hetatoms_res)
+        write_message("Hetero atoms determined (n={})\n".format(len(hetatoms)), mtype='debug')
 
         hetatoms = dict(hetatoms)  # make it a dict with idx as key and OBAtom as value
         lig = pybel.ob.OBMol()  # new ligand mol
@@ -318,6 +324,7 @@ class LigandFinder:
             # ids of all neighbours of obatom
             neighbours[idx] = set([neighbour_atom.GetIdx() for neighbour_atom
                                    in pybel.ob.OBAtomAtomIter(obatom)]) & set(hetatoms.keys())
+        write_message("Atom neighbours mapped\n", mtype='debug')
 
         ##############################################################
         # map the old atom idx of OBMol to the new idx of the ligand #
@@ -341,6 +348,8 @@ class LigandFinder:
 
         lig.title = ':'.join((rname, rchain, str(rnum)))
         self.mapper.ligandmaps[lig.title] = mapold
+
+        write_message("Renumerated molecule generated\n", mtype='debug')
 
         atomorder = canonicalize(lig)
 
@@ -1299,14 +1308,16 @@ class PDBComplex:
                 self.pymol_name = potential_name
         write_message("Pymol Name set as: '%s'\n" % self.pymol_name, mtype='debug')
 
-        self.protcomplex.OBMol.AddPolarHydrogens()
-        for atm in self.protcomplex:
-            self.atoms[atm.idx] = atm
-
         # Extract and prepare ligands
         ligandfinder = LigandFinder(self.protcomplex, self.altconf, self.modres, self.covalent, self.Mapper)
         self.ligands = ligandfinder.ligands
         self.excluded = ligandfinder.excluded
+
+        # Add polar hydrogens
+        self.protcomplex.OBMol.AddPolarHydrogens()
+        for atm in self.protcomplex:
+            self.atoms[atm.idx] = atm
+        write_message("Assigned polar hydrogens\n", mtype='debug')
 
         if len(self.excluded) != 0:
             write_message("Excluded molecules as ligands: %s\n" % ','.join([lig for lig in self.excluded]))

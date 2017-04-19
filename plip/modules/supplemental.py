@@ -420,25 +420,30 @@ def read(fil):
 def readmol(path, as_string=False):
     """Reads the given molecule file and returns the corresponding Pybel molecule as well as the input file type.
     In contrast to the standard Pybel implementation, the file is closed properly."""
-    supported_formats = ['pdb', 'pdbqt', 'mmcif']
+    supported_formats = ['pdb', 'mmcif']
     obc = pybel.ob.OBConversion()
 
-    if as_string:
-        filestr = path
-    else:
-        with read(path) as f:
-            filestr = str(f.read())
     for sformat in supported_formats:
         obc.SetInFormat(sformat)
+        write_message("Detected {} as format. Now trying to read file with OpenBabel...\n".format(sformat), mtype='debug')
         mol = pybel.ob.OBMol()
-        obc.ReadString(mol, filestr)
-        if not mol.Empty():
-            if sformat == 'pdbqt':
-                write_message('[EXPERIMENTAL] Input is PDBQT file. Some features (especially visualization) might not '
-                        'work as expected. Please consider using PDB format instead.\n')
-            if sformat == 'mmcif':
-                write_message('[EXPERIMENTAL] Input is mmCIF file. Most features do currently not work with this format.\n')
-            return pybel.Molecule(mol), sformat
+
+        # Read molecules with single bond information
+        if as_string:
+            read_file = pybel.readstring(format=sformat, filename=path, opt={"s": None})
+        else:
+            read_file = pybel.readfile(format=sformat, filename=path, opt={"s": None})
+        try:
+            mymol = read_file.next()
+        except StopIteration:
+            sysexit(4, 'File contains no valid molecules.\n')
+
+        write_message("Molecule successfully read.\n", mtype='debug')
+
+        # Assign multiple bonds
+        mymol.OBMol.PerceiveBondOrders()
+        return mymol, sformat
+
     sysexit(4, 'No valid file format provided.')
 
 

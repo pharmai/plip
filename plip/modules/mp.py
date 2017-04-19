@@ -34,7 +34,7 @@ class SubProcessError(Exception):
 def universal_worker(input_pair):
     """This is a wrapper function expecting a tiplet of function, single
        argument, dict of keyword arguments. The provided function is called
-       with the appropriate arguments.""" 
+       with the appropriate arguments."""
     function, arg, kwargs = input_pair
     return function(arg, **kwargs)
 
@@ -48,22 +48,21 @@ def parallel_fn(f):
     """Simple wrapper function, returning a parallel version of the given function f.
        The function f must have one argument and may have an arbitray number of
        keyword arguments. """
-       
+
     def simple_parallel(func, sequence, **args):
         """ f takes an element of sequence as input and the keyword args in **args"""
-        multiprocessing.freeze_support()
         if 'processes' in args:
             processes = args.get('processes')
             del args['processes']
         else:
             processes = multiprocessing.cpu_count()
-        
-        pool = multiprocessing.Pool(processes=processes)  # depends on available cores
-        result = pool.map(universal_worker, pool_args(func, sequence, args))
-        cleaned = [x for x in result if x is not None]  # getting results
-        cleaned = asarray(cleaned)
+
+        pool = multiprocessing.Pool(processes)  # depends on available cores
+
+        result = pool.map_async(universal_worker, pool_args(func, sequence, args))
         pool.close()
         pool.join()
+        cleaned = [x for x in result.get() if x is not None]  # getting results
+        cleaned = asarray(cleaned)
         return cleaned
     return partial(simple_parallel, f)
-
