@@ -168,7 +168,7 @@ class BindingSiteReport:
         # WATER-BRIDGES #
         #################
 
-        self.waterbridge_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'RESNR_LIG', 'RESTYPE_LIG', 'RESCHAIN_LIG','RESNR_LIG', 'DIST_A-W', 'DIST_D-W', 'DON_ANGLE', 'WATER_ANGLE',
+        self.waterbridge_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'RESNR_LIG', 'RESTYPE_LIG', 'RESCHAIN_LIG', 'DIST_A-W', 'DIST_D-W', 'DON_ANGLE', 'WATER_ANGLE',
                                      'PROTISDON', 'DONOR_IDX', 'DONORTYPE', 'ACCEPTOR_IDX', 'ACCEPTORTYPE', 'WATER_IDX',
                                      'LIGCOO', 'PROTCOO', 'WATERCOO')
         # The coordinate format is an exception here, since the interaction is not only between ligand and protein
