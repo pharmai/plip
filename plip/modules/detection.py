@@ -146,7 +146,7 @@ def pistacking(rings_bs, rings_lig):
                 passed = True
             if passed:
                 contact = data(proteinring=r, ligandring=l, distance=d, angle=a, offset=offset,
-                               type='T', resnr=resnr, restype=restype, reschain=reschain,
+                               type=ptype, resnr=resnr, restype=restype, reschain=reschain,
                                resnr_l=resnr_l, restype_l=restype_l, reschain_l=reschain_l)
                 pairings.append(contact)
     return filter_contacts(pairings)
