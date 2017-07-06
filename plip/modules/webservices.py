@@ -16,11 +16,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-# Own modules
-from supplemental import write_message, sysexit
-
-# Python standard libary
+# Python standard library
+from __future__ import absolute_import
 import urllib2
+
+# Own modules
+from plip.modules.supplemental import write_message, sysexit
 
 # External libraries
 import lxml.etree as et

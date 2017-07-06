@@ -19,24 +19,16 @@ limitations under the License.
 
 # Compatibility
 from __future__ import print_function
+from __future__ import absolute_import
 
 # Own modules
-try:
-    from plip.modules.preparation import *
-    from plip.modules.visualize import visualize_in_pymol
-    from plip.modules.plipremote import VisualizerData
-    from plip.modules.report import StructureReport,__version__
-    from plip.modules import config
-    from plip.modules.mp import parallel_fn
-    from plip.modules.webservices import check_pdb_status, fetch_pdb
-except ImportError:
-    from modules.preparation import *
-    from modules.visualize import visualize_in_pymol
-    from modules.plipremote import VisualizerData
-    from modules.report import StructureReport, __version__
-    from modules import config
-    from modules.mp import parallel_fn
-    from modules.webservices import check_pdb_status, fetch_pdb
+from plip.modules.preparation import *
+from plip.modules.visualize import visualize_in_pymol
+from plip.modules.plipremote import VisualizerData
+from plip.modules.report import StructureReport,__version__
+from plip.modules import config
+from plip.modules.mp import parallel_fn
+from plip.modules.webservices import check_pdb_status, fetch_pdb
 
 # Python standard library
 import sys

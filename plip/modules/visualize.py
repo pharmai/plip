@@ -16,12 +16,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+# Python standard library
+from __future__ import absolute_import
 
 # Own modules
-from supplemental import initialize_pymol, start_pymol, write_message, colorlog, sysexit
-import config
-from pymolplip import PyMOLVisualizer
-from plipremote import VisualizerData
+from plip.modules.supplemental import initialize_pymol, start_pymol, write_message, colorlog, sysexit
+import plip.modules.config as config
+from plip.modules.pymolplip import PyMOLVisualizer
+from plip.modules.plipremote import VisualizerData
 
 # Python Standard Library
 import json

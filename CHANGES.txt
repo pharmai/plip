@@ -1,6 +1,11 @@
 Changelog
 ---------
 
+### Next version
+* Preparation for Python 3: Imports
+* small correction for PDB fixing
+* includes TODO files with user suggestions
+
 ### 1.3.4
 * __DNA/RNA can be selected as receptor with --dnareceptor__
 * __Composite ligands and intra-protein mode: Annotation which part of the ligand interacts with the receptor__

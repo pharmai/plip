@@ -1,0 +1,14 @@
+Possible future features
+========================
+
+* Python 3 support
+* support special characters in filenames (e.g. spanish accents), currently cause problems in XML report
+* support for mmcif format
+* support presets for hydrogenation
+* detection of steric clashes
+* detection of anion-pi interactions
+* detection of electrostatic repulsion force_string
+* detection of Keesom forces
+* weak hydrogen bonding
+* visualization: show hydrogen atoms in PyMOL for hydrogen bonds and adapt interaction vector accordingly
+* use SMARTS for detection of chemical features (charged groups, etc.)

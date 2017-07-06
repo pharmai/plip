@@ -24,7 +24,6 @@ from itertools import groupby
 import sys
 import urllib2
 
-#TODO True/False values for all corresponding attributes
 
 class XMLStorage:
     """Generic class for storing XML data from PLIP XML files."""

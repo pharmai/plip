@@ -18,12 +18,13 @@ limitations under the License.
 
 
 # Python Standard Library
+from __future__ import absolute_import
 from operator import itemgetter
 
 # Own modules
-from detection import *
-from supplemental import *
-import config
+from plip.modules.detection import *
+from plip.modules.supplemental import *
+import plip.modules.config
 
 
 ################
@@ -37,6 +38,7 @@ class PDBParser:
         self.num_fixed_lines = 0
         self.covlinkage = namedtuple("covlinkage", "id1 chain1 pos1 conf1 id2 chain2 pos2 conf2")
         self.proteinmap, self.modres, self.covalent, self.altconformations, self.corrected_pdb = self.parse_pdb()
+
 
     def parse_pdb(self):
         """Extracts additional information from PDB files.
@@ -174,7 +176,7 @@ class PDBParser:
                 pdbline = pdbline[:6] + (5 - len(str(newnum))) * ' ' + str(newnum) + ' ' + pdbline[12:]
                 fixed = True
             # No chain assigned or number assigned as chain
-            if pdbline[21] == ' ' or re.match("[0-9]", pdbline[21]):
+            if pdbline[21] == ' ':
                 pdbline = pdbline[:21] + 'Z' + pdbline[22:]
                 fixed = True
             # No residue number assigned
@@ -234,7 +236,6 @@ class LigandFinder:
         if len(all_from_chain) == 0:
             return None
         else:
-            #TODO Can be done shorter with a split
             water = [o for o in all_from_chain if o.GetResidueProperty(9)]
             non_water = water = [o for o in all_from_chain if not o.GetResidueProperty(9)]
             ligand = self.extract_ligand(non_water)
@@ -421,7 +422,8 @@ class LigandFinder:
                        (link.id2, link.chain2, link.pos2)] for link in
                       [c for c in self.covalent if c.id1 in self.lignames_kept and c.id2 in self.lignames_kept and
                        c.conf1 in ['A', ''] and c.conf2 in ['A', '']
-                      and (c.id1, c.chain1, c.pos1) in residues and (c.id2, c.chain2, c.pos2) in residues]]
+                      and (c.id1, c.chain1, c.pos1) in residues
+                      and (c.id2, c.chain2, c.pos2) in residues]]
         kmers = cluster_doubles(ligdoubles)
         if not kmers:  # No ligand kmers, just normal independent ligands
             return [[residues[res]] for res in residues]

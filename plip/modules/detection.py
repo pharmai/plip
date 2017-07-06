@@ -17,12 +17,13 @@ limitations under the License.
 """
 
 # Python standard library
+from __future__ import absolute_import
 import itertools
 from collections import defaultdict
 
 # Own modules
-from supplemental import *
-import config
+from plip.modules.supplemental import *
+import plip.modules.config
 
 
 def filter_contacts(pairings):

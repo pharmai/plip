@@ -406,6 +406,7 @@ class PyMOLVisualizer:
         cmd.set('direct', 0)
         cmd.set('ray_shadow', 0)  # Gives the molecules a flat, modern look
         cmd.set('ambient_occlusion_mode', 1)
+        cmd.set('ray_opaque_background', 0) # Transparent background
 
     def adapt_for_peptides(self):
         """Adapt visualization for peptide ligands and interchain contacts"""
@@ -419,7 +420,7 @@ class PyMOLVisualizer:
 
     def adapt_for_intra(self):
         """Adapt visualization for intra-protein interactions"""
-        
+
 
 
 

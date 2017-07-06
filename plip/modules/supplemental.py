@@ -18,9 +18,10 @@ limitations under the License.
 
 # Compatibility
 from __future__ import print_function
+from __future__ import absolute_import
 
 # PLIP Modules
-import config
+import plip.modules.config as config
 
 # Python standard library
 import re
