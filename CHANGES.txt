@@ -2,9 +2,13 @@ Changelog
 ---------
 
 ### Next version
+-
+
+### 1.3.5
 * Preparation for Python 3: Imports
 * small correction for PDB fixing
 * includes TODO files with user suggestions
+* license adapted to GNU GPLv2
 
 ### 1.3.4
 * __DNA/RNA can be selected as receptor with --dnareceptor__
