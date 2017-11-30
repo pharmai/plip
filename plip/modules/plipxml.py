@@ -274,6 +274,7 @@ class BSite(XMLStorage):
                       'wbridges': len(self.wbridges), 'sbridges': len(self.sbridges), 'pistacks': len(self.pi_stacks),
                       'pications': len(self.pi_cations), 'halogens': len(self.halogens), 'metal': len(self.metal_complexes),
                       'hbond_back': hbondsback, 'hbond_nonback': (len(self.hbonds) - hbondsback)}
+        counts['total'] = counts['hydrophobics'] + counts['hbonds'] + counts['wbridges'] + counts['sbridges'] + counts['pistacks'] + counts['pications'] + counts['halogens'] + counts['metal']
         return counts
 
 class PLIPXML(XMLStorage):
