@@ -24,6 +24,7 @@ from argparse import ArgumentParser
 import time
 import multiprocessing
 import json
+
 # External libraries
 import lxml.etree as et
 
@@ -44,14 +45,14 @@ def threshold_limiter(aparser, arg):
 
 
 
-def process_pdb(pdbfile, outpath):
+def process_pdb(pdbfile, outpath, as_string=False):
     """Analysis of a single PDB file. Can generate textual reports XML, PyMOL session files and images as output."""
     startmessage = '\nStarting analysis of %s\n' % pdbfile.split('/')[-1]
     write_message(startmessage)
     write_message('='*len(startmessage)+'\n')
     mol = PDBComplex()
     mol.output_path = outpath
-    mol.load_pdb(pdbfile)
+    mol.load_pdb(pdbfile, as_string=as_string)
     # #@todo Offers possibility for filter function from command line (by ligand chain, position, hetid)
     for ligand in mol.ligands:
         mol.characterize_complex(ligand)
@@ -79,10 +80,10 @@ def process_pdb(pdbfile, outpath):
             [visualize_in_pymol(plcomplex) for plcomplex in complexes]
 
     if config.XML:  # Generate report in xml format
-        streport.write_xml()
+        streport.write_xml(as_string=config.STDOUT)
 
     if config.TXT:  # Generate report in txt (rst) format
-        streport.write_txt()
+        streport.write_txt(as_string=config.STDOUT)
 
 def download_structure(inputpdbid):
     """Given a PDB ID, downloads the corresponding PDB structure.
@@ -127,13 +128,18 @@ def main(inputstructs, inputpdbids):
     if inputstructs is not None:  # Process PDB file(s)
         num_structures = len(inputstructs)
         inputstructs = remove_duplicates(inputstructs)
+        read_from_stdin = False
         for inputstruct in inputstructs:
-            if os.path.getsize(inputstruct) == 0:
-                sysexit(2, 'Empty PDB file\n')  # Exit if input file is empty
-            if num_structures > 1:
-                basename = inputstruct.split('.')[-2].split('/')[-1]
-                config.OUTPATH = '/'.join([config.BASEPATH, basename])
-            process_pdb(inputstruct, config.OUTPATH)
+            if inputstruct == '-':
+                inputstruct = sys.stdin.read()
+                read_from_stdin = True
+            else:
+                if os.path.getsize(inputstruct) == 0:
+                    sysexit(2, 'Empty PDB file\n')  # Exit if input file is empty
+                if num_structures > 1:
+                    basename = inputstruct.split('.')[-2].split('/')[-1]
+                    config.OUTPATH = '/'.join([config.BASEPATH, basename])
+            process_pdb(inputstruct, config.OUTPATH, as_string=read_from_stdin)
     else:  # Try to fetch the current PDB structure(s) directly from the RCBS server
         num_pdbids = len(inputpdbids)
         inputpdbids =remove_duplicates(inputpdbids)
@@ -157,9 +163,11 @@ if __name__ == '__main__':
 
     parser = ArgumentParser(prog="PLIP", description=descript)
     pdbstructure = parser.add_mutually_exclusive_group(required=True)  # Needs either PDB ID or file
-    pdbstructure.add_argument("-f", "--file", dest="input", nargs="+")
+    pdbstructure.add_argument("-f", "--file", dest="input", nargs="+", help="Set input file, '-' reads from stdin") # '-' as file name reads from stdin
     pdbstructure.add_argument("-i", "--input", dest="pdbid", nargs="+")
-    parser.add_argument("-o", "--out", dest="outpath", default="./")
+    outputgroup = parser.add_mutually_exclusive_group(required=False)  # Needs either outpath or stdout
+    outputgroup.add_argument("-o", "--out", dest="outpath", default="./")
+    outputgroup.add_argument("-O", "--stdout", dest="stdout", action="store_true", default=False, help="Write to stdout instead of file")
     parser.add_argument("-v", "--verbose", dest="verbose", default=False, help="Set verbose mode", action="store_true")
     parser.add_argument("-p", "--pics", dest="pics", default=False, help="Additional pictures", action="store_true")
     parser.add_argument("-x", "--xml", dest="xml", default=False, help="Generate report file in XML format",
@@ -173,8 +181,7 @@ if __name__ == '__main__':
                              "If not set, PLIP uses all available CPUs if possible.",
                         type=int)
     parser.add_argument("--breakcomposite", dest="breakcomposite", default=False,
-                        help="Don't combine ligand fragments into with covalent bonds but treat them as single ligands"
-                             "fot the analysis.",
+                        help="Don't combine ligand fragments with covalent bonds but treat them as single ligands for the analysis.",
                         action="store_true")
     parser.add_argument("--altlocation", dest="altlocation", default=False,
                         help="Also consider alternate locations for atoms (e.g. alternate conformations).",
@@ -220,6 +227,7 @@ if __name__ == '__main__':
     config.TXT = arguments.txt
     config.PICS = arguments.pics
     config.PYMOL = arguments.pymol
+    config.STDOUT = arguments.stdout
     config.OUTPATH = arguments.outpath
     config.OUTPATH = tilde_expansion("".join([config.OUTPATH, '/'])
                                      if not config.OUTPATH.endswith('/') else config.OUTPATH)
