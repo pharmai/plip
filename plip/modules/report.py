@@ -50,7 +50,7 @@ class StructureReport:
         pdbfixes = et.SubElement(report, 'pdbfixes')
         pdbfixes.text = str(self.mol.information['pdbfixes'])
         filename = et.SubElement(report, 'filename')
-        filename.text = str(self.mol.sourcefiles['filename'])
+        filename.text = str(self.mol.sourcefiles.get('filename') or None)
         exligs = et.SubElement(report, 'excluded_ligands')
         for i, exlig in enumerate(self.excluded):
             e = et.SubElement(exligs, 'excluded_ligand', id=str(i + 1))

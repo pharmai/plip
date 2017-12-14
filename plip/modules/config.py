@@ -10,6 +10,7 @@ XML = False
 TXT = False
 PICS = False
 PYMOL = False
+STDOUT = False
 OUTPATH = './'
 BASEPATH = './'
 BREAKCOMPOSITE = False  # Break up composite ligands with covalent bonds

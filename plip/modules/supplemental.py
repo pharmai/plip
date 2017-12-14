@@ -418,13 +418,13 @@ def readmol(path, as_string=False):
 
         # Read molecules with single bond information
         if as_string:
-            read_file = pybel.readstring(format=sformat, filename=path, opt={"s": None})
+            mymol = pybel.readstring(sformat, path)
         else:
             read_file = pybel.readfile(format=sformat, filename=path, opt={"s": None})
-        try:
-            mymol = read_file.next()
-        except StopIteration:
-            sysexit(4, 'File contains no valid molecules.\n')
+            try:
+                mymol = read_file.next()
+            except StopIteration:
+                sysexit(4, 'File contains no valid molecules.\n')
 
         write_message("Molecule successfully read.\n", mtype='debug')
 
