@@ -2,7 +2,9 @@ Changelog
 ---------
 
 ### Next version
-* Read PDB files from stdin with "-f -" and write to stdout with "-O" (capital "O")
+* __Read PDB files from stdin with "-f -" and write to stdout with "-O" (capital "O")__
+* Improves handling of fixed PDB files
+* Option to turn off writing fixed PDB structures to a file ("--nofixfile")
 
 ### 1.3.5
 * Preparation for Python 3: Imports

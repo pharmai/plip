@@ -37,10 +37,9 @@ class PDBParser:
         IV. Alternative conformations
         """
         if self.as_string:
-            fil = self.pdbpath.split('\n')
+            fil = self.pdbpath.rstrip('\n').split('\n') # Removing trailing newline character
         else:
             fil = read(self.pdbpath).readlines()
-        # #@todo Also consider SSBOND entries here
         corrected_lines = []
         i, j = 0, 0  # idx and PDB numbering
         d = {}
@@ -74,7 +73,6 @@ class PDBParser:
         else:
             corrected_pdb = self.pdbpath
             corrected_lines = fil
-
 
         for line in corrected_lines:
             if line.startswith(("ATOM", "HETATM")):
@@ -1294,20 +1292,23 @@ class PDBComplex:
             if pdbparser.num_fixed_lines > 0:
                 write_message('%i lines automatically fixed in PDB input file.\n' % pdbparser.num_fixed_lines)
                 # Save modified PDB file
-                basename = os.path.basename(pdbpath).split('.')[0]
+                if not as_string:
+                    basename = os.path.basename(pdbpath).split('.')[0]
+                else:
+                    basename = "from_stdin"
                 pdbpath_fixed = tmpfile(prefix='plipfixed.' + basename + '_', direc=self.output_path)
                 create_folder_if_not_exists(self.output_path)
                 self.sourcefiles['pdbcomplex'] = pdbpath_fixed
                 self.corrected_pdb = re.sub(r'[^\x00-\x7F]+', ' ', self.corrected_pdb)  # Strip non-unicode chars
-                with open(pdbpath_fixed, 'w') as f:
-                    f.write(self.corrected_pdb)
+                if not config.NOFIXFILE: # Only write to file if this option is not activated
+                    with open(pdbpath_fixed, 'w') as f:
+                        f.write(self.corrected_pdb)
                 self.information['pdbfixes'] = True
 
-        if as_string:
-            self.protcomplex, self.filetype = read_pdb(self.sourcefiles['pdbstring'], as_string=as_string)
-        else:
+
+        if not as_string:
             self.sourcefiles['filename'] = os.path.basename(self.sourcefiles['pdbcomplex'])
-            self.protcomplex, self.filetype = read_pdb(self.sourcefiles['pdbcomplex'], as_string=as_string)
+        self.protcomplex, self.filetype = read_pdb(self.corrected_pdb, as_string=True)
 
         # Update the model in the Mapper class instance
         self.Mapper.original_structure = self.protcomplex.OBMol
