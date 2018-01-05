@@ -425,7 +425,7 @@ def readmol(path, as_string=False):
         else:
             read_file = pybel.readfile(format=sformat, filename=path, opt={"s": None})
             try:
-                mymol = read_file.next()
+                mymol = next(read_file)
             except StopIteration:
                 sysexit(4, 'File contains no valid molecules.\n')
 

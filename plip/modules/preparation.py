@@ -1254,7 +1254,7 @@ class PDBComplex:
         self.sourcefiles = {}
         self.information = {}
         self.corrected_pdb = ''
-        self.output_path = '/tmp'
+        self._output_path = '/tmp'
         self.pymol_name = None
         self.modres = set()
         self.resis = []
@@ -1282,7 +1282,7 @@ class PDBComplex:
         pdbparser = PDBParser(pdbpath, as_string=as_string)  # Parse PDB file to find errors and get additonal data
         # #@todo Refactor and rename here
         self.Mapper.proteinmap = pdbparser.proteinmap
-        self.Mapper.reversed_proteinmap = inv_map = {v: k for k, v in self.Mapper.proteinmap.iteritems()}
+        self.Mapper.reversed_proteinmap = inv_map = {v: k for k, v in self.Mapper.proteinmap.items()}
         self.modres = pdbparser.modres
         self.covalent = pdbparser.covalent
         self.altconf = pdbparser.altconformations
@@ -1435,8 +1435,8 @@ class PDBComplex:
 
     @property
     def output_path(self):
-        return self.output_path
+        return self._output_path
 
     @output_path.setter
     def output_path(self, path):
-        self.output_path = tilde_expansion(path)
+        self._output_path = tilde_expansion(path)

@@ -9,7 +9,11 @@ from lxml import etree
 import itertools
 from itertools import groupby
 import sys
-import urllib2
+
+try: # Python 3
+    from urllib.request import urlopen
+except ImportError: # Fallback Python 2.x
+    from urllib2 import urlopen
 
 
 class XMLStorage:
@@ -298,7 +302,7 @@ class PLIPXMLREST(PLIPXML):
     def load_data(self, pdbid):
         """Loads and parses an XML resource and saves it as a tree if successful"""
         #TODO Implement error handling
-        f = urllib2.urlopen("http://projects.biotec.tu-dresden.de/plip-rest/pdb/%s?format=xml" % pdbid.lower())
+        f = urlopen("http://projects.biotec.tu-dresden.de/plip-rest/pdb/%s?format=xml" % pdbid.lower())
         try:
             self.doc = etree.parse(f)
         except IOError:
