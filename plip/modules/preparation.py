@@ -6,6 +6,7 @@ preparation.py - Prepare PDB input files for processing.
 
 # Python Standard Library
 from __future__ import absolute_import
+from builtins import filter
 from operator import itemgetter
 
 # Own modules
@@ -291,7 +292,7 @@ class LigandFinder:
         hetatoms = set()
         for obresidue in kmer:
             hetatoms_res = set([(obatom.GetIdx(), obatom) for obatom in pybel.ob.OBResidueAtomIter(obresidue)
-                                if not obatom.IsHydrogen()])
+                                if obatom.GetAtomicNum() != 1])
 
             if not config.ALTLOC:
                 # Remove alternative conformations (standard -> True)
@@ -486,7 +487,7 @@ class Mol:
         """Find all possible hydrogen bond acceptors"""
         data = namedtuple('hbondacceptor', 'a a_orig_atom a_orig_idx type')
         a_set = []
-        for atom in itertools.ifilter(lambda at: at.OBAtom.IsHbondAcceptor(), all_atoms):
+        for atom in filter(lambda at: at.OBAtom.IsHbondAcceptor(), all_atoms):
             if atom.atomicnum not in [9, 17, 35, 53] and atom.idx not in self.altconf:  # Exclude halogen atoms
                 a_orig_idx = self.Mapper.mapid(atom.idx, mtype=self.mtype, bsid=self.bsid)
                 a_orig_atom = self.Mapper.id_to_atom(a_orig_idx)

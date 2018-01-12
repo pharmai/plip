@@ -92,7 +92,7 @@ def vector(p1, p2):
     :param p2: coordinates of point p2
     :returns : numpy array with vector coordinates
     """
-    return None if len(p1) != len(p2) else np.array([p2[i] - p1[i] for i in xrange(len(p1))])
+    return None if len(p1) != len(p2) else np.array([p2[i] - p1[i] for i in range(len(p1))])
 
 
 def vecangle(v1, v2, deg=True):
@@ -123,7 +123,7 @@ def centroid(coo):
     :param coo: Array of coordinate arrays
     :returns : centroid coordinates as list
     """
-    return map(np.mean, (([c[0] for c in coo]), ([c[1] for c in coo]), ([c[2] for c in coo])))
+    return list(map(np.mean, (([c[0] for c in coo]), ([c[1] for c in coo]), ([c[2] for c in coo]))))
 
 
 def projection(pnormal1, ppoint, tpoint):
@@ -398,20 +398,21 @@ def read(fil):
         zf = zipfile.ZipFile(fil, 'r')
         return zf.open(zf.infolist()[0].filename)
     else:
-        try:
-            codecs.open(fil, 'r', 'utf-8').read()
-            return codecs.open(fil, 'r', 'utf-8')
-        except UnicodeDecodeError:
-            return open(fil, 'r')
+        return open(fil, 'r')
+        #try:
+        #    codecs.open(fil, 'r', 'utf-8').read()
+        #    return codecs.open(fil, 'r', 'utf-8')
+        #except UnicodeDecodeError:
+        #    return open(fil, 'r')
 
 
 def readmol(path, as_string=False):
     """Reads the given molecule file and returns the corresponding Pybel molecule as well as the input file type.
     In contrast to the standard Pybel implementation, the file is closed properly."""
     supported_formats = ['pdb', 'mmcif']
-    obc = pybel.ob.OBConversion()
 
     for sformat in supported_formats:
+        obc = pybel.ob.OBConversion()
         obc.SetInFormat(sformat)
         write_message("Detected {} as format. Now trying to read file with OpenBabel...\n".format(sformat), mtype='debug')
         mol = pybel.ob.OBMol()

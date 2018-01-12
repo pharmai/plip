@@ -50,7 +50,7 @@ def fetch_pdb(pdbid):
     write_message('Downloading file from PDB ... ')
     pdburl = 'http://www.rcsb.org/pdb/files/%s.pdb' % current_entry  # Get URL for current entry
     try:
-        pdbfile = str(urlopen(pdburl).read())
+        pdbfile = urlopen(pdburl).read().decode()
         # If no PDB file is available, a text is now shown with "We're sorry, but ..."
         # Could previously be distinguished by an HTTP error
         if 'sorry' in pdbfile:
