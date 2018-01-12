@@ -6,7 +6,7 @@ setup.py - Setup configuration file for pip, etc.
 from setuptools import setup
 
 setup(name='plip',
-      version='1.3.5',
+      version='1.4.0',
       description='PLIP - Fully automated protein-ligand interaction profiler',
       classifiers=[
           'Development Status :: 5 - Production/Stable',
@@ -14,11 +14,12 @@ setup(name='plip',
           'Natural Language :: English',
           'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
           'Programming Language :: Python :: 2.7',
+          'Programming Language :: Python :: 3.5',
           'Topic :: Scientific/Engineering :: Bio-Informatics'
       ],
       url='https://github.com/ssalentin/plip',
       author='Sebastian Salentin',
-      author_email='sebastian.salentin@biotec.tu-dresden.de',
+      author_email='sebastian.salentin@tu-dresden.de',
       license='GPLv2',
       packages=['plip', 'plip/modules'],
       scripts=['plip/plipcmd'],

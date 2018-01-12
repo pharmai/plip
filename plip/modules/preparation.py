@@ -10,9 +10,9 @@ from builtins import filter
 from operator import itemgetter
 
 # Own modules
-from plip.modules.detection import *
-from plip.modules.supplemental import *
-import plip.modules.config
+from .detection import *
+from .supplemental import *
+from . import config
 
 
 ################
@@ -40,7 +40,9 @@ class PDBParser:
         if self.as_string:
             fil = self.pdbpath.rstrip('\n').split('\n') # Removing trailing newline character
         else:
-            fil = read(self.pdbpath).readlines()
+            f = read(self.pdbpath)
+            fil = f.readlines()
+            f.close()
         corrected_lines = []
         i, j = 0, 0  # idx and PDB numbering
         d = {}

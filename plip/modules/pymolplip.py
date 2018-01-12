@@ -69,7 +69,7 @@ class PyMOLVisualizer:
         idlist = list(set(idlist))  # Remove duplicates
         if not selection_exists:
             cmd.select(selname, 'None')  # Empty selection first
-        idchunks = [idlist[i:i+chunksize] for i in xrange(0, len(idlist), chunksize)]
+        idchunks = [idlist[i:i+chunksize] for i in range(0, len(idlist), chunksize)]
         for idchunk in idchunks:
             cmd.select(selname, '%s or (id %s)' % (selname, '+'.join(map(str, idchunk))))
         if restrict is not None:

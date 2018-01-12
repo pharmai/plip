@@ -8,7 +8,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 # PLIP Modules
-import plip.modules.config as config
+from . import config
 
 # Python standard library
 import re

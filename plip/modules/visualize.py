@@ -7,10 +7,10 @@ visualize.py - Visualization of PLIP results using PyMOL.
 from __future__ import absolute_import
 
 # Own modules
-from plip.modules.supplemental import initialize_pymol, start_pymol, write_message, colorlog, sysexit
-import plip.modules.config as config
-from plip.modules.pymolplip import PyMOLVisualizer
-from plip.modules.plipremote import VisualizerData
+from .supplemental import initialize_pymol, start_pymol, write_message, colorlog, sysexit
+from . import config
+from .pymolplip import PyMOLVisualizer
+from .plipremote import VisualizerData
 
 # Python Standard Library
 import json

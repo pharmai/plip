@@ -13,7 +13,7 @@ except ImportError: # Fallback Python 2.x
     from urllib2 import urlopen, HTTPError
 
 # Own modules
-from plip.modules.supplemental import write_message, sysexit
+from .supplemental import write_message, sysexit
 
 # External libraries
 import lxml.etree as et
