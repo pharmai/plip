@@ -5,6 +5,7 @@ mp.py - Functions for parallel processing
 
 # Python Standard Library
 from __future__ import division
+from builtins import zip
 import multiprocessing
 import itertools
 from numpy import asarray
@@ -28,7 +29,7 @@ def universal_worker(input_pair):
 
 def pool_args(function, sequence, kwargs):
     """Return a single iterator of n elements of lists of length 3, given a sequence of len n."""
-    return itertools.izip(itertools.repeat(function), sequence, itertools.repeat(kwargs))
+    return zip(itertools.repeat(function), sequence, itertools.repeat(kwargs))
 
 
 def parallel_fn(f):

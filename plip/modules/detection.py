@@ -9,8 +9,8 @@ import itertools
 from collections import defaultdict
 
 # Own modules
-from plip.modules.supplemental import *
-import plip.modules.config
+from .supplemental import *
+from . import config
 
 
 def filter_contacts(pairings):

@@ -9,13 +9,13 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 # Own modules
-from plip.modules.preparation import *
-from plip.modules.visualize import visualize_in_pymol
-from plip.modules.plipremote import VisualizerData
-from plip.modules.report import StructureReport,__version__
-from plip.modules import config
-from plip.modules.mp import parallel_fn
-from plip.modules.webservices import check_pdb_status, fetch_pdb
+from modules.preparation import *
+from modules.visualize import visualize_in_pymol
+from modules.plipremote import VisualizerData
+from modules.report import StructureReport,__version__
+from modules import config
+from modules.mp import parallel_fn
+from modules.webservices import check_pdb_status, fetch_pdb
 
 # Python standard library
 import sys
@@ -47,7 +47,10 @@ def threshold_limiter(aparser, arg):
 
 def process_pdb(pdbfile, outpath, as_string=False):
     """Analysis of a single PDB file. Can generate textual reports XML, PyMOL session files and images as output."""
-    startmessage = '\nStarting analysis of %s\n' % pdbfile.split('/')[-1]
+    if not as_string:
+        startmessage = '\nStarting analysis of %s\n' % pdbfile.split('/')[-1]
+    else:
+        startmessage = "Starting analysis from stdin.\n"
     write_message(startmessage)
     write_message('='*len(startmessage)+'\n')
     mol = PDBComplex()
@@ -193,6 +196,9 @@ if __name__ == '__main__':
     parser.add_argument("--nofix", dest="nofix", default=False,
                         help="Turns off fixing of PDB files.",
                         action="store_true")
+    parser.add_argument("--nofixfile", dest="nofixfile", default=False,
+                        help="Turns off writing files for fixed PDB files.",
+                        action="store_true")
     parser.add_argument("--dnareceptor", dest="dnareceptor", default=False,
                         help="Uses the DNA instead of the protein as a receptor for interactions.",
                         action="store_true")
@@ -238,6 +244,7 @@ if __name__ == '__main__':
     config.PEPTIDES = arguments.peptides
     config.INTRA = arguments.intra
     config.NOFIX = arguments.nofix
+    config.NOFIXFILE = arguments.nofixfile
     config.KEEPMOD = arguments.keepmod
     config.DNARECEPTOR = arguments.dnareceptor
     # Assign values to global thresholds

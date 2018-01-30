@@ -3,18 +3,23 @@ Protein-Ligand Interaction Profiler - Analyze and visualize protein-ligand inter
 report.py - Write PLIP results to output files.
 """
 
+# Compatibility
+from __future__ import print_function
+from __future__ import absolute_import
 
 # Python Standard Library
 import time
 from operator import itemgetter
 import sys
-import config
+
+# Own modules
+from . import config
 
 
 # External libraries
 import lxml.etree as et
 
-__version__ = '1.3.5'
+__version__ = '1.4.0'
 
 class StructureReport:
     """Creates reports (xml or txt) for one structure/"""
@@ -92,7 +97,7 @@ class StructureReport:
         if not as_string:
             et.ElementTree(self.xmlreport).write('%s/report.xml' % self.outpath, pretty_print=True, xml_declaration=True)
         else:
-            print et.tostring(self.xmlreport, pretty_print=True)
+            print(et.tostring(self.xmlreport, pretty_print=True))
 
     def write_txt(self, as_string=False):
         """Write the TXT report"""
@@ -100,7 +105,7 @@ class StructureReport:
             with open('%s/report.txt' % self.outpath, 'w') as f:
                 [f.write(textline + '\n') for textline in self.txtreport]
         else:
-            print '\n'.join(self.txtreport)
+            print('\n'.join(self.txtreport))
 
 
 class BindingSiteReport:

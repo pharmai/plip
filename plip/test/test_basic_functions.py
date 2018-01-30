@@ -77,7 +77,7 @@ class GeometryTest(unittest.TestCase):
         """Generate random data for the tests"""
         # Generate two random n-dimensional float vectors, with -100 <= n <= 100 and values 0 <= i <= 1
         dim = random.randint(1, 100)
-        self.rnd_vec = [random.uniform(-100, 100) for i in xrange(dim)]
+        self.rnd_vec = [random.uniform(-100, 100) for i in range(dim)]
 
     def test_euclidean(self):
         """Tests for mathematics.euclidean"""

@@ -6,12 +6,13 @@ preparation.py - Prepare PDB input files for processing.
 
 # Python Standard Library
 from __future__ import absolute_import
+from builtins import filter
 from operator import itemgetter
 
 # Own modules
-from plip.modules.detection import *
-from plip.modules.supplemental import *
-import plip.modules.config
+from .detection import *
+from .supplemental import *
+from . import config
 
 
 ################
@@ -37,10 +38,11 @@ class PDBParser:
         IV. Alternative conformations
         """
         if self.as_string:
-            fil = self.pdbpath.split('\n')
+            fil = self.pdbpath.rstrip('\n').split('\n') # Removing trailing newline character
         else:
-            fil = read(self.pdbpath).readlines()
-        # #@todo Also consider SSBOND entries here
+            f = read(self.pdbpath)
+            fil = f.readlines()
+            f.close()
         corrected_lines = []
         i, j = 0, 0  # idx and PDB numbering
         d = {}
@@ -74,7 +76,6 @@ class PDBParser:
         else:
             corrected_pdb = self.pdbpath
             corrected_lines = fil
-
 
         for line in corrected_lines:
             if line.startswith(("ATOM", "HETATM")):
@@ -293,7 +294,7 @@ class LigandFinder:
         hetatoms = set()
         for obresidue in kmer:
             hetatoms_res = set([(obatom.GetIdx(), obatom) for obatom in pybel.ob.OBResidueAtomIter(obresidue)
-                                if not obatom.IsHydrogen()])
+                                if obatom.GetAtomicNum() != 1])
 
             if not config.ALTLOC:
                 # Remove alternative conformations (standard -> True)
@@ -488,7 +489,7 @@ class Mol:
         """Find all possible hydrogen bond acceptors"""
         data = namedtuple('hbondacceptor', 'a a_orig_atom a_orig_idx type')
         a_set = []
-        for atom in itertools.ifilter(lambda at: at.OBAtom.IsHbondAcceptor(), all_atoms):
+        for atom in filter(lambda at: at.OBAtom.IsHbondAcceptor(), all_atoms):
             if atom.atomicnum not in [9, 17, 35, 53] and atom.idx not in self.altconf:  # Exclude halogen atoms
                 a_orig_idx = self.Mapper.mapid(atom.idx, mtype=self.mtype, bsid=self.bsid)
                 a_orig_atom = self.Mapper.id_to_atom(a_orig_idx)
@@ -1256,7 +1257,7 @@ class PDBComplex:
         self.sourcefiles = {}
         self.information = {}
         self.corrected_pdb = ''
-        self.output_path = '/tmp'
+        self._output_path = '/tmp'
         self.pymol_name = None
         self.modres = set()
         self.resis = []
@@ -1284,7 +1285,7 @@ class PDBComplex:
         pdbparser = PDBParser(pdbpath, as_string=as_string)  # Parse PDB file to find errors and get additonal data
         # #@todo Refactor and rename here
         self.Mapper.proteinmap = pdbparser.proteinmap
-        self.Mapper.reversed_proteinmap = inv_map = {v: k for k, v in self.Mapper.proteinmap.iteritems()}
+        self.Mapper.reversed_proteinmap = inv_map = {v: k for k, v in self.Mapper.proteinmap.items()}
         self.modres = pdbparser.modres
         self.covalent = pdbparser.covalent
         self.altconf = pdbparser.altconformations
@@ -1294,20 +1295,23 @@ class PDBComplex:
             if pdbparser.num_fixed_lines > 0:
                 write_message('%i lines automatically fixed in PDB input file.\n' % pdbparser.num_fixed_lines)
                 # Save modified PDB file
-                basename = os.path.basename(pdbpath).split('.')[0]
+                if not as_string:
+                    basename = os.path.basename(pdbpath).split('.')[0]
+                else:
+                    basename = "from_stdin"
                 pdbpath_fixed = tmpfile(prefix='plipfixed.' + basename + '_', direc=self.output_path)
                 create_folder_if_not_exists(self.output_path)
                 self.sourcefiles['pdbcomplex'] = pdbpath_fixed
                 self.corrected_pdb = re.sub(r'[^\x00-\x7F]+', ' ', self.corrected_pdb)  # Strip non-unicode chars
-                with open(pdbpath_fixed, 'w') as f:
-                    f.write(self.corrected_pdb)
+                if not config.NOFIXFILE: # Only write to file if this option is not activated
+                    with open(pdbpath_fixed, 'w') as f:
+                        f.write(self.corrected_pdb)
                 self.information['pdbfixes'] = True
 
-        if as_string:
-            self.protcomplex, self.filetype = read_pdb(self.sourcefiles['pdbstring'], as_string=as_string)
-        else:
+
+        if not as_string:
             self.sourcefiles['filename'] = os.path.basename(self.sourcefiles['pdbcomplex'])
-            self.protcomplex, self.filetype = read_pdb(self.sourcefiles['pdbcomplex'], as_string=as_string)
+        self.protcomplex, self.filetype = read_pdb(self.corrected_pdb, as_string=True)
 
         # Update the model in the Mapper class instance
         self.Mapper.original_structure = self.protcomplex.OBMol
@@ -1434,8 +1438,8 @@ class PDBComplex:
 
     @property
     def output_path(self):
-        return self.output_path
+        return self._output_path
 
     @output_path.setter
     def output_path(self, path):
-        self.output_path = tilde_expansion(path)
+        self._output_path = tilde_expansion(path)

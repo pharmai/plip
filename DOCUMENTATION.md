@@ -87,7 +87,7 @@ plip -i 1vsn -v
 The command above will fetch the PDB entry 1vsn from the server, analyze all interactions and print out the results (verbose mode).
 No output files are produced at this point.
 
-The same can be done for local PDB files.
+The same can be done for local PDB files (-f <file>) or for reading from stdin (-f -).
 
 ```bash
 wget http://files.rcsb.org/download/1EVE.pdb
@@ -99,6 +99,7 @@ The output formats can be added in any combination, currently including:
 * Text report files (`-t`, human-readable)
 * PyMOL session files (`-y`)
 * Ray-traced images (`-p`)
+* writing to stdout (`-O`), to be used in combination with XML or text report files
 
 ```bash
 plip -i 1osn -pyx
