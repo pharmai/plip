@@ -97,7 +97,10 @@ class StructureReport:
         if not as_string:
             et.ElementTree(self.xmlreport).write('%s/report.xml' % self.outpath, pretty_print=True, xml_declaration=True)
         else:
-            print(et.tostring(self.xmlreport, pretty_print=True))
+            output = et.tostring(self.xmlreport, pretty_print=True)
+            if config.RAWSTRING:
+                output = repr(output)
+            print(output)
 
     def write_txt(self, as_string=False):
         """Write the TXT report"""
@@ -105,7 +108,10 @@ class StructureReport:
             with open('%s/report.txt' % self.outpath, 'w') as f:
                 [f.write(textline + '\n') for textline in self.txtreport]
         else:
-            print('\n'.join(self.txtreport))
+            output = '\n'.join(self.txtreport)
+            if config.RAWSTRING:
+                output = repr(output)
+            print(output)
 
 
 class BindingSiteReport:
