@@ -11,6 +11,7 @@ TXT = False
 PICS = False
 PYMOL = False
 STDOUT = False
+RAWSTRING = False # use raw strings for input / output
 OUTPATH = './'
 BASEPATH = './'
 BREAKCOMPOSITE = False  # Break up composite ligands with covalent bonds

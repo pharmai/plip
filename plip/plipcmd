@@ -136,6 +136,11 @@ def main(inputstructs, inputpdbids):
             if inputstruct == '-':
                 inputstruct = sys.stdin.read()
                 read_from_stdin = True
+                if config.RAWSTRING:
+                    if sys.version_info < (3,):
+                        inputstruct = bytes(inputstruct).decode('unicode_escape')
+                    else:
+                        inputstruct = bytes(inputstruct, 'utf8').decode('unicode_escape')
             else:
                 if os.path.getsize(inputstruct) == 0:
                     sysexit(2, 'Empty PDB file\n')  # Exit if input file is empty
@@ -171,6 +176,7 @@ if __name__ == '__main__':
     outputgroup = parser.add_mutually_exclusive_group(required=False)  # Needs either outpath or stdout
     outputgroup.add_argument("-o", "--out", dest="outpath", default="./")
     outputgroup.add_argument("-O", "--stdout", dest="stdout", action="store_true", default=False, help="Write to stdout instead of file")
+    parser.add_argument("--rawstring", dest="use_raw_string", default=False, action="store_true", help="Use Python raw strings for stdout and stdin")
     parser.add_argument("-v", "--verbose", dest="verbose", default=False, help="Set verbose mode", action="store_true")
     parser.add_argument("-p", "--pics", dest="pics", default=False, help="Additional pictures", action="store_true")
     parser.add_argument("-x", "--xml", dest="xml", default=False, help="Generate report file in XML format",
@@ -234,6 +240,7 @@ if __name__ == '__main__':
     config.PICS = arguments.pics
     config.PYMOL = arguments.pymol
     config.STDOUT = arguments.stdout
+    config.RAWSTRING = arguments.use_raw_string
     config.OUTPATH = arguments.outpath
     config.OUTPATH = tilde_expansion("".join([config.OUTPATH, '/'])
                                      if not config.OUTPATH.endswith('/') else config.OUTPATH)
