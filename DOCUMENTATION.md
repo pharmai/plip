@@ -279,7 +279,7 @@ The distance between the other ring center and the projected point (i.e. the off
 This value corresponds approximately to the radius of benzene + 0.6 Å.
 
 ##### π-Cation Interactions
-π-Cation interactions are reported for each pairing of a positive charge and an aromatic ring if the distance between the charge center and the aromatic ring center is less than PICATION_DIST_MAX.
+π-Cation interactions are reported for each pairing of a positive charge and an aromatic ring if the distance between the charge center and the aromatic ring center is less than PICATION_DIST_MAX and the offset between the ring center and the charge is no larger than PISTACK_OFFSET_MAX.
 In the case of a putative π-cation interaction with a tertiary amine of the ligand, an additional angle criterion is applied (see documentation in the source code).
 
 ##### Salt Bridges
