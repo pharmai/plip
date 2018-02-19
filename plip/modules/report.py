@@ -361,6 +361,7 @@ class BindingSiteReport:
         composite = et.SubElement(identifiers, 'composite')
         members = et.SubElement(identifiers, 'members')
         smiles = et.SubElement(identifiers, 'smiles')
+        inchikey = et.SubElement(identifiers, 'inchikey')
 
         # Ligand properties. Number of (unpaired) functional atoms and rings.
         lig_properties = et.SubElement(report, 'lig_properties')
@@ -402,6 +403,7 @@ class BindingSiteReport:
         longname.text = self.longname
         ligtype.text = self.ligtype
         smiles.text = self.ligand.smiles
+        inchikey.text = self.ligand.inchikey
         num_heavy_atoms.text = str(self.ligand.heavy_atoms)  # Number of heavy atoms in ligand
         for i, member in enumerate(self.lig_members):
             bsid = ":".join(str(element) for element in member)

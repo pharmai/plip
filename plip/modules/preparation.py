@@ -979,6 +979,7 @@ class Ligand(Mol):
         self.complex = cclass
         self.molecule = ligand.mol  # Pybel Molecule
         self.smiles = self.molecule.write(format='can')  # SMILES String
+        self.inchikey = self.molecule.write(format='inchikey')
         self.can_to_pdb = ligand.can_to_pdb
         if not len(self.smiles) == 0:
             self.smiles = self.smiles.split()[0]
