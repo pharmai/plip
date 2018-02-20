@@ -334,15 +334,16 @@ def get_isomorphisms(reference, lig):
     return isomorphs
 
 
-def canonicalize(lig):
+def canonicalize(lig, preserve_bond_order=False):
     """Get the canonical atom order for the ligand."""
     atomorder = None
     # Get canonical atom order
 
     lig = pybel.ob.OBMol(lig.OBMol)
-    for bond in pybel.ob.OBMolBondIter(lig):
-        if bond.GetBondOrder() != 1:
-            bond.SetBondOrder(1)
+    if not preserve_bond_order:
+        for bond in pybel.ob.OBMolBondIter(lig):
+            if bond.GetBondOrder() != 1:
+                bond.SetBondOrder(1)
     lig.DeleteData(pybel.ob.StereoData)
     lig = pybel.Molecule(lig)
     testcan = lig.write(format='can')
