@@ -26,6 +26,7 @@ setup(name='plip',
       install_requires=[
           'openbabel',
           'numpy',
-          'lxml'
+          'lxml',
+          'future'
       ],
       zip_safe=False)
