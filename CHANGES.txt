@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-### Next version (1.4.0)
+# 1.4.0
 * __Full Python 3 Compatibility__
 * __Read PDB files from stdin with "-f -" and write to stdout with "-O" (capital "O")__
 * Improves handling of fixed PDB files
