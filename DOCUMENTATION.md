@@ -351,170 +351,121 @@ The best fit with the least difference in observed targets is chosen as an estim
 | Metal Complex | [140, 64, 153] | violetpurple | dashed line |
 
 
-
 ### XML Report Documentation
 
-**report**
-
-Contains all binding site information
-
-**plipversion**
-
-Version of PLIP used for generating the output file
-
-**bindingsite**
-
-Information for one bindingsite. Has a unique ID and attribute `has_interactions`
-
-
-**identifiers**
-
-Ligand/bindingsite identifiers
-
-
-**longname**
-
-Long name of ligand, contains all het ids of ligands in one composite cluster
-
-
-**ligtype**
-
-Classification of ligand, can be SMALLMOLECULE/POLYMER/DNA/RNA/ION or combinations of the first four with ION
-
-
-**hetid**
-
-PDB hetero ID of the ligand
-
-
-**chain**
-
-Chain assigned to the ligand in the PDB file
-
-
-**position**
-Position in chain of the ligand in the PDB file
-
-**composite**
-
-Can be True or False depending on whether the ligand consists of several separate subunits or not
-
-
-**members**
-
-Lists the members of a composite ligand cluster
-
-
-**smiles**
-
-The SMILES string of the complete (composite) ligand
-
-
-**lig_properties**
-
-Additional information on the ligand, i.e. number of functional atoms
-
-
-**num_heavy_atoms**
-
-Number of heavy atoms in the ligand
-
-
-**num_hbd**
-
-Number of hydrogen bond donors in the ligand
-
-
-**num_unpaired_hbd**
-
-Number of unpaired hydrogen bond donors in the ligand (not involved as acceptor/donor in hydrogen bonds, salt bridges,
-water bridges, metal complexes)
-
-
-**num_hba**
-
-Number of hydrogen bond acceptors in the ligand
-
-
-**num_unpaired_hba**
-
-Number of unpaired hydrogen bond acceptors in the ligand (not involved as acceptor/donor in hydrogen bonds, salt bridges,
-water bridges, metal complexes)
-
-
-**num_hal**
-
-Number of halogen bond donors in the ligand
-
-
-**num_unpaired_hal**
-
-Number of unpaired halogen bond donors in the ligand
-
-
-**num_aromatic_rings**
-
-Number of aromatic rings in the ligand
-
-
-**interacting chains**
-
-Lists the chains the ligand interacts with
-
-
-**bs_residues**
-
-Listing of binding site residues the ligand is near to or interacts with. Contains the type of amino acid, information
-on contact, a unique id and the minimal distance to the ligand in Angstrom
-
-
-**interactions**
-
-Detailed information on all interactions (general attributes documented below)
-
-
-**resnr**
-
-Residue number of interacting amino acid
-
-
-**restype**
-
-Residue type of interacting amino acid
-
-
-**reschain**
-
-Residue chain of interacting amino acid
-
-**resnr_ligand**
-
-Residue number of interacting ligand residue
-
-
-**restype_ligand**
-
-Residue type of interacting ligand residue
-
-
-**reschain_ligand**
-
-Residue chain of interacting ligand residue
-
-
-**dist**
-
-Distance of interacting atoms or groups in Angstrom
-
-
-**ligcoo**
-
-Coordinates of interacting ligand atom or interaction center in ligand
-
-
-**protcoo**
-
-Coordinates of interacting protein atom or interaction center in ligand
+| Attribute  | Description |
+| ------------ | -------------- |
+| report | Contains all binding site information |
+
+#### report
+
+| Attribute  | Description |
+| ------------ | -------------- |
+| plipversion | Version of PLIP used for generating the output file |
+| bindingsite | Information for one bindingsite. Has a unique ID and attribute `has_interactions` |
+| date_of_creation | Date of the analyis |
+| citation_information | How to cite PLIP |
+| mode | Documents if PLIP was started in default or any special mode (e.g. intra-protein interactions) |
+| pdbid | PDB identifier of the input file |
+| pdbfile | Name of the input PDB file |
+| pdbfixes | Were any fixes applied automatically to the input file? |
+| filename | Filename of the processed PDB file |
+| excluded_ligands | List of excluded ligands |
+
+### bindingsite
+
+| Attribute  | Description |
+| ------------ | -------------- |
+| identifiers | Ligand/bindingsite identifiers |
+| lig_properties | Additional information on the ligand, i.e. number of functional atoms |
+| interacting chains | Lists the chains the ligand interacts with |
+| bs_residues | Listing of binding site residues the ligand is near to or interacts with.  |
+| interactions | Detailed information on all interactions |
+| mappings | Contains mappings from canonical SMILES to PDB in smiles_to_pdb |
+
+### identifiers
+
+| Attribute  | Description |
+| ------------ | -------------- |
+| longname | Long name of ligand, contains all het ids of ligands in one composite cluster |
+| ligtype | Classification of ligand, can be SMALLMOLECULE/POLYMER/DNA/RNA/ION or combinations of the first four with ION |
+| hetid | PDB hetero ID of the ligand |
+| chain | Chain assigned to the ligand in the PDB file |
+| position | Position in chain of the ligand in the PDB file |
+| composite | Can be True or False depending on whether the ligand consists of several separate subunits or not |
+| members | Lists the members of a composite ligand cluster |
+| smiles | The SMILES string of the complete (composite) ligand |
+
+### lig_properties
+
+| Attribute  | Description |
+| ------------ | -------------- |
+| num_heavy_atoms | Number of heavy atoms in the ligand |
+| num_hbd | Number of hydrogen bond donors in the ligand |
+| num_unpaired_hbd | Number of unpaired hydrogen bond donors in the ligand |
+| num_hba | Number of hydrogen bond acceptors in the ligand |
+| num_unpaired_hba | Number of unpaired hydrogen bond acceptors in the ligand |
+| num_hal | Number of halogen bond donors in the ligand |
+| num_unpaired_hal | Number of unpaired halogen bond donors in the ligand |
+| num_aromatic_rings | Number of aromatic rings in the ligand |
+| num_rotatable_bonds | Number of rotatable bonds in the ligand |
+| molweight | Molecular weight of the ligand |
+| logp | logP value of the ligand |
+
+### bs_residues
+
+Contains a list of bs_residue entries selected with a primary distance cutoff. As IDs, ech bs_residue lists aa (three-letter amino acid code), contact (boolean, indicated if residue interactions with the ligand or not), id (a continuous ID), min_dist (The minimal distance to the ligand).
+
+| Attribute  | Description |
+| ------------ | -------------- |
+bs_residue | Concatenated chain of position and residue number |
+
+### interactions
+
+Interactions are subdivided by interaction type. Most interaction types share the same information (types and IDs of interacting residue, distances), while some information is specific to certain types (charges, directionality, ring geometries, etc.)
+
+Type | Attribute  | Description |
+| ------------| ------------ | -------------- |
+All | resnr | Residue number of interacting amino acid |
+All | restype | Residue type of interacting amino acid |
+All | reschain | Residue chain of interacting amino acid |
+All | resnr_lig | Residue number of interacting ligand residue |
+All | restype_lig | Residue type of interacting ligand residue |
+All | reschain_lig | Residue chain of interacting ligand residue
+All | dist | Distance of interacting atoms or groups in Angstrom |
+All | ligcoo | Coordinates of interacting ligand atom or interaction center in ligand |
+All | protcoo | Coordinates of interacting protein atom or interaction center in ligand |
+hydrogen_bond | sidechain | Is the H-Bond formed with the sidechain of the protein? |
+hydrogen_bond | dist_h-a | Distance between H-Bond hydrogen and acceptor atom |
+hydrogen_bond | dist_d-a | Distance between H-Bond donor and acceptor atoms |
+hydrogen_bond, water_bridge, halogen_bond | don_angle | Angle at the donor |
+hydrogen_bond, water_bridge | protisdon | Is protein the donor? |
+hydrogen_bond, water_bridge, halogen_bond | donoridx/don_idx | Atom ID of the donor atom |
+hydrogen_bond, water_bridge, halogen_bond | donortype | Atom type of the donor atom |
+hydrogen_bond, water_bridge, halogen_bond | acceptoridx/acc_idx | Atom ID of the acceptor atom |
+hydrogen_bond, water_bridge, halogen_bond | acceptortype | Atom type of the acceptor atom |
+water_bridge | dist_a-w | Distance between the acceptor and interacting atom from water |
+water_bridge | dist_d-w | Distance between the donor and water interacting atom from water |
+water_bridge | water_angle | Angle at the interacting water atoms
+water_bridge | water_idx | Atom ID of the water oxygen atom |
+halogen_bond | acc_angle | Angle at the aceptor |
+salt_bridge | protispos | Does the protein carry the positive charge? |
+salt_bridge, pi_cation_interaction | lig_group | Functional group in the ligand |
+salt_bridge, pi_stack | lig_idx_list | List of atom IDs from the functional group in the ligand |
+pi_stack | cent_dist | Distance between the ring centers |
+pi_stack | angle | Angle between the ring planes |
+pi_stack, pi_cation_interaction | offset | Offset between the interacting groups |
+pi_stack | type | Stacking type (Perpendicular or T-Shaped) |
+pi_cation_interaction | protcharged | Does the protein provide the charge? |
+metal_complex | metal_idx | Atom ID of the metal ion |
+metal_complex | metal_type | Atom type of the metal |
+metal_complex | target_idx | Atom ID of the target interacting atom |
+metal_complex | target_type | Atom type of the target interacting atom |
+metal_complex | coordination | Metal coordination number |
+metal_complex | location | Location of the target group |
+metal_complex | rms | RMS of the geometry fit |
+metal_complex | geometry | Metal coordination type |
+metal_complex | complexnum | Continous numbering for the metal complex |
 
 ## Testing
 To run the tests, run the following set of commands.
