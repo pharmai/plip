@@ -495,7 +495,4 @@ def message(msg, indent=False, mtype='standard', caption=False):
         msg = colorlog('Info:  ' + msg, 'green')
     if indent:
         msg = '  ' + msg
-    if mtype in ['error', 'warning']:
-        sys.stderr.write(msg)
-    else:
-        sys.stdout.write(msg)
+    sys.stderr.write(msg)
