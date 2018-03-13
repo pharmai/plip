@@ -33,7 +33,7 @@ pymol 1VSN_NFT_A_283.pse
 In your terminal, add the PLIP repository to your PYTHONPATH variable.
 For our example, we also download a PDB file for testing.
 ```bash
-export PYTHONPATH=~/pliptool/plip:${PYTHONPATH}
+export PYTHONPATH=~/pliptool:${PYTHONPATH}
 cd /tmp && wget http://files.rcsb.org/download/1EVE.pdb
 python
 ```
