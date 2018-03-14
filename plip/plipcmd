@@ -253,6 +253,13 @@ if __name__ == '__main__':
     config.NOFIXFILE = arguments.nofixfile
     config.KEEPMOD = arguments.keepmod
     config.DNARECEPTOR = arguments.dnareceptor
+    # Make sure we have pymol with --pics and --pymol
+    if config.PICS or config.PYMOL:
+        try:
+            import pymol
+        except ImportError:
+            write_message("PyMOL is required for --pics and --pymol.\n", mtype='error')
+            raise
     # Assign values to global thresholds
     for t in thresholds:
         tvalue = getattr(arguments, t.name)
