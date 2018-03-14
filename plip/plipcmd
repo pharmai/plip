@@ -10,7 +10,6 @@ from __future__ import absolute_import
 
 # Own modules
 from modules.preparation import *
-from modules.visualize import visualize_in_pymol
 from modules.plipremote import VisualizerData
 from modules.report import StructureReport,__version__
 from modules import config
@@ -73,6 +72,7 @@ def process_pdb(pdbfile, outpath, as_string=False):
     ######################################
 
     if config.PYMOL or config.PICS:
+        from modules.visualize import visualize_in_pymol
         complexes = [VisualizerData(mol, site) for site in sorted(mol.interaction_sets)
                      if not len(mol.interaction_sets[site].interacting_res) == 0]
         if config.MAXTHREADS > 1:
