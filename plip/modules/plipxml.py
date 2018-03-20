@@ -195,6 +195,8 @@ class BSite(XMLStorage):
         self.ligtype = self.getdata(bindingsite, 'identifiers/ligtype')
         self.smiles = self.getdata(bindingsite, 'identifiers/smiles')
         self.inchikey = self.getdata(bindingsite, 'identifiers/inchikey')
+        self.position = self.getdata(bindingsite, 'identifiers/position')
+        self.chain = self.getdata(bindingsite, 'identifiers/chain')
 
         # Information on binding site members
         self.members = []
