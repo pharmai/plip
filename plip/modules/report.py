@@ -23,13 +23,14 @@ __version__ = '1.4.0'
 
 class StructureReport:
     """Creates reports (xml or txt) for one structure/"""
-    def __init__(self, mol):
+    def __init__(self, mol, outputprefix='report'):
         self.mol = mol
         self.excluded = self.mol.excluded
         self.xmlreport = self.construct_xml_tree()
         self.txtreport = self.construct_txt_file()
         self.get_bindingsite_data()
         self.outpath = mol.output_path
+        self.outputprefix = outputprefix
 
     def construct_xml_tree(self):
         """Construct the basic XML tree"""
@@ -95,7 +96,7 @@ class StructureReport:
     def write_xml(self, as_string=False):
         """Write the XML report"""
         if not as_string:
-            et.ElementTree(self.xmlreport).write('%s/report.xml' % self.outpath, pretty_print=True, xml_declaration=True)
+            et.ElementTree(self.xmlreport).write('{}/{}.xml'.format(self.outpath, self.outputprefix), pretty_print=True, xml_declaration=True)
         else:
             output = et.tostring(self.xmlreport, pretty_print=True)
             if config.RAWSTRING:
@@ -105,7 +106,7 @@ class StructureReport:
     def write_txt(self, as_string=False):
         """Write the TXT report"""
         if not as_string:
-            with open('%s/report.txt' % self.outpath, 'w') as f:
+            with open('{}/{}.txt'.format(self.outpath, self.outputprefix), 'w') as f:
                 [f.write(textline + '\n') for textline in self.txtreport]
         else:
             output = '\n'.join(self.txtreport)

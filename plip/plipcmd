@@ -44,7 +44,7 @@ def threshold_limiter(aparser, arg):
 
 
 
-def process_pdb(pdbfile, outpath, as_string=False):
+def process_pdb(pdbfile, outpath, as_string=False, outputprefix='report'):
     """Analysis of a single PDB file. Can generate textual reports XML, PyMOL session files and images as output."""
     if not as_string:
         startmessage = '\nStarting analysis of %s\n' % pdbfile.split('/')[-1]
@@ -62,7 +62,7 @@ def process_pdb(pdbfile, outpath, as_string=False):
     create_folder_if_not_exists(outpath)
 
     # Generate the report files
-    streport = StructureReport(mol)
+    streport = StructureReport(mol, outputprefix=outputprefix)
 
     config.MAXTHREADS = min(config.MAXTHREADS, len(mol.interaction_sets))
 
@@ -127,6 +127,7 @@ def main(inputstructs, inputpdbids):
     write_message('\n' + '*' * len(title) + '\n')
     write_message(title)
     write_message('\n' + '*' * len(title) + '\n\n')
+    outputprefix = config.OUTPUTFILENAME
 
     if inputstructs is not None:  # Process PDB file(s)
         num_structures = len(inputstructs)
@@ -147,7 +148,8 @@ def main(inputstructs, inputpdbids):
                 if num_structures > 1:
                     basename = inputstruct.split('.')[-2].split('/')[-1]
                     config.OUTPATH = '/'.join([config.BASEPATH, basename])
-            process_pdb(inputstruct, config.OUTPATH, as_string=read_from_stdin)
+                    outputprefix = 'report'
+            process_pdb(inputstruct, config.OUTPATH, as_string=read_from_stdin, outputprefix=outputprefix)
     else:  # Try to fetch the current PDB structure(s) directly from the RCBS server
         num_pdbids = len(inputpdbids)
         inputpdbids =remove_duplicates(inputpdbids)
@@ -155,7 +157,8 @@ def main(inputstructs, inputpdbids):
             pdbpath, pdbid = download_structure(inputpdbid)
             if num_pdbids > 1:
                 config.OUTPATH = '/'.join([config.BASEPATH, pdbid[1:3].upper(), pdbid.upper()])
-            process_pdb(pdbpath, config.OUTPATH)
+                outputprefix = 'report'
+            process_pdb(pdbpath, config.OUTPATH, outputprefix=outputprefix)
 
     if (pdbid is not None or inputstructs is not None) and config.BASEPATH is not None:
         if config.BASEPATH in ['.', './']:
@@ -207,6 +210,8 @@ if __name__ == '__main__':
     parser.add_argument("--dnareceptor", dest="dnareceptor", default=False,
                         help="Uses the DNA instead of the protein as a receptor for interactions.",
                         action="store_true")
+    parser.add_argument("--name", dest="outputfilename", default="report",
+                        help="Set a filename for the report TXT and XML files. Will only work when processing single structures.")
     ligandtype = parser.add_mutually_exclusive_group()  # Either peptide/inter or intra mode
     ligandtype.add_argument("--peptides", "--inter", dest="peptides", default=[],
                         help="Allows to define one or multiple chains as peptide ligands or to detect inter-chain contacts",
@@ -253,6 +258,7 @@ if __name__ == '__main__':
     config.NOFIXFILE = arguments.nofixfile
     config.KEEPMOD = arguments.keepmod
     config.DNARECEPTOR = arguments.dnareceptor
+    config.OUTPUTFILENAME = arguments.outputfilename
     # Make sure we have pymol with --pics and --pymol
     if config.PICS or config.PYMOL:
         try:

@@ -23,6 +23,7 @@ PEPTIDES = []  # Definition which chains should be considered as peptide ligands
 INTRA = None
 KEEPMOD = False
 DNARECEPTOR = False
+OUTPUTFILENAME = "report" # Naming for the TXT and XML report files
 
 # Configuration file for Protein-Ligand Interaction Profiler (PLIP)
 # Set thresholds for detection of interactions
