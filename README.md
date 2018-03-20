@@ -33,7 +33,7 @@ pymol 1VSN_NFT_A_283.pse
 In your terminal, add the PLIP repository to your PYTHONPATH variable.
 For our example, we also download a PDB file for testing.
 ```bash
-export PYTHONPATH=~/pliptool/plip:${PYTHONPATH}
+export PYTHONPATH=~/pliptool:${PYTHONPATH}
 cd /tmp && wget http://files.rcsb.org/download/1EVE.pdb
 python
 ```
@@ -51,7 +51,7 @@ my_mol.analyze()
 my_interactions = my_mol.interaction_sets[my_bsid] # Contains all interaction data
 
 # Now print numbers of all residues taking part in pi-stacking
-print [pistack.resnr for pistack in s.pistacking] # Prints [84, 129]
+print [pistack.resnr for pistack in my_interactions.pistacking] # Prints [84, 129]
 ```
 
 #### 3. View and process the results
