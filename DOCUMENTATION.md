@@ -433,8 +433,8 @@ All | resnr_lig | Residue number of interacting ligand residue |
 All | restype_lig | Residue type of interacting ligand residue |
 All | reschain_lig | Residue chain of interacting ligand residue
 All | dist | Distance of interacting atoms or groups in Angstrom |
-All | ligcoo | Coordinates of interacting ligand atom or interaction center in ligand |
-All | protcoo | Coordinates of interacting protein atom or interaction center in ligand |
+All (except metal_complex) | ligcoo | Coordinates of interacting ligand atom or interaction center in ligand |
+All (except metal_complex)| protcoo | Coordinates of interacting protein atom or interaction center in ligand |
 hydrogen_bond | sidechain | Is the H-Bond formed with the sidechain of the protein? |
 hydrogen_bond | dist_h-a | Distance between H-Bond hydrogen and acceptor atom |
 hydrogen_bond | dist_d-a | Distance between H-Bond donor and acceptor atoms |
@@ -457,6 +457,8 @@ pi_stack | angle | Angle between the ring planes |
 pi_stack, pi_cation_interaction | offset | Offset between the interacting groups |
 pi_stack | type | Stacking type (Perpendicular or T-Shaped) |
 pi_cation_interaction | protcharged | Does the protein provide the charge? |
+metal_complex| metalcoo | Coordinates of interacting metal atom |
+metal_complex| targetcoo | Coordinates of interacting protein atom or interaction center in the chelating target group (in protein or ligand) |
 metal_complex | metal_idx | Atom ID of the metal ion |
 metal_complex | metal_type | Atom type of the metal |
 metal_complex | target_idx | Atom ID of the target interacting atom |
