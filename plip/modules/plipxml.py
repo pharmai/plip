@@ -195,6 +195,8 @@ class BSite(XMLStorage):
         self.ligtype = self.getdata(bindingsite, 'identifiers/ligtype')
         self.smiles = self.getdata(bindingsite, 'identifiers/smiles')
         self.inchikey = self.getdata(bindingsite, 'identifiers/inchikey')
+        self.position = self.getdata(bindingsite, 'identifiers/position')
+        self.chain = self.getdata(bindingsite, 'identifiers/chain')
 
         # Information on binding site members
         self.members = []
@@ -289,11 +291,7 @@ class PLIPXML(XMLStorage):
 
     def load_data(self, xmlfile):
         """Loads/parses an XML file and saves it as a tree if successful."""
-        try:
-            self.doc = etree.parse(xmlfile)
-        except IOError:
-            sys.__stderr__.write("XML %s file could not be read." % xmlfile)
-            sys.exit(1)
+        self.doc = etree.parse(xmlfile)
 
 class PLIPXMLREST(PLIPXML):
     """Parses and stores all from a PLIP XML file from the PLIP REST service"""
@@ -304,8 +302,4 @@ class PLIPXMLREST(PLIPXML):
         """Loads and parses an XML resource and saves it as a tree if successful"""
         #TODO Implement error handling
         f = urlopen("http://projects.biotec.tu-dresden.de/plip-rest/pdb/%s?format=xml" % pdbid.lower())
-        try:
-            self.doc = etree.parse(f)
-        except IOError:
-            sys.__stderr__.write("XML file for PDB ID %s could not be read." % pdbid)
-            sys.exit(1)
+        self.doc = etree.parse(f)

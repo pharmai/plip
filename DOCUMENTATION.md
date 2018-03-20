@@ -37,7 +37,7 @@ Please refer to the webpages of the corresponding tools to get help for installa
 To install all dependencies for PLIP, either just install PyMOL and then use the `pip` installation routine or install all tools and clone from GitHub.
 The current version of PLIP depends on
 * OpenBabel >=2.3.2
-* PyMOL 1.7.x with Python bindings
+* PyMOL 1.7.x with Python bindings (optional, for visualization only)
 * Imagemagick >=6.9.x (optional)
 
 and should be executed with Python 2.7.x.

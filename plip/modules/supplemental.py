@@ -27,8 +27,6 @@ import pybel
 from pybel import *
 from openbabel import *
 import numpy as np
-from pymol import cmd
-from pymol import finish_launching
 import itertools
 
 # Settings
@@ -221,9 +219,10 @@ def cmd_exists(c):
 
 def initialize_pymol(options):
     """Initializes PyMOL"""
+    import pymol
     # Pass standard arguments of function to prevent PyMOL from printing out PDB headers (workaround)
-    finish_launching(args=['pymol', options, '-K'])
-    cmd.reinitialize()
+    pymol.finish_launching(args=['pymol', options, '-K'])
+    pymol.cmd.reinitialize()
 
 
 def start_pymol(quiet=False, options='-p', run=False):
@@ -234,7 +233,7 @@ def start_pymol(quiet=False, options='-p', run=False):
     if run:
         initialize_pymol(options)
     if quiet:
-        cmd.feedback('disable', 'all', 'everything')
+        pymol.cmd.feedback('disable', 'all', 'everything')
 
 def nucleotide_linkage(residues):
     """Support for DNA/RNA ligands by finding missing covalent linkages to stitch DNA/RNA together."""
@@ -495,7 +494,4 @@ def message(msg, indent=False, mtype='standard', caption=False):
         msg = colorlog('Info:  ' + msg, 'green')
     if indent:
         msg = '  ' + msg
-    if mtype in ['error', 'warning']:
-        sys.stderr.write(msg)
-    else:
-        sys.stdout.write(msg)
+    sys.stderr.write(msg)

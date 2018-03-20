@@ -67,7 +67,7 @@ Newer commits from the stable and development branch may contains new but untest
 Previous to using PLIP, make sure you have the following tools and libraries installed:
 * Python 2.7.x
 * OpenBabel >=2.3.2
-* PyMOL 1.7.x with Python bindings
+* PyMOL 1.7.x with Python bindings (optional, for visualization only)
 * Imagemagick >=6.9.x (optional)
 
 ## Contributions
