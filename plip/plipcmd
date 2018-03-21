@@ -9,12 +9,12 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 # Own modules
-from modules.preparation import *
-from modules.plipremote import VisualizerData
-from modules.report import StructureReport,__version__
-from modules import config
-from modules.mp import parallel_fn
-from modules.webservices import check_pdb_status, fetch_pdb
+from plip.modules.preparation import *
+from plip.modules.plipremote import VisualizerData
+from plip.modules.report import StructureReport,__version__
+from plip.modules import config
+from plip.modules.mp import parallel_fn
+from plip.modules.webservices import check_pdb_status, fetch_pdb
 
 # Python standard library
 import sys
@@ -72,7 +72,7 @@ def process_pdb(pdbfile, outpath, as_string=False):
     ######################################
 
     if config.PYMOL or config.PICS:
-        from modules.visualize import visualize_in_pymol
+        from plip.modules.visualize import visualize_in_pymol
         complexes = [VisualizerData(mol, site) for site in sorted(mol.interaction_sets)
                      if not len(mol.interaction_sets[site].interacting_res) == 0]
         if config.MAXTHREADS > 1:
