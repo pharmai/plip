@@ -3,7 +3,7 @@
 **Protein-Ligand Interaction Profiler (PLIP)**
 
  Analyze non-covalent protein-ligand interactions in 3D structures
- 
+
  <img src="https://github.com/ssalentin/plip/blob/development/pliplogo.png"  alt="PLIP Logo" height="100">
 
 ## How to use PLIP
@@ -51,7 +51,7 @@ my_mol.analyze()
 my_interactions = my_mol.interaction_sets[my_bsid] # Contains all interaction data
 
 # Now print numbers of all residues taking part in pi-stacking
-print [pistack.resnr for pistack in s.pistacking] # Prints [84, 129]
+print [pistack.resnr for pistack in my_interactions.pistacking] # Prints [84, 129]
 ```
 
 #### 3. View and process the results
