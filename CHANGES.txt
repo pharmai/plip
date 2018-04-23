@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+# 1.4.1
+* Improved import of modules
+* Corrections for README and documentation
+* Several improvements for error handling
+* independence from PyMOL when used without visualization features
+
 # 1.4.0
 * __Full Python 3 Compatibility__
 * __Read PDB files from stdin with "-f -" and write to stdout with "-O" (capital "O")__
