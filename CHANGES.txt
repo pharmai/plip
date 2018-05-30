@@ -1,6 +1,11 @@
 Changelog
 ---------
 
+# 1.4.2
+* Adds "--name" option to change name of output files
+* Adds "--nopdbcanmap" option to skip calculation of canonical->PDB mapping which can lead to segfaults with OpenBabel
+* Improved handling of ligand names
+
 # 1.4.1
 * Improved import of modules
 * Corrections for README and documentation
