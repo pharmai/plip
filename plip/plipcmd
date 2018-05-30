@@ -204,6 +204,9 @@ if __name__ == '__main__':
     parser.add_argument("--nofixfile", dest="nofixfile", default=False,
                         help="Turns off writing files for fixed PDB files.",
                         action="store_true")
+    parser.add_argument("--nopdbcanmap", dest="nopdbcanmap", default=False,
+                        help="Turns off calculation of mapping between canonical and PDB atom order for ligands.",
+                        action="store_true")
     parser.add_argument("--dnareceptor", dest="dnareceptor", default=False,
                         help="Uses the DNA instead of the protein as a receptor for interactions.",
                         action="store_true")
@@ -251,6 +254,7 @@ if __name__ == '__main__':
     config.INTRA = arguments.intra
     config.NOFIX = arguments.nofix
     config.NOFIXFILE = arguments.nofixfile
+    config.NOPDBCANMAP = arguments.nopdbcanmap
     config.KEEPMOD = arguments.keepmod
     config.DNARECEPTOR = arguments.dnareceptor
     # Make sure we have pymol with --pics and --pymol

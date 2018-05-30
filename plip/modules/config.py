@@ -23,6 +23,7 @@ PEPTIDES = []  # Definition which chains should be considered as peptide ligands
 INTRA = None
 KEEPMOD = False
 DNARECEPTOR = False
+NOPDBCANMAP = False # Skip calculation of mapping canonical atom order: PDB atom order
 
 # Configuration file for Protein-Ligand Interaction Profiler (PLIP)
 # Set thresholds for detection of interactions
