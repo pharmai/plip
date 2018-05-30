@@ -340,7 +340,10 @@ class LigandFinder:
 
         write_message("Renumerated molecule generated\n", mtype='debug')
 
-        atomorder = canonicalize(lig)
+        if not config.NOPDBCANMAP:
+            atomorder = canonicalize(lig)
+        else:
+            atomorder =  None
 
         can_to_pdb = {}
         if atomorder is not None:

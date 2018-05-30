@@ -409,7 +409,7 @@ def read(fil):
 def readmol(path, as_string=False):
     """Reads the given molecule file and returns the corresponding Pybel molecule as well as the input file type.
     In contrast to the standard Pybel implementation, the file is closed properly."""
-    supported_formats = ['pdb', 'mmcif']
+    supported_formats = ['pdb']
     # Fix for Windows-generated files: Remove carriage return characters
     if "\r" in path and as_string:
         path = path.replace('\r', '')

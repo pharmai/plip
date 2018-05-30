@@ -9,12 +9,12 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 # Own modules
-from modules.preparation import *
-from modules.plipremote import VisualizerData
-from modules.report import StructureReport,__version__
-from modules import config
-from modules.mp import parallel_fn
-from modules.webservices import check_pdb_status, fetch_pdb
+from plip.modules.preparation import *
+from plip.modules.plipremote import VisualizerData
+from plip.modules.report import StructureReport,__version__
+from plip.modules import config
+from plip.modules.mp import parallel_fn
+from plip.modules.webservices import check_pdb_status, fetch_pdb
 
 # Python standard library
 import sys
@@ -72,7 +72,7 @@ def process_pdb(pdbfile, outpath, as_string=False, outputprefix='report'):
     ######################################
 
     if config.PYMOL or config.PICS:
-        from modules.visualize import visualize_in_pymol
+        from plip.modules.visualize import visualize_in_pymol
         complexes = [VisualizerData(mol, site) for site in sorted(mol.interaction_sets)
                      if not len(mol.interaction_sets[site].interacting_res) == 0]
         if config.MAXTHREADS > 1:
@@ -207,6 +207,9 @@ if __name__ == '__main__':
     parser.add_argument("--nofixfile", dest="nofixfile", default=False,
                         help="Turns off writing files for fixed PDB files.",
                         action="store_true")
+    parser.add_argument("--nopdbcanmap", dest="nopdbcanmap", default=False,
+                        help="Turns off calculation of mapping between canonical and PDB atom order for ligands.",
+                        action="store_true")
     parser.add_argument("--dnareceptor", dest="dnareceptor", default=False,
                         help="Uses the DNA instead of the protein as a receptor for interactions.",
                         action="store_true")
@@ -256,6 +259,7 @@ if __name__ == '__main__':
     config.INTRA = arguments.intra
     config.NOFIX = arguments.nofix
     config.NOFIXFILE = arguments.nofixfile
+    config.NOPDBCANMAP = arguments.nopdbcanmap
     config.KEEPMOD = arguments.keepmod
     config.DNARECEPTOR = arguments.dnareceptor
     config.OUTPUTFILENAME = arguments.outputfilename

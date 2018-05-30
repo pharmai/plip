@@ -19,7 +19,7 @@ from . import config
 # External libraries
 import lxml.etree as et
 
-__version__ = '1.4.0'
+__version__ = '1.4.1'
 
 class StructureReport:
     """Creates reports (xml or txt) for one structure/"""

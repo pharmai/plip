@@ -24,6 +24,7 @@ INTRA = None
 KEEPMOD = False
 DNARECEPTOR = False
 OUTPUTFILENAME = "report" # Naming for the TXT and XML report files
+NOPDBCANMAP = False # Skip calculation of mapping canonical atom order: PDB atom order
 
 # Configuration file for Protein-Ligand Interaction Profiler (PLIP)
 # Set thresholds for detection of interactions
