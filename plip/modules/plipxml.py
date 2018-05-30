@@ -53,10 +53,10 @@ class Interaction(XMLStorage):
     def __init__(self, interaction_part):
         self.id = interaction_part.get('id')
         self.resnr = self.getdata(interaction_part, 'resnr')
-        self.restype = self.getdata(interaction_part, 'restype')
+        self.restype = self.getdata(interaction_part, 'restype', force_string=True)
         self.reschain = self.getdata(interaction_part, 'reschain', force_string=True)
         self.resnr_lig = self.getdata(interaction_part, 'resnr_lig')
-        self.restype_lig = self.getdata(interaction_part, 'restype_lig')
+        self.restype_lig = self.getdata(interaction_part, 'restype_lig', force_string=True)
         self.reschain_lig = self.getdata(interaction_part, 'reschain_lig', force_string=True)
         self.ligcoo = self.getcoordinates(interaction_part, 'ligcoo')
         self.protcoo = self.getcoordinates(interaction_part, 'protcoo')
@@ -87,8 +87,8 @@ class HydrogenBond(Interaction):
         self.protisdon = self.getdata(hbond_part, 'protisdon')
         self.donoridx = self.getdata(hbond_part, 'donoridx')
         self.acceptoridx = self.getdata(hbond_part, 'acceptoridx')
-        self.donortype = self.getdata(hbond_part, 'donortype')
-        self.acceptortype = self.getdata(hbond_part, 'acceptortype')
+        self.donortype = self.getdata(hbond_part, 'donortype', force_string=True)
+        self.acceptortype = self.getdata(hbond_part, 'acceptortype', force_string=True)
 
 
 class WaterBridge(Interaction):
@@ -105,8 +105,8 @@ class WaterBridge(Interaction):
 
         self.donor_idx = self.getdata(wbridge_part, 'donor_idx')
         self.acceptor_idx = self.getdata(wbridge_part, 'acceptor_idx')
-        self.donortype = self.getdata(wbridge_part, 'donortype')
-        self.acceptortype = self.getdata(wbridge_part, 'acceptortype')
+        self.donortype = self.getdata(wbridge_part, 'donortype', force_string=True)
+        self.acceptortype = self.getdata(wbridge_part, 'acceptortype', force_string=True)
         self.water_idx = self.getdata(wbridge_part, 'water_idx')
         self.watercoo = self.getcoordinates(wbridge_part, 'watercoo')
 
@@ -118,7 +118,7 @@ class SaltBridge(Interaction):
         Interaction.__init__(self, sbridge_part)
         self.dist =  self.getdata(sbridge_part, 'dist')
         self.protispos = self.getdata(sbridge_part, 'protispos')
-        self.lig_group = self.getdata(sbridge_part, 'lig_group')
+        self.lig_group = self.getdata(sbridge_part, 'lig_group', force_string=True)
         self.lig_idx_list = [int(tagpart.text) for tagpart in
                              sbridge_part.xpath('lig_idx_list/idx')]
 
@@ -157,8 +157,8 @@ class HalogenBond(Interaction):
         self.dist = self.getdata(halogen_part, 'dist')
         self.don_angle = self.getdata(halogen_part, 'don_angle')
         self.acc_angle = self.getdata(halogen_part, 'acc_angle')
-        self.donortype = self.getdata(halogen_part, 'donortype')
-        self.acceptortype = self.getdata(halogen_part, 'acceptortype')
+        self.donortype = self.getdata(halogen_part, 'donortype', force_string=True)
+        self.acceptortype = self.getdata(halogen_part, 'acceptortype', force_string=True)
         self.don_idx = self.getdata(halogen_part, 'don_idx')
         self.acc_idx = self.getdata(halogen_part, 'acc_idx')
         self.sidechain = self.getdata(halogen_part, 'sidechain')
@@ -170,14 +170,14 @@ class MetalComplex(Interaction):
     def __init__(self, metalcomplex_part):
         Interaction.__init__(self, metalcomplex_part)
         self.metal_idx = self.getdata(metalcomplex_part, 'metal_idx')
-        self.metal_type = self.getdata(metalcomplex_part, 'metal_type')
+        self.metal_type = self.getdata(metalcomplex_part, 'metal_type', force_string=True)
         self.target_idx = self.getdata(metalcomplex_part, 'target_idx')
-        self.target_type = self.getdata(metalcomplex_part, 'target_type')
+        self.target_type = self.getdata(metalcomplex_part, 'target_type', force_string=True)
         self.coordination = self.getdata(metalcomplex_part, 'coordination')
         self.dist = self.getdata(metalcomplex_part, 'dist')
-        self.location = self.getdata(metalcomplex_part, 'location')
+        self.location = self.getdata(metalcomplex_part, 'location', force_string=True)
         self.rms = self.getdata(metalcomplex_part, 'rms')
-        self.geometry = self.getdata(metalcomplex_part, 'geometry')
+        self.geometry = self.getdata(metalcomplex_part, 'geometry', force_string=True)
         self.complexnum = self.getdata(metalcomplex_part, 'complexnum')
         self.targetcoo = self.getcoordinates(metalcomplex_part, 'targetcoo')
         self.metalcoo = self.getcoordinates(metalcomplex_part, 'metalcoo')
@@ -190,13 +190,13 @@ class BSite(XMLStorage):
         self.pdbid = pdbid
         self.bsid = ":".join(bindingsite.xpath('identifiers/*/text()')[2:5])
         self.uniqueid = ":".join([self.pdbid, self.bsid])
-        self.hetid = self.getdata(bindingsite, 'identifiers/hetid')
-        self.longname = self.getdata(bindingsite, 'identifiers/longname')
-        self.ligtype = self.getdata(bindingsite, 'identifiers/ligtype')
-        self.smiles = self.getdata(bindingsite, 'identifiers/smiles')
-        self.inchikey = self.getdata(bindingsite, 'identifiers/inchikey')
+        self.hetid = self.getdata(bindingsite, 'identifiers/hetid', force_string=True)
+        self.longname = self.getdata(bindingsite, 'identifiers/longname', force_string=True)
+        self.ligtype = self.getdata(bindingsite, 'identifiers/ligtype', force_string=True)
+        self.smiles = self.getdata(bindingsite, 'identifiers/smiles', force_string=True)
+        self.inchikey = self.getdata(bindingsite, 'identifiers/inchikey', force_string=True)
         self.position = self.getdata(bindingsite, 'identifiers/position')
-        self.chain = self.getdata(bindingsite, 'identifiers/chain')
+        self.chain = self.getdata(bindingsite, 'identifiers/chain', force_string=True)
 
         # Information on binding site members
         self.members = []
