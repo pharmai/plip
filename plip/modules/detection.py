@@ -17,26 +17,25 @@ def filter_contacts(pairings):
     """Filter interactions by two criteria:
     1. No interactions between the same residue (important for intra mode).
     2. No duplicate interactions (A with B and B with A, also important for intra mode)."""
-    if config.INTRA:
-        filtered1_pairings = [p for p in pairings if (p.resnr, p.reschain) != (p.resnr_l, p.reschain_l)]
-        already_considered = []
-        filtered2_pairings = []
-        for contact in filtered1_pairings:
-            try:
-                dist = 'D{}'.format(round(contact.distance,2))
-            except AttributeError:
-                try:
-                    dist = 'D{}'.format(round(contact.distance_ah,2))
-                except AttributeError:
-                    dist = 'D{}'.format(round(contact.distance_aw,2))
-            res1, res2 = ''.join([str(contact.resnr), contact.reschain]), ''.join([str(contact.resnr_l), contact.reschain_l])
-            data = set([res1, res2, dist])
-            if data not in already_considered:
-                filtered2_pairings.append(contact)
-                already_considered.append(data)
-        return filtered2_pairings
-    else:
+    if not config.INTRA:
         return pairings
+    filtered1_pairings = [p for p in pairings if (p.resnr, p.reschain) != (p.resnr_l, p.reschain_l)]
+    already_considered = []
+    filtered2_pairings = []
+    for contact in filtered1_pairings:
+        try:
+            dist = 'D{}'.format(round(contact.distance,2))
+        except AttributeError:
+            try:
+                dist = 'D{}'.format(round(contact.distance_ah,2))
+            except AttributeError:
+                dist = 'D{}'.format(round(contact.distance_aw,2))
+        res1, res2 = ''.join([str(contact.resnr), contact.reschain]), ''.join([str(contact.resnr_l), contact.reschain_l])
+        data = set([res1, res2, dist])
+        if data not in already_considered:
+            filtered2_pairings.append(contact)
+            already_considered.append(data)
+    return filtered2_pairings
 
 
 ##################################################
