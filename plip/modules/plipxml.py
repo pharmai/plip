@@ -22,7 +22,7 @@ class XMLStorage:
     def getdata(self, tree, location, force_string=False):
         """Gets XML data from a specific element and handles types."""
         found = tree.xpath('%s/text()' % location)
-        if found == []:
+        if not found:
             return None
         else:
             data = found[0]
