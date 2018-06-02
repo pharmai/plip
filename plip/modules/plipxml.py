@@ -244,7 +244,7 @@ class BSite(XMLStorage):
         self.halogens = [HalogenBond(x) for x in interactions.xpath('halogen_bonds/halogen_bond')]
         self.metal_complexes = [MetalComplex(x) for x in interactions.xpath('metal_complexes/metal_complex')]
         self.num_contacts = len(self.hydrophobics) + len(self.hbonds) + len(self.wbridges) + len(self.sbridges) + len(self.pi_stacks) + len(self.pi_cations) + len(self.halogens) + len(self.metal_complexes)
-        self.has_interactions = True if self.num_contacts > 0 else False
+        self.has_interactions = self.num_contacts > 0
 
         self.get_atom_mapping()
         self.counts = self.get_counts()
