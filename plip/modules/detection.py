@@ -31,7 +31,7 @@ def filter_contacts(pairings):
             except AttributeError:
                 dist = 'D{}'.format(round(contact.distance_aw,2))
         res1, res2 = ''.join([str(contact.resnr), contact.reschain]), ''.join([str(contact.resnr_l), contact.reschain_l])
-        data = set([res1, res2, dist])
+        data = {res1, res2, dist}
         if data not in already_considered:
             filtered2_pairings.append(contact)
             already_considered.append(data)
@@ -152,7 +152,7 @@ def pication(rings, pos_charged, protcharged):
     data = namedtuple('pication', 'ring charge distance offset type restype resnr reschain restype_l resnr_l reschain_l protcharged')
     pairings = []
     if len(rings) == 0 or len(pos_charged) == 0:
-        continue
+        return
     for ring in rings:
         c = ring.center
         for p in pos_charged:
