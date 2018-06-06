@@ -61,7 +61,7 @@ For a full documentation of running options and output formats, please refear to
 
 ## Versions and Branches
 For production environments, you should use the latest versioned commit from the stable branch.
-Newer commits from the stable and development branch may contains new but untested and not documented features.
+Newer commits from the stable and development branch may contain new but untested and not documented features.
 
 ## Requirements
 Previous to using PLIP, make sure you have the following tools and libraries installed:
