@@ -52,9 +52,9 @@ def hydrophobic_interactions(atom_set_a, atom_set_b):
     for a, b in itertools.product(atom_set_a, atom_set_b):
         if a.orig_idx == b.orig_idx:
             continue
+        e = euclidean3d(a.atom.coords, b.atom.coords)
         if not config.MIN_DIST < e < config.HYDROPH_DIST_MAX:
             continue
-        e = euclidean3d(a.atom.coords, b.atom.coords)
         restype, resnr, reschain = whichrestype(a.atom), whichresnumber(a.atom), whichchain(a.atom)
         restype_l, resnr_l, reschain_l = whichrestype(b.orig_atom), whichresnumber(b.orig_atom), whichchain(b.orig_atom)
         contact = data(bsatom=a.atom, bsatom_orig_idx=a.orig_idx, ligatom=b.atom, ligatom_orig_idx=b.orig_idx,
@@ -152,7 +152,7 @@ def pication(rings, pos_charged, protcharged):
     data = namedtuple('pication', 'ring charge distance offset type restype resnr reschain restype_l resnr_l reschain_l protcharged')
     pairings = []
     if len(rings) == 0 or len(pos_charged) == 0:
-        return
+        return pairings
     for ring in rings:
         c = ring.center
         for p in pos_charged:
