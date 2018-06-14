@@ -282,7 +282,7 @@ class PLIPXML(XMLStorage):
         self.filetype = self.getdata(self.doc, '/report/filetype')
         self.fixed = self.getdata(self.doc, '/report/pdbfixes/')
         self.filename = self.getdata(self.doc, '/report/filename')
-        self.excluded = self.getdata(self.doc, '/report/excluded_ligands')
+        self.excluded = self.doc.xpath('/report/excluded_ligands/excluded_ligand/text()')
 
         # Parse binding site information
         self.bsites = {BSite(bs, self.pdbid).bsid: BSite(bs, self.pdbid) for bs in self.doc.xpath('//bindingsite')}
