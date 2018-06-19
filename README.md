@@ -93,3 +93,11 @@ If you are unsure about usage options, don't hesitate to contact me.
 If you are using PLIP in your work, please cite
 > Salentin,S. et al. PLIP: fully automated protein-ligand interaction profiler.
 > Nucl. Acids Res. (1 July 2015) 43 (W1): W443-W447. doi: 10.1093/nar/gkv315
+
+## FAQ
+> I try to run PLIP, but I'm getting an error message saying:
+> ValueError: [...] is not a recognised Open Babel descriptor type
+
+Make sure Open Babel is correctly installed. This error can occur if the installed Python bindings don't match the OpenBabel version on your machine.
+We don't offer technical support for installation of third-party packages.
+For an instruction how to install Open Babel, please refer to their [website](https://openbabel.org/docs/dev/Installation/install.html).
