@@ -1,5 +1,7 @@
 Changelog
 ---------
+# Next version
+* Adds information on covalent linkages to XML files
 
 # 1.4.2
 * Adds "--name" option to change name of output files

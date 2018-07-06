@@ -61,6 +61,13 @@ class StructureReport:
         for i, exlig in enumerate(self.excluded):
             e = et.SubElement(exligs, 'excluded_ligand', id=str(i + 1))
             e.text = exlig
+        covalent = et.SubElement(report, 'covlinkages')
+        for i, covlinkage in enumerate(self.mol.covalent):
+            e = et.SubElement(covalent, 'covlinkage', id=str(i + 1))
+            f1 = et.SubElement(e, 'res1')
+            f2 = et.SubElement(e, 'res2')
+            f1.text = ":".join([covlinkage.id1, covlinkage.chain1, str(covlinkage.pos1)])
+            f2.text =  ":".join([covlinkage.id2, covlinkage.chain2, str(covlinkage.pos2)])
         return report
 
     def construct_txt_file(self):
