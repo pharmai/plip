@@ -1,0 +1,4 @@
+recursive-include plip *.py
+include *.txt
+include *.md
+prune plip/test
