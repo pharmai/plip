@@ -17,7 +17,7 @@ setup(name='plip',
           'Programming Language :: Python :: 3.5',
           'Topic :: Scientific/Engineering :: Bio-Informatics'
       ],
-      url='https://github.com/ssalentin/plip',
+      url='https://github.com/lkagami/plip',
       author='Sebastian Salentin',
       author_email='sebastian.salentin@tu-dresden.de',
       license='GPLv2',
