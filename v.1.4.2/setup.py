@@ -22,6 +22,7 @@ setup(name='plip',
       author_email='sebastian.salentin@tu-dresden.de',
       license='GPLv2',
       packages=['plip', 'plip.modules'],
+      include_package_data=True,
       entry_points={'console_scripts': ['plip = plip.plipcmd:main']},
       install_requires=[
           'openbabel',
