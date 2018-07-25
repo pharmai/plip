@@ -304,4 +304,4 @@ def main_init():
     expanded_path = tilde_expansion(arguments.input) if arguments.input is not None else None
     main(expanded_path, arguments.pdbid)  # Start main script
 if __name__ == '__main__':
-  def main_init()
+  main_init()
