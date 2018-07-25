@@ -177,12 +177,10 @@ def main(inputstructs, inputpdbids):
         else:
             write_message('\nFinished analysis. Find the result files in %s\n\n' % config.BASEPATH)
 
-if __name__ == '__main__':
-
     ##############################
     # Parse command line arguments
     ##############################
-
+def main_init():
     parser = ArgumentParser(prog="PLIP", description=descript)
     pdbstructure = parser.add_mutually_exclusive_group(required=True)  # Needs either PDB ID or file
     pdbstructure.add_argument("-f", "--file", dest="input", nargs="+", help="Set input file, '-' reads from stdin") # '-' as file name reads from stdin
@@ -304,3 +302,5 @@ if __name__ == '__main__':
         parser.error("The water bridge omega minimum angle has to be smaller than the water bridge omega maximum angle")
     expanded_path = tilde_expansion(arguments.input) if arguments.input is not None else None
     main(expanded_path, arguments.pdbid)  # Start main script
+if __name__ == '__main__':
+    main_init()
