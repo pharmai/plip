@@ -24,5 +24,5 @@ setup(name='plip',
       packages=['plip','plip.modules',],
       keywords=['plip'],
       include_package_data=True,
-      entry_points={'console_scripts': ['plip = plip.plipcmd_conda:main_init']},
+      entry_points={'console_scripts': ['plip = plip.plipcmd:main_init']},
       zip_safe=False)
