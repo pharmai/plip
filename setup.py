@@ -22,7 +22,7 @@ setup(name='plip',
       author_email='sebastian.salentin@tu-dresden.de',
       license='GPLv2',
       packages=['plip', 'plip/modules'],
-      scripts=['plip/plipcmd'],
+      scripts=['plip/plipcmd.py'],
       install_requires=[
           'openbabel',
           'numpy',

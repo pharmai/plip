@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 """
 Protein-Ligand Interaction Profiler - Analyze and visualize protein-ligand interactions in PDB files.
-plipcmd - Main script for PLIP command line execution.
+plipcmd.py - Main script for PLIP command line execution.
 """
 
 # Compatibility
@@ -182,6 +182,7 @@ def main(inputstructs, inputpdbids):
     # Parse command line arguments
     ##############################
 def main_init():
+    """Parse command line arguments and start main script for analysis."""
     parser = ArgumentParser(prog="PLIP", description=descript)
     pdbstructure = parser.add_mutually_exclusive_group(required=True)  # Needs either PDB ID or file
     pdbstructure.add_argument("-f", "--file", dest="input", nargs="+", help="Set input file, '-' reads from stdin") # '-' as file name reads from stdin

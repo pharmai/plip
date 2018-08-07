@@ -18,11 +18,11 @@ git clone https://github.com/ssalentin/plip.git ~/pliptool
 
 ##### As a command line tool
 
-Run the `plipcmd` script inside the PLIP folder to detect, report, and visualize interactions. The following example creates a PYMOL visualization for the interactions
+Run the `plipcmd.py` script inside the PLIP folder to detect, report, and visualize interactions. The following example creates a PYMOL visualization for the interactions
 between the inhibitor NFT and its target protein in the PDB structure 1VSN.
 
 ```bash
-alias plip='~/pliptool/plip/plipcmd'
+alias plip='python ~/pliptool/plip/plipcmd.py'
 mkdir /tmp/1vsn && cd /tmp/1vsn
 plip -i 1vsn -yv
 pymol 1VSN_NFT_A_283.pse

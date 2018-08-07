@@ -67,7 +67,7 @@ You can use any other user directory, but we will use the one given above for th
 The package manager `pip` will create symlinks for you so you can call PLIP using `plip` in the command line. If you cloned from Github, use the following command to do the same:
 
 ```bash
-alias plip='~/pliptool/plip/plipcmd'
+alias plip='python ~/pliptool/plip/plipcmd.py'
 ```
 
 ## Analyze a PDB structure with PLIP
