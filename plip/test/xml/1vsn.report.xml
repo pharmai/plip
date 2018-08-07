@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='ASCII'?>
 <report>
-  <plipversion>1.3.2</plipversion>
+  <plipversion>1.4.2</plipversion>
   <bindingsite id="1" has_interactions="True">
     <identifiers>
       <longname>NFT</longname>
@@ -12,7 +12,8 @@
       <members>
         <member id="1">NFT:A:283</member>
       </members>
-      <smiles>N=CCNC(=O)[C@H](CC(C)C)N[C@H](C(F)(F)F)c1ccc(cc1)c1ccc(cc1)S(=O)(=O)N</smiles>
+      <smiles>CC(C)CC(NC(c1ccc(cc1)c1ccc(cc1)S(N)(=O)=O)C(F)(F)F)C(=O)NCC=N</smiles>
+      <inchikey>LUFZQYFBEDDLGO-UHFFFAOYSA-N</inchikey>
     </identifiers>
     <lig_properties>
       <num_heavy_atoms>33</num_heavy_atoms>
@@ -24,8 +25,8 @@
       <num_unpaired_hal>1</num_unpaired_hal>
       <num_aromatic_rings>2</num_aromatic_rings>
       <num_rotatable_bonds>12</num_rotatable_bonds>
-      <molweight>484.5349896</molweight>
-      <logp>6.0371</logp>
+      <molweight>483.5270496</molweight>
+      <logp>5.9141</logp>
     </lig_properties>
     <interacting_chains>
       <interacting_chain id="1">A</interacting_chain>
@@ -50,23 +51,22 @@
       <bs_residue aa="PHE" contact="False" id="17" min_dist="7.4">28A</bs_residue>
       <bs_residue aa="LEU" contact="False" id="18" min_dist="4.2">205A</bs_residue>
       <bs_residue aa="THR" contact="False" id="19" min_dist="7.3">69A</bs_residue>
-      <bs_residue aa="TRP" contact="True" id="20" min_dist="5.8">177A</bs_residue>
+      <bs_residue aa="TRP" contact="False" id="20" min_dist="5.8">177A</bs_residue>
       <bs_residue aa="HIS" contact="True" id="21" min_dist="4.0">159A</bs_residue>
       <bs_residue aa="ASN" contact="True" id="22" min_dist="2.9">158A</bs_residue>
       <bs_residue aa="VAL" contact="False" id="23" min_dist="6.9">161A</bs_residue>
       <bs_residue aa="ALA" contact="False" id="24" min_dist="6.8">27A</bs_residue>
       <bs_residue aa="ALA" contact="False" id="25" min_dist="6.8">1156A</bs_residue>
-      <bs_residue aa="CYS" contact="True" id="26" min_dist="1.7">25A</bs_residue>
-      <bs_residue aa="GLY" contact="False" id="27" min_dist="3.4">23A</bs_residue>
-      <bs_residue aa="GLU" contact="False" id="28" min_dist="3.3">59A</bs_residue>
-      <bs_residue aa="GLY" contact="False" id="29" min_dist="5.8">62A</bs_residue>
-      <bs_residue aa="VAL" contact="False" id="30" min_dist="6.0">132A</bs_residue>
-      <bs_residue aa="ASN" contact="False" id="31" min_dist="3.0">60A</bs_residue>
-      <bs_residue aa="ILE" contact="False" id="32" min_dist="5.7">134A</bs_residue>
-      <bs_residue aa="VAL" contact="False" id="33" min_dist="6.3">57A</bs_residue>
-      <bs_residue aa="GLN" contact="True" id="34" min_dist="3.1">19A</bs_residue>
-      <bs_residue aa="ASN" contact="False" id="35" min_dist="5.9">70A</bs_residue>
-      <bs_residue aa="GLY" contact="True" id="36" min_dist="2.9">66A</bs_residue>
+      <bs_residue aa="GLY" contact="False" id="26" min_dist="3.4">23A</bs_residue>
+      <bs_residue aa="GLU" contact="False" id="27" min_dist="3.3">59A</bs_residue>
+      <bs_residue aa="GLY" contact="False" id="28" min_dist="5.8">62A</bs_residue>
+      <bs_residue aa="VAL" contact="False" id="29" min_dist="6.0">132A</bs_residue>
+      <bs_residue aa="ASN" contact="False" id="30" min_dist="3.0">60A</bs_residue>
+      <bs_residue aa="ILE" contact="False" id="31" min_dist="5.7">134A</bs_residue>
+      <bs_residue aa="VAL" contact="False" id="32" min_dist="6.3">57A</bs_residue>
+      <bs_residue aa="GLN" contact="True" id="33" min_dist="3.1">19A</bs_residue>
+      <bs_residue aa="ASN" contact="False" id="34" min_dist="5.9">70A</bs_residue>
+      <bs_residue aa="GLY" contact="True" id="35" min_dist="2.9">66A</bs_residue>
     </bs_residues>
     <interactions>
       <hydrophobic_interactions>
@@ -74,6 +74,9 @@
           <resnr>61</resnr>
           <restype>ASP</restype>
           <reschain>A</reschain>
+          <resnr_lig>283</resnr_lig>
+          <restype_lig>NFT</restype_lig>
+          <reschain_lig>A</reschain_lig>
           <dist>3.67</dist>
           <ligcarbonidx>1639</ligcarbonidx>
           <protcarbonidx>448</protcarbonidx>
@@ -92,6 +95,9 @@
           <resnr>67</resnr>
           <restype>TYR</restype>
           <reschain>A</reschain>
+          <resnr_lig>283</resnr_lig>
+          <restype_lig>NFT</restype_lig>
+          <reschain_lig>A</reschain_lig>
           <dist>3.73</dist>
           <ligcarbonidx>1622</ligcarbonidx>
           <protcarbonidx>482</protcarbonidx>
@@ -110,6 +116,9 @@
           <resnr>67</resnr>
           <restype>TYR</restype>
           <reschain>A</reschain>
+          <resnr_lig>283</resnr_lig>
+          <restype_lig>NFT</restype_lig>
+          <reschain_lig>A</reschain_lig>
           <dist>3.84</dist>
           <ligcarbonidx>1636</ligcarbonidx>
           <protcarbonidx>481</protcarbonidx>
@@ -128,6 +137,9 @@
           <resnr>133</resnr>
           <restype>ALA</restype>
           <reschain>A</reschain>
+          <resnr_lig>283</resnr_lig>
+          <restype_lig>NFT</restype_lig>
+          <reschain_lig>A</reschain_lig>
           <dist>3.97</dist>
           <ligcarbonidx>1636</ligcarbonidx>
           <protcarbonidx>994</protcarbonidx>
@@ -148,6 +160,9 @@
           <resnr>19</resnr>
           <restype>GLN</restype>
           <reschain>A</reschain>
+          <resnr_lig>283</resnr_lig>
+          <restype_lig>NFT</restype_lig>
+          <reschain_lig>A</reschain_lig>
           <sidechain>True</sidechain>
           <dist_h-a>2.16</dist_h-a>
           <dist_d-a>3.11</dist_d-a>
@@ -169,33 +184,12 @@
           </protcoo>
         </hydrogen_bond>
         <hydrogen_bond id="2">
-          <resnr>25</resnr>
-          <restype>CYS</restype>
-          <reschain>A</reschain>
-          <sidechain>False</sidechain>
-          <dist_h-a>2.21</dist_h-a>
-          <dist_d-a>3.09</dist_d-a>
-          <don_angle>146.90</don_angle>
-          <protisdon>True</protisdon>
-          <donoridx>183</donoridx>
-          <donortype>Nam</donortype>
-          <acceptoridx>1649</acceptoridx>
-          <acceptortype>N2</acceptortype>
-          <ligcoo>
-            <x>2.820</x>
-            <y>18.145</y>
-            <z>6.806</z>
-          </ligcoo>
-          <protcoo>
-            <x>3.306</x>
-            <y>18.620</y>
-            <z>9.817</z>
-          </protcoo>
-        </hydrogen_bond>
-        <hydrogen_bond id="3">
           <resnr>61</resnr>
           <restype>ASP</restype>
           <reschain>A</reschain>
+          <resnr_lig>283</resnr_lig>
+          <restype_lig>NFT</restype_lig>
+          <reschain_lig>A</reschain_lig>
           <sidechain>True</sidechain>
           <dist_h-a>2.26</dist_h-a>
           <dist_d-a>2.99</dist_d-a>
@@ -216,10 +210,13 @@
             <z>9.223</z>
           </protcoo>
         </hydrogen_bond>
-        <hydrogen_bond id="4">
+        <hydrogen_bond id="3">
           <resnr>61</resnr>
           <restype>ASP</restype>
           <reschain>A</reschain>
+          <resnr_lig>283</resnr_lig>
+          <restype_lig>NFT</restype_lig>
+          <reschain_lig>A</reschain_lig>
           <sidechain>True</sidechain>
           <dist_h-a>1.98</dist_h-a>
           <dist_d-a>2.99</dist_d-a>
@@ -240,10 +237,13 @@
             <z>9.223</z>
           </protcoo>
         </hydrogen_bond>
-        <hydrogen_bond id="5">
+        <hydrogen_bond id="4">
           <resnr>66</resnr>
           <restype>GLY</restype>
           <reschain>A</reschain>
+          <resnr_lig>283</resnr_lig>
+          <restype_lig>NFT</restype_lig>
+          <reschain_lig>A</reschain_lig>
           <sidechain>False</sidechain>
           <dist_h-a>2.33</dist_h-a>
           <dist_d-a>3.18</dist_d-a>
@@ -264,10 +264,13 @@
             <z>8.576</z>
           </protcoo>
         </hydrogen_bond>
-        <hydrogen_bond id="6">
+        <hydrogen_bond id="5">
           <resnr>66</resnr>
           <restype>GLY</restype>
           <reschain>A</reschain>
+          <resnr_lig>283</resnr_lig>
+          <restype_lig>NFT</restype_lig>
+          <reschain_lig>A</reschain_lig>
           <sidechain>False</sidechain>
           <dist_h-a>2.05</dist_h-a>
           <dist_d-a>2.95</dist_d-a>
@@ -288,10 +291,13 @@
             <z>8.621</z>
           </protcoo>
         </hydrogen_bond>
-        <hydrogen_bond id="7">
+        <hydrogen_bond id="6">
           <resnr>158</resnr>
           <restype>ASN</restype>
           <reschain>A</reschain>
+          <resnr_lig>283</resnr_lig>
+          <restype_lig>NFT</restype_lig>
+          <reschain_lig>A</reschain_lig>
           <sidechain>False</sidechain>
           <dist_h-a>1.95</dist_h-a>
           <dist_d-a>2.92</dist_d-a>
@@ -318,6 +324,9 @@
           <resnr>159</resnr>
           <restype>HIS</restype>
           <reschain>A</reschain>
+          <resnr_lig>283</resnr_lig>
+          <restype_lig>NFT</restype_lig>
+          <reschain_lig>A</reschain_lig>
           <dist_a-w>3.67</dist_a-w>
           <dist_d-w>3.13</dist_d-w>
           <don_angle>126.73</don_angle>
@@ -344,36 +353,6 @@
             <z>3.309</z>
           </watercoo>
         </water_bridge>
-        <water_bridge id="2">
-          <resnr>177</resnr>
-          <restype>TRP</restype>
-          <reschain>A</reschain>
-          <dist_a-w>3.96</dist_a-w>
-          <dist_d-w>3.04</dist_d-w>
-          <don_angle>125.14</don_angle>
-          <water_angle>84.15</water_angle>
-          <protisdon>True</protisdon>
-          <donor_idx>1380</donor_idx>
-          <donortype>Nar</donortype>
-          <acceptor_idx>1649</acceptor_idx>
-          <acceptortype>N2</acceptortype>
-          <water_idx>1735</water_idx>
-          <ligcoo>
-            <x>2.820</x>
-            <y>18.145</y>
-            <z>6.806</z>
-          </ligcoo>
-          <protcoo>
-            <x>7.577</x>
-            <y>15.116</y>
-            <z>5.463</z>
-          </protcoo>
-          <watercoo>
-            <x>4.665</x>
-            <y>15.397</y>
-            <z>4.635</z>
-          </watercoo>
-        </water_bridge>
       </water_bridges>
       <salt_bridges/>
       <pi_stacks/>
@@ -383,6 +362,9 @@
           <resnr>67</resnr>
           <restype>TYR</restype>
           <reschain>A</reschain>
+          <resnr_lig>283</resnr_lig>
+          <restype_lig>NFT</restype_lig>
+          <reschain_lig>A</reschain_lig>
           <sidechain>True</sidechain>
           <dist>3.37</dist>
           <don_angle>156.70</don_angle>
@@ -406,6 +388,9 @@
           <resnr>157</resnr>
           <restype>LEU</restype>
           <reschain>A</reschain>
+          <resnr_lig>283</resnr_lig>
+          <restype_lig>NFT</restype_lig>
+          <reschain_lig>A</reschain_lig>
           <sidechain>False</sidechain>
           <dist>3.24</dist>
           <don_angle>141.32</don_angle>
@@ -429,12 +414,14 @@
       <metal_complexes/>
     </interactions>
     <mappings>
-      <smiles_to_pdb>1:1649,2:1648,3:1630,4:1629,5:1637,6:1632,7:1631,8:1624,9:1625,10:1626,11:1627,12:1628,13:1623,14:1621,15:1620,16:1619,17:1618,18:1622,19:1617,20:1639,21:1640,22:1641,23:1642,24:1643,25:1644,26:1645,27:1646,28:1647,29:1633,30:1634,31:1635,32:1636,33:1638</smiles_to_pdb>
+      <smiles_to_pdb>1:1636,2:1634,3:1635,4:1633,5:1632,6:1631,7:1624,8:1623,9:1621,10:1620,11:1619,12:1618,13:1622,14:1617,15:1639,16:1640,17:1641,18:1642,19:1643,20:1644,21:1645,22:1646,23:1647,24:1625,25:1626,26:1627,27:1628,28:1637,29:1638,30:1629,31:1630,32:1648,33:1649</smiles_to_pdb>
     </mappings>
   </bindingsite>
+  <date_of_creation>2018/08/07</date_of_creation>
+  <citation_information>Salentin,S. et al. PLIP: fully automated protein-ligand interaction profiler. Nucl. Acids Res. (1 July 2015) 43 (W1): W443-W447. doi: 10.1093/nar/gkv315</citation_information>
+  <mode>default</mode>
   <pdbid>1VSN</pdbid>
-  <filetype>PDB</filetype>
-  <pdbfile>1vsn.pdb</pdbfile>
+  <pdbfile>./1vsn.pdb</pdbfile>
   <pdbfixes>False</pdbfixes>
   <filename>1vsn.pdb</filename>
   <excluded_ligands/>

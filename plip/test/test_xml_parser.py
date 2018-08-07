@@ -15,16 +15,15 @@ class XMLParserTest(unittest.TestCase):
     def setUp(self):
         self.px = PLIPXML('./xml/1vsn.report.xml')
         self.bsite = self.px.bsites['NFT:A:283']
-        self.smiles = 'N=CCNC(=O)[C@H](CC(C)C)N[C@H](C(F)(F)F)c1ccc(cc1)c1ccc(cc1)S(=O)(=O)N'
+        self.smiles = 'CC(C)CC(NC(c1ccc(cc1)c1ccc(cc1)S(N)(=O)=O)C(F)(F)F)C(=O)NCC=N'
 
     def test_general_information(self):
         """Test if general information is correctly parsed."""
-        self.assertEqual(self.px.version, '1.3.2')
+        self.assertEqual(self.px.version, '1.4.2')
         self.assertEqual(self.px.pdbid, '1VSN')
-        self.assertEqual(self.px.filetype, 'PDB')
         self.assertFalse(self.px.fixed)
         self.assertEqual(self.px.filename, '1vsn.pdb')
-        self.assertEqual(self.px.excluded, None)
+        self.assertEqual(self.px.excluded, [])
 
     def test_bsite_information(self):
         """Test if the binding site information is correctly parsed."""
@@ -47,17 +46,17 @@ class XMLParserTest(unittest.TestCase):
         self.assertEqual(self.bsite.unpaired_hal, 1)
         self.assertEqual(self.bsite.rings, 2)
         self.assertEqual(self.bsite.rotatable_bonds, 12)
-        self.assertEqual(self.bsite.molweight, 484.5349896)
-        self.assertEqual(self.bsite.logp, 6.0371)
+        self.assertAlmostEqual(self.bsite.molweight, 484, 0)
+        self.assertAlmostEqual(self.bsite.logp, 6, 0)
 
         # Atom mappings (non-exhaustive test)
         lmap = self.bsite.mappings['pdb_to_smiles']
-        self.assertEqual(lmap[1625], 9)
-        self.assertEqual(lmap[1649], 1)
-        self.assertEqual(lmap[1617], 19)
+        self.assertEqual(lmap[1625], 24)
+        self.assertEqual(lmap[1649], 33)
+        self.assertEqual(lmap[1617], 14)
 
         # Binding site residues
-        self.assertEqual(len(self.bsite.bs_res), 36)
+        self.assertEqual(len(self.bsite.bs_res), 35)
 
         # Interacting chains
         self.assertEqual(self.bsite.interacting_chains, ['A'])
@@ -82,7 +81,7 @@ class XMLParserTest(unittest.TestCase):
 
 
         # Hydrogen Bonds
-        self.assertEqual(len(self.bsite.hbonds), 7)
+        self.assertEqual(len(self.bsite.hbonds), 6)
         hbond1 = self.bsite.hbonds[0]
         self.assertEqual(hbond1.resnr, 19)
         self.assertEqual(hbond1.restype, 'GLN')
@@ -100,7 +99,7 @@ class XMLParserTest(unittest.TestCase):
         self.assertEqual(hbond1.protcoo, (3.976, 15.409, 7.712))
 
         # Water Bridges
-        self.assertEqual(len(self.bsite.wbridges), 2)
+        self.assertEqual(len(self.bsite.wbridges), 1)
         wbridge1 = self.bsite.wbridges[0]
         self.assertEqual(wbridge1.resnr, 159)
         self.assertEqual(wbridge1.restype, 'HIS')
