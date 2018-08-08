@@ -4,7 +4,7 @@ package:
 
 source:
   git_rev: "recipe"
-  git_url: https://github.com/lkagami/plip.git
+  git_url: https://github.com/ssalentin/plip.git
   
 requirements:
   host:
