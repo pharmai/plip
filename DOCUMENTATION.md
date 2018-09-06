@@ -44,7 +44,7 @@ and should be executed with Python 2.7.x.
 
 Example command for Ubuntu using apt-get
 ```bash
-sudo apt-get install pymol openbabel python-openbabel imagemagick
+sudo apt-get install pymol openbabel python-openbabel imagemagick swig
 ```
 
 
