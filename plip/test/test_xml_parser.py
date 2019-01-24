@@ -79,7 +79,6 @@ class XMLParserTest(unittest.TestCase):
         self.assertEqual(hydrophobic1.ligcoo, (-7.395, 24.225, 6.614))
         self.assertEqual(hydrophobic1.protcoo, (-6.900, 21.561, 9.090))
 
-
         # Hydrogen Bonds
         self.assertEqual(len(self.bsite.hbonds), 6)
         hbond1 = self.bsite.hbonds[0]
@@ -116,7 +115,6 @@ class XMLParserTest(unittest.TestCase):
         self.assertEqual(wbridge1.ligcoo, (2.820, 18.145, 6.806))
         self.assertEqual(wbridge1.protcoo, (6.401, 19.307, 4.971))
         self.assertEqual(wbridge1.watercoo, (3.860, 18.563, 3.309))
-
 
         # Salt Bridges
         self.assertEqual(len(self.bsite.sbridges), 0)

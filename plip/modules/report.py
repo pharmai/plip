@@ -19,10 +19,12 @@ from . import config
 # External libraries
 import lxml.etree as et
 
-__version__ = '1.4.3'
+__version__ = '1.4.4'
+
 
 class StructureReport:
     """Creates reports (xml or txt) for one structure/"""
+
     def __init__(self, mol, outputprefix='report'):
         self.mol = mol
         self.excluded = self.mol.excluded
@@ -41,7 +43,7 @@ class StructureReport:
         date_of_creation.text = time.strftime("%Y/%m/%d")
         citation_information = et.SubElement(report, 'citation_information')
         citation_information.text = "Salentin,S. et al. PLIP: fully automated protein-ligand interaction profiler. " \
-           "Nucl. Acids Res. (1 July 2015) 43 (W1): W443-W447. doi: 10.1093/nar/gkv315"
+            "Nucl. Acids Res. (1 July 2015) 43 (W1): W443-W447. doi: 10.1093/nar/gkv315"
         mode = et.SubElement(report, 'mode')
         if config.DNARECEPTOR:
             mode.text = 'dna_receptor'
@@ -67,7 +69,7 @@ class StructureReport:
             f1 = et.SubElement(e, 'res1')
             f2 = et.SubElement(e, 'res2')
             f1.text = ":".join([covlinkage.id1, covlinkage.chain1, str(covlinkage.pos1)])
-            f2.text =  ":".join([covlinkage.id2, covlinkage.chain2, str(covlinkage.pos2)])
+            f2.text = ":".join([covlinkage.id2, covlinkage.chain2, str(covlinkage.pos2)])
         return report
 
     def construct_txt_file(self):
@@ -124,6 +126,7 @@ class StructureReport:
 
 class BindingSiteReport:
     """Gather report data and generate reports for one binding site in different formats."""
+
     def __init__(self, plcomplex):
 
         ################
@@ -465,7 +468,8 @@ class BindingSiteReport:
         smiles_to_pdb = et.SubElement(mappings, 'smiles_to_pdb')  # SMILES numbering to PDB file numbering (atoms)
         bsid = ':'.join([self.ligand.hetid, self.ligand.chain, str(self.ligand.position)])
         if self.ligand.atomorder is not None:
-            smiles_to_pdb_map = [(key, self.ligand.Mapper.mapid(self.ligand.can_to_pdb[key], mtype='protein', bsid=bsid)) for key in self.ligand.can_to_pdb]
+            smiles_to_pdb_map = [(key, self.ligand.Mapper.mapid(self.ligand.can_to_pdb[key],
+                                                                mtype='protein', bsid=bsid)) for key in self.ligand.can_to_pdb]
             smiles_to_pdb.text = ','.join([str(mapping[0])+':'+str(mapping[1]) for mapping in smiles_to_pdb_map])
         else:
             smiles_to_pdb.text = ''

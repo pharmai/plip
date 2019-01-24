@@ -16,14 +16,14 @@ sbridge_info = namedtuple('sbridge_info', 'positive_atoms negative_atoms positiv
 wbridge_info = namedtuple('wbridge_info', 'don_id acc_id water_id protisdon')
 metal_info = namedtuple('metal_info', 'metal_id, target_id location')
 
+
 class VisualizerData:
     """Contains all information on a complex relevant for visualization. Can be pickled"""
+
     def __init__(self, mol, site):
         pcomp = mol
         pli = mol.interaction_sets[site]
         ligand = pli.ligand
-
-
 
         # General Information
         self.lig_members = sorted(pli.ligand.members)

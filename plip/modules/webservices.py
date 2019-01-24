@@ -6,10 +6,10 @@ webservices.py - Connect to various webservices to retrieve data
 # Python standard library
 from __future__ import absolute_import
 
-try: # Python 3
+try:  # Python 3
     from urllib.request import urlopen
     from urllib.error import HTTPError
-except ImportError: # Fallback Python 2.x
+except ImportError:  # Fallback Python 2.x
     from urllib2 import urlopen, HTTPError
 
 # Own modules
@@ -17,7 +17,6 @@ from .supplemental import write_message, sysexit
 
 # External libraries
 import lxml.etree as et
-
 
 
 def check_pdb_status(pdbid):

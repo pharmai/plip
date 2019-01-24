@@ -27,7 +27,3 @@ class TestPDB(unittest.TestCase):
         status, current_pdbid = check_pdb_status('xxxx')
         self.assertEqual(status, 'UNKNOWN')
         self.assertEqual(current_pdbid, 'xxxx')
-
-
-        #print "Latest PDB ---", "passed" if get_latest_pdb("1a0v") == "1y46" else "not passed"
-#print "Resolution ---", "passed" if get_resolution("4HHB") == 1.74 else "not passed"

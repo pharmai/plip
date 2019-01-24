@@ -1,6 +1,13 @@
 Changelog
 ---------
+
 # Next version
+* Improved parameters for water bridge detection
+* Added unit test for PDB structure 1HPX
+* PEP8 Changes
+* Improved imports 
+
+# 1.4.3
 * Adds information on covalent linkages to XML files
 * __Anaconda package__ (provided by `Ikagami`)
 

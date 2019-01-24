@@ -3,8 +3,10 @@ Protein-Ligand Interaction Profiler - Analyze and visualize protein-ligand inter
 chimeraplip.py - Visualization class for Chimera.
 """
 
+
 class ChimeraVisualizer():
     """Provides visualization for Chimera."""
+
     def __init__(self, plcomplex, chimera_module, tid):
         self.chimera = chimera_module
         self.tid = tid
@@ -12,12 +14,11 @@ class ChimeraVisualizer():
         self.plipname = 'PLIP-%i' % self.tid
         self.hetid, self.chain, self.pos = self.uid.split(':')
         self.pos = int(self.pos)
-        Molecule = self.chimera.Molecule
         self.colorbyname = self.chimera.colorTable.getColorByName
         self.rc = self.chimera.runCommand
         self.getPseudoBondGroup = self.chimera.misc.getPseudoBondGroup
 
-        if not plcomplex is None:
+        if plcomplex is not None:
             self.plcomplex = plcomplex
             self.protname = plcomplex.pdbid  # Name of protein with binding site
             self.ligname = plcomplex.hetid  # Name of ligand
@@ -32,13 +33,12 @@ class ChimeraVisualizer():
 
             self.atoms = self.atom_by_serialnumber()
 
-
     def set_initial_representations(self):
         """Set the initial representations"""
         self.update_model_dict()
         self.rc("background solid white")
         self.rc("setattr g display 0")  # Hide all pseudobonds
-        self.rc("~display #%i & :/isHet & ~:%s" % (self.model_dict[self.plipname],self.hetid))
+        self.rc("~display #%i & :/isHet & ~:%s" % (self.model_dict[self.plipname], self.hetid))
 
     def update_model_dict(self):
         """Updates the model dictionary"""
@@ -52,7 +52,7 @@ class ChimeraVisualizer():
         """Provides a dictionary mapping serial numbers to their atom objects."""
         atm_by_snum = {}
         for atom in self.model.atoms:
-            atm_by_snum[atom.serialNumber] =  atom
+            atm_by_snum[atom.serialNumber] = atom
         return atm_by_snum
 
     def show_hydrophobic(self):
@@ -62,7 +62,6 @@ class ChimeraVisualizer():
         grp.lineWidth = 3
         grp.color = self.colorbyname('gray')
         for i in self.plcomplex.hydrophobic_contacts.pairs_ids:
-            b = grp.newPseudoBond(self.atoms[i[0]], self.atoms[i[1]])
             self.bs_res_ids.append(i[0])
 
     def show_hbonds(self):
@@ -77,7 +76,6 @@ class ChimeraVisualizer():
             b = grp.newPseudoBond(self.atoms[i[0]], self.atoms[i[1]])
             b.color = self.colorbyname('blue')
             self.bs_res_ids.append(i[1])
-
 
     def show_halogen(self):
         """Visualizes halogen bonds."""
@@ -107,7 +105,6 @@ class ChimeraVisualizer():
             x, y, z = stack.ligandring_center
             centroid_lig.setCoord(self.chimera.Coord(x, y, z))
             r.addAtom(centroid_lig)
-
 
             b = grp.newPseudoBond(centroid_lig, centroid_prot)
             b.color = self.colorbyname('forest green')
@@ -214,8 +211,6 @@ class ChimeraVisualizer():
         self.rc("~display #%i & ~:/isHet" % self.model_dict[self.plipname])
         self.rc("display :%s" % ",".join([str(self.atoms[bsid].residue.id) for bsid in self.bs_res_ids]))
         self.rc("color lightblue :HOH")
-
-
 
     def zoom_to_ligand(self):
         """Centers the view on the ligand and its binding site residues."""

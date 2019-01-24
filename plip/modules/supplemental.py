@@ -7,6 +7,13 @@ supplemental.py - Supplemental functions for PLIP analysis.
 from __future__ import print_function
 from __future__ import absolute_import
 
+# Python standard Library
+
+# External Libraries
+import numpy as np
+import pybel
+from pybel import Atom
+
 # PLIP Modules
 from . import config
 
@@ -14,20 +21,18 @@ from . import config
 import re
 from collections import namedtuple
 import os
-if os.name != 'nt':  # Resource module not available for Windows
-    import resource
+import sys
 import subprocess
-import codecs
+import itertools
 import gzip
 import zipfile
 import platform
+import tempfile
 
-# External libraries
-import pybel
-from pybel import *
-from openbabel import *
-import numpy as np
-import itertools
+# Windows
+if os.name != 'nt':  # Resource module not available for Windows
+    import resource
+
 
 # Settings
 np.seterr(all='ignore')  # No runtime warnings
@@ -215,8 +220,6 @@ def cmd_exists(c):
 ################
 
 
-
-
 def initialize_pymol(options):
     """Initializes PyMOL"""
     import pymol
@@ -234,6 +237,7 @@ def start_pymol(quiet=False, options='-p', run=False):
         initialize_pymol(options)
     if quiet:
         pymol.cmd.feedback('disable', 'all', 'everything')
+
 
 def nucleotide_linkage(residues):
     """Support for DNA/RNA ligands by finding missing covalent linkages to stitch DNA/RNA together."""
@@ -265,6 +269,7 @@ def nucleotide_linkage(residues):
                 nuc_covalent.append(newlink)
 
     return nuc_covalent
+
 
 def ring_is_planar(ring, r_atoms):
     """Given a set of ring atoms, check if the ring is sufficiently planar
@@ -304,6 +309,7 @@ def classify_by_name(names):
                 if "ION" not in ligtype:
                     ligtype += '+ION'
     return ligtype
+
 
 def sort_members_by_importance(members):
     """Sort the members of a composite ligand according to two criteria:
@@ -399,11 +405,6 @@ def read(fil):
         return zf.open(zf.infolist()[0].filename)
     else:
         return open(fil, 'r')
-        #try:
-        #    codecs.open(fil, 'r', 'utf-8').read()
-        #    return codecs.open(fil, 'r', 'utf-8')
-        #except UnicodeDecodeError:
-        #    return open(fil, 'r')
 
 
 def readmol(path, as_string=False):
@@ -417,8 +418,7 @@ def readmol(path, as_string=False):
     for sformat in supported_formats:
         obc = pybel.ob.OBConversion()
         obc.SetInFormat(sformat)
-        write_message("Detected {} as format. Now trying to read file with OpenBabel...\n".format(sformat), mtype='debug')
-        mol = pybel.ob.OBMol()
+        write_message("Detected {} as format. Trying to read file with OpenBabel...\n".format(sformat), mtype='debug')
 
         # Read molecules with single bond information
         if as_string:
@@ -451,10 +451,11 @@ def sysexit(code, msg):
 # Verbose and Debug #
 #####################
 
+
 def colorlog(msg, color, bold=False, blink=False):
     """Colors messages on non-Windows systems supporting ANSI escape."""
 
-    ## ANSI Escape Codes ##
+    # ANSI Escape Codes
     PINK_COL = '\x1b[35m'
     GREEN_COL = '\x1b[32m'
     RED_COL = '\x1b[31m'
@@ -475,10 +476,12 @@ def colorlog(msg, color, bold=False, blink=False):
             msg = PINK_COL + msg + RESET
     return msg
 
+
 def write_message(msg, indent=False, mtype='standard', caption=False):
     """Writes message if verbose mode is set."""
-    if (mtype=='debug' and config.DEBUG) or (mtype !='debug' and config.VERBOSE) or mtype=='error':
+    if (mtype == 'debug' and config.DEBUG) or (mtype != 'debug' and config.VERBOSE) or mtype == 'error':
         message(msg, indent=indent, mtype=mtype, caption=caption)
+
 
 def message(msg, indent=False, mtype='standard', caption=False):
     """Writes messages in verbose mode"""

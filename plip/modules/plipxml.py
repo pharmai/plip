@@ -4,15 +4,11 @@ plipxml.py - Read in PLIP XML files for further analysis.
 """
 
 # Python standard library
-from collections import defaultdict
 from lxml import etree
-import itertools
-from itertools import groupby
-import sys
 
-try: # Python 3
+try:  # Python 3
     from urllib.request import urlopen
-except ImportError: # Fallback Python 2.x
+except ImportError:  # Fallback Python 2.x
     from urllib2 import urlopen
 
 
@@ -60,7 +56,6 @@ class Interaction(XMLStorage):
         self.reschain_lig = self.getdata(interaction_part, 'reschain_lig', force_string=True)
         self.ligcoo = self.getcoordinates(interaction_part, 'ligcoo')
         self.protcoo = self.getcoordinates(interaction_part, 'protcoo')
-
 
 
 class HydrophobicInteraction(Interaction):
@@ -116,7 +111,7 @@ class SaltBridge(Interaction):
 
     def __init__(self, sbridge_part):
         Interaction.__init__(self, sbridge_part)
-        self.dist =  self.getdata(sbridge_part, 'dist')
+        self.dist = self.getdata(sbridge_part, 'dist')
         self.protispos = self.getdata(sbridge_part, 'protispos')
         self.lig_group = self.getdata(sbridge_part, 'lig_group', force_string=True)
         self.lig_idx_list = [int(tagpart.text) for tagpart in
@@ -182,6 +177,7 @@ class MetalComplex(Interaction):
         self.targetcoo = self.getcoordinates(metalcomplex_part, 'targetcoo')
         self.metalcoo = self.getcoordinates(metalcomplex_part, 'metalcoo')
 
+
 class BSite(XMLStorage):
     """Stores all information about an specific binding site."""
 
@@ -218,13 +214,13 @@ class BSite(XMLStorage):
         self.rotatable_bonds = self.getdata(bindingsite, 'lig_properties/num_rotatable_bonds')
         self.rings = self.getdata(bindingsite, 'lig_properties/num_aromatic_rings')
 
-
         # Binding Site residues
         self.bs_res = []
         for tagpart in bindingsite.xpath('bs_residues/bs_residue'):
             resnumber, reschain = tagpart.text[:-1], tagpart.text[-1]
             aa, contact, min_dist = tagpart.get('aa'), tagpart.get('contact'), tagpart.get('min_dist')
-            new_bs_res = {'resnr': int(resnumber), 'reschain': reschain, 'aa': aa, 'contact': True if contact == 'True' else False, 'min_dist': float(min_dist)}
+            new_bs_res = {'resnr': int(resnumber), 'reschain': reschain, 'aa': aa,
+                          'contact': True if contact == 'True' else False, 'min_dist': float(min_dist)}
             self.bs_res.append(new_bs_res)
 
         # Interacting chains
@@ -243,7 +239,8 @@ class BSite(XMLStorage):
         self.pi_cations = [PiCation(x) for x in interactions.xpath('pi_cation_interactions/pi_cation_interaction')]
         self.halogens = [HalogenBond(x) for x in interactions.xpath('halogen_bonds/halogen_bond')]
         self.metal_complexes = [MetalComplex(x) for x in interactions.xpath('metal_complexes/metal_complex')]
-        self.num_contacts = len(self.hydrophobics) + len(self.hbonds) + len(self.wbridges) + len(self.sbridges) + len(self.pi_stacks) + len(self.pi_cations) + len(self.halogens) + len(self.metal_complexes)
+        self.num_contacts = len(self.hydrophobics) + len(self.hbonds) + len(self.wbridges) + len(self.sbridges) + \
+            len(self.pi_stacks) + len(self.pi_cations) + len(self.halogens) + len(self.metal_complexes)
         self.has_interactions = self.num_contacts > 0
 
         self.get_atom_mapping()
@@ -256,7 +253,8 @@ class BSite(XMLStorage):
         if smiles_to_pdb_mapping == []:
             self.mappings = {'smiles_to_pdb': None, 'pdb_to_smiles': None}
         else:
-            smiles_to_pdb_mapping = {int(y[0]): int(y[1]) for y in [x.split(':') for x in smiles_to_pdb_mapping[0].split(',')]}
+            smiles_to_pdb_mapping = {int(y[0]): int(y[1]) for y in [x.split(':')
+                                                                    for x in smiles_to_pdb_mapping[0].split(',')]}
             self.mappings = {'smiles_to_pdb': smiles_to_pdb_mapping}
             self.mappings['pdb_to_smiles'] = {v: k for k, v in self.mappings['smiles_to_pdb'].items()}
 
@@ -265,14 +263,17 @@ class BSite(XMLStorage):
 
         hbondsback = len([hb for hb in self.hbonds if not hb.sidechain])
         counts = {'hydrophobics': len(self.hydrophobics), 'hbonds': len(self.hbonds),
-                      'wbridges': len(self.wbridges), 'sbridges': len(self.sbridges), 'pistacks': len(self.pi_stacks),
-                      'pications': len(self.pi_cations), 'halogens': len(self.halogens), 'metal': len(self.metal_complexes),
-                      'hbond_back': hbondsback, 'hbond_nonback': (len(self.hbonds) - hbondsback)}
-        counts['total'] = counts['hydrophobics'] + counts['hbonds'] + counts['wbridges'] + counts['sbridges'] + counts['pistacks'] + counts['pications'] + counts['halogens'] + counts['metal']
+                  'wbridges': len(self.wbridges), 'sbridges': len(self.sbridges), 'pistacks': len(self.pi_stacks),
+                  'pications': len(self.pi_cations), 'halogens': len(self.halogens), 'metal': len(self.metal_complexes),
+                  'hbond_back': hbondsback, 'hbond_nonback': (len(self.hbonds) - hbondsback)}
+        counts['total'] = counts['hydrophobics'] + counts['hbonds'] + counts['wbridges'] + \
+            counts['sbridges'] + counts['pistacks'] + counts['pications'] + counts['halogens'] + counts['metal']
         return counts
+
 
 class PLIPXML(XMLStorage):
     """Parses and stores all information from a PLIP XML file."""
+
     def __init__(self, xmlfile):
         self.load_data(xmlfile)
 
@@ -288,18 +289,18 @@ class PLIPXML(XMLStorage):
         self.bsites = {BSite(bs, self.pdbid).bsid: BSite(bs, self.pdbid) for bs in self.doc.xpath('//bindingsite')}
         self.num_bsites = len(self.bsites)
 
-
     def load_data(self, xmlfile):
         """Loads/parses an XML file and saves it as a tree if successful."""
         self.doc = etree.parse(xmlfile)
 
+
 class PLIPXMLREST(PLIPXML):
     """Parses and stores all from a PLIP XML file from the PLIP REST service"""
+
     def __init__(self, pdbid):
         PLIPXML.__init__(self, pdbid)
 
     def load_data(self, pdbid):
         """Loads and parses an XML resource and saves it as a tree if successful"""
-        #TODO Implement error handling
         f = urlopen("http://projects.biotec.tu-dresden.de/plip-rest/pdb/%s?format=xml" % pdbid.lower())
         self.doc = etree.parse(f)

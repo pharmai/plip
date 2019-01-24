@@ -10,30 +10,31 @@ from __future__ import absolute_import
 
 # Own modules
 try:
-    from plip.modules.preparation import *
+    from plip.modules.preparation import tilde_expansion, write_message, PDBComplex
+    from plip.modules.preparation import create_folder_if_not_exists, extract_pdbid
     from plip.modules.plipremote import VisualizerData
-    from plip.modules.report import StructureReport,__version__
+    from plip.modules.report import StructureReport, __version__
     from plip.modules import config
     from plip.modules.mp import parallel_fn
-    from plip.modules.webservices import check_pdb_status, fetch_pdb
+    from plip.modules.webservices import fetch_pdb
+    from plip.modules.supplemental import sysexit
 except ImportError:
-    from modules.preparation import *
+    from modules.preparation import tilde_expansion, write_message, PDBComplex
+    from modules.preparation import create_folder_if_not_exists, extract_pdbid
     from modules.plipremote import VisualizerData
-    from modules.report import StructureReport,__version__
+    from modules.report import StructureReport, __version__
     from modules import config
     from modules.mp import parallel_fn
-    from modules.webservices import check_pdb_status, fetch_pdb
+    from modules.webservices import fetch_pdb
+    from modules.supplemental import sysexit
 
 # Python standard library
 import sys
 import argparse
 from argparse import ArgumentParser
-import time
 import multiprocessing
-import json
-
-# External libraries
-import lxml.etree as et
+from collections import namedtuple
+import os
 
 descript = "Protein-Ligand Interaction Profiler (PLIP) v%s " \
            "is a command-line based tool to analyze interactions in a protein-ligand complex. " \
@@ -47,9 +48,6 @@ def threshold_limiter(aparser, arg):
     if arg <= 0:
         aparser.error("All thresholds have to be values larger than zero.")
     return arg
-
-
-
 
 
 def process_pdb(pdbfile, outpath, as_string=False, outputprefix='report'):
@@ -73,7 +71,6 @@ def process_pdb(pdbfile, outpath, as_string=False, outputprefix='report'):
     streport = StructureReport(mol, outputprefix=outputprefix)
 
     config.MAXTHREADS = min(config.MAXTHREADS, len(mol.interaction_sets))
-
 
     ######################################
     # PyMOL Visualization (parallelized) #
@@ -99,6 +96,7 @@ def process_pdb(pdbfile, outpath, as_string=False, outputprefix='report'):
     if config.TXT:  # Generate report in txt (rst) format
         streport.write_txt(as_string=config.STDOUT)
 
+
 def download_structure(inputpdbid):
     """Given a PDB ID, downloads the corresponding PDB structure.
     Checks for validity of ID and handles error while downloading.
@@ -116,6 +114,7 @@ def download_structure(inputpdbid):
 
     except ValueError:  # Invalid PDB ID, cannot fetch from RCBS server
         sysexit(3, 'Invalid PDB ID (Entry does not exist)\n')
+
 
 def remove_duplicates(slist):
     """Checks input lists for duplicates and returns
@@ -163,7 +162,7 @@ def main(inputstructs, inputpdbids):
             process_pdb(inputstruct, config.OUTPATH, as_string=read_from_stdin, outputprefix=outputprefix)
     else:  # Try to fetch the current PDB structure(s) directly from the RCBS server
         num_pdbids = len(inputpdbids)
-        inputpdbids =remove_duplicates(inputpdbids)
+        inputpdbids = remove_duplicates(inputpdbids)
         for inputpdbid in inputpdbids:
             pdbpath, pdbid = download_structure(inputpdbid)
             if num_pdbids > 1:
@@ -177,15 +176,17 @@ def main(inputstructs, inputpdbids):
         else:
             write_message('\nFinished analysis. Find the result files in %s\n\n' % config.BASEPATH)
 
-
     ##############################
     # Parse command line arguments
     ##############################
+
+
 def main_init():
     """Parse command line arguments and start main script for analysis."""
     parser = ArgumentParser(prog="PLIP", description=descript)
     pdbstructure = parser.add_mutually_exclusive_group(required=True)  # Needs either PDB ID or file
-    pdbstructure.add_argument("-f", "--file", dest="input", nargs="+", help="Set input file, '-' reads from stdin") # '-' as file name reads from stdin
+    # '-' as file name reads from stdin
+    pdbstructure.add_argument("-f", "--file", dest="input", nargs="+", help="Set input file, '-' reads from stdin")
     pdbstructure.add_argument("-i", "--input", dest="pdbid", nargs="+")
     outputgroup = parser.add_mutually_exclusive_group(required=False)  # Needs either outpath or stdout
     outputgroup.add_argument("-o", "--out", dest="outpath", default="./")
@@ -304,5 +305,7 @@ def main_init():
         parser.error("The water bridge omega minimum angle has to be smaller than the water bridge omega maximum angle")
     expanded_path = tilde_expansion(arguments.input) if arguments.input is not None else None
     main(expanded_path, arguments.pdbid)  # Start main script
+
+
 if __name__ == '__main__':
-  main_init()
+    main_init()

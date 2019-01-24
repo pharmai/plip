@@ -14,6 +14,7 @@ from plip.modules.preparation import PDBComplex
 from plip.modules.supplemental import euclidean3d, vector, vecangle, projection
 from plip.modules.supplemental import normalize_vector, cluster_doubles, centroid
 
+
 class TestLigandSupport(unittest.TestCase):
     """Test for support of different ligands"""
 
@@ -21,13 +22,13 @@ class TestLigandSupport(unittest.TestCase):
         """Test if DNA and RNA is correctly processed as ligands"""
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/1tf6.pdb')
-        bsid = 'DA:B:1'
         # DNA ligand four times consisting of 31 parts (composite)
         self.assertEqual([len(ligand.members) for ligand in tmpmol.ligands].count(31), 4)
         for ligset in [set((x[0] for x in ligand.members)) for ligand in tmpmol.ligands]:
             if len(ligset) == 4:
                 # DNA only contains four bases
                 self.assertEqual(ligset, set(['DG', 'DC', 'DA', 'DT']))
+
 
 class TestMapping(unittest.TestCase):
     """Test"""
@@ -65,6 +66,7 @@ class TestMapping(unittest.TestCase):
             if contact.restype == 'LEU' and contact.resnr == 157:
                 self.assertEqual(contact.don.x_orig_idx, 1628)
                 self.assertEqual(contact.acc.o_orig_idx, 1191)
+
 
 class GeometryTest(unittest.TestCase):
     """Tests for geometrical calculations in PLIP"""

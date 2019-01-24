@@ -9,10 +9,11 @@ import sys
 import os
 import subprocess
 
+
 class PyMOLVisualizer:
 
     def __init__(self, plcomplex):
-        if not plcomplex is None:
+        if plcomplex is not None:
             self.plcomplex = plcomplex
             self.protname = plcomplex.pdbid  # Name of protein with binding site
             self.hetid = plcomplex.hetid
@@ -34,12 +35,12 @@ class PyMOLVisualizer:
     def make_initial_selections(self):
         """Make empty selections for structures and interactions"""
         for group in ['Hydrophobic-P', 'Hydrophobic-L', 'HBondDonor-P',
-        'HBondDonor-L', 'HBondAccept-P', 'HBondAccept-L',
-        'HalogenAccept', 'HalogenDonor', 'Water', 'MetalIons', 'StackRings-P',
-        'PosCharge-P', 'PosCharge-L', 'NegCharge-P', 'NegCharge-L',
-        'PiCatRing-P', 'StackRings-L', 'PiCatRing-L', 'Metal-M', 'Metal-P',
-        'Metal-W', 'Metal-L', 'Unpaired-HBA', 'Unpaired-HBD', 'Unpaired-HAL',
-        'Unpaired-RINGS']:
+                      'HBondDonor-L', 'HBondAccept-P', 'HBondAccept-L',
+                      'HalogenAccept', 'HalogenDonor', 'Water', 'MetalIons', 'StackRings-P',
+                      'PosCharge-P', 'PosCharge-L', 'NegCharge-P', 'NegCharge-L',
+                      'PiCatRing-P', 'StackRings-L', 'PiCatRing-L', 'Metal-M', 'Metal-P',
+                      'Metal-W', 'Metal-L', 'Unpaired-HBA', 'Unpaired-HBD', 'Unpaired-HAL',
+                      'Unpaired-RINGS']:
             cmd.select(group, 'None')
 
     def standard_settings(self):
@@ -75,7 +76,6 @@ class PyMOLVisualizer:
         if restrict is not None:
             cmd.select(selname, '%s and %s' % (selname, restrict))
 
-
     def object_exists(self, object_name):
         """Checks if an object exists in the open PyMOL session."""
         return object_name in cmd.get_names("objects")
@@ -101,11 +101,11 @@ class PyMOLVisualizer:
         """Visualizes hydrogen bonds."""
         hbonds = self.plcomplex.hbonds
         for group in [['HBondDonor-P', hbonds.prot_don_id],
-        ['HBondAccept-P', hbonds.prot_acc_id]]:
+                      ['HBondAccept-P', hbonds.prot_acc_id]]:
             if not len(group[1]) == 0:
                 self.select_by_ids(group[0], group[1], restrict=self.protname)
         for group in [['HBondDonor-L', hbonds.lig_don_id],
-        ['HBondAccept-L', hbonds.lig_acc_id]]:
+                      ['HBondAccept-L', hbonds.lig_acc_id]]:
             if not len(group[1]) == 0:
                 self.select_by_ids(group[0], group[1], restrict=self.ligname)
         for i in hbonds.ldon_id:
@@ -266,8 +266,6 @@ class PyMOLVisualizer:
             cmd.show('spheres', 'Metal-W')
             cmd.color('lightblue', 'Metal-W')
 
-
-
     def selections_cleanup(self):
         """Cleans up non-used selections"""
 
@@ -326,7 +324,8 @@ class PyMOLVisualizer:
 
     def save_session(self, outfolder, override=None):
         """Saves a PyMOL session file."""
-        filename = '%s_%s' % (self.protname.upper(), "_".join([self.hetid, self.plcomplex.chain, self.plcomplex.position]))
+        filename = '%s_%s' % (self.protname.upper(), "_".join(
+            [self.hetid, self.plcomplex.chain, self.plcomplex.position]))
         if override is not None:
             filename = override
         cmd.save("/".join([outfolder, "%s.pse" % filename]))
@@ -394,7 +393,7 @@ class PyMOLVisualizer:
         cmd.set('direct', 0)
         cmd.set('ray_shadow', 0)  # Gives the molecules a flat, modern look
         cmd.set('ambient_occlusion_mode', 1)
-        cmd.set('ray_opaque_background', 0) # Transparent background
+        cmd.set('ray_opaque_background', 0)  # Transparent background
 
     def adapt_for_peptides(self):
         """Adapt visualization for peptide ligands and interchain contacts"""
@@ -408,10 +407,6 @@ class PyMOLVisualizer:
 
     def adapt_for_intra(self):
         """Adapt visualization for intra-protein interactions"""
-
-
-
-
 
     def refinements(self):
         """Refinements for the visualization"""
@@ -437,7 +432,6 @@ class PyMOLVisualizer:
         cmd.show('sticks', '%sCartoon' % self.protname)
         cmd.set('stick_transparency', 1, '%sCartoon' % self.protname)
 
-
         # Resize water molecules. Sometimes they are not heteroatoms HOH, but part of the protein
         cmd.set('sphere_scale', 0.2, 'resn HOH or Water')  # Needs to be done here because of the copy made
         cmd.set('sphere_transparency', 0.4, '!(resn HOH or Water)')
@@ -450,7 +444,8 @@ class PyMOLVisualizer:
             cmd.show('spheres', '%s' % self.ligname)
 
         cmd.hide('everything', 'resn HOH &!Water')  # Hide all non-interacting water molecules
-        cmd.hide('sticks', '%s and !%s and !AllBSRes' % (self.protname, self.ligname))  # Hide all non-interacting residues
+        cmd.hide('sticks', '%s and !%s and !AllBSRes' %
+                 (self.protname, self.ligname))  # Hide all non-interacting residues
 
         if self.ligandtype in ['PEPTIDE', 'INTRA']:
             self.adapt_for_peptides()

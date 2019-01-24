@@ -7,9 +7,15 @@ detection.py - Detect non-covalent interactions.
 from __future__ import absolute_import
 import itertools
 from collections import defaultdict
+import numpy as np
+from collections import namedtuple
+
+# External Libraries
+from openbabel import OBAtomAtomIter
 
 # Own modules
-from .supplemental import *
+from .supplemental import whichresnumber, whichrestype, whichchain, write_message
+from .supplemental import vecangle, vector, euclidean3d, projection
 from . import config
 
 
@@ -24,13 +30,14 @@ def filter_contacts(pairings):
     filtered2_pairings = []
     for contact in filtered1_pairings:
         try:
-            dist = 'D{}'.format(round(contact.distance,2))
+            dist = 'D{}'.format(round(contact.distance, 2))
         except AttributeError:
             try:
-                dist = 'D{}'.format(round(contact.distance_ah,2))
+                dist = 'D{}'.format(round(contact.distance_ah, 2))
             except AttributeError:
-                dist = 'D{}'.format(round(contact.distance_aw,2))
-        res1, res2 = ''.join([str(contact.resnr), contact.reschain]), ''.join([str(contact.resnr_l), contact.reschain_l])
+                dist = 'D{}'.format(round(contact.distance_aw, 2))
+        res1, res2 = ''.join([str(contact.resnr), contact.reschain]), ''.join(
+            [str(contact.resnr_l), contact.reschain_l])
         data = {res1, res2, dist}
         if data not in already_considered:
             filtered2_pairings.append(contact)
@@ -96,9 +103,11 @@ def hbonds(acceptors, donor_pairs, protisdon, typ):
         reschain = whichchain(don.d) if protisdon else whichchain(acc.a)
         rechain_l = whichchain(acc.a_orig_atom) if protisdon else whichchain(don.d_orig_atom)
         # Next line prevents H-Bonds within amino acids in intermolecular interactions
-        if config.INTRA is not None and whichresnumber(don.d) == whichresnumber(acc.a): continue
+        if config.INTRA is not None and whichresnumber(don.d) == whichresnumber(acc.a):
+            continue
         # Next line prevents backbone-backbone H-Bonds
-        if config.INTRA is not None and protatom.GetResidue().GetAtomProperty(protatom, 8) and ligatom.GetResidue().GetAtomProperty(ligatom, 8): continue
+        if config.INTRA is not None and protatom.GetResidue().GetAtomProperty(protatom, 8) and ligatom.GetResidue().GetAtomProperty(ligatom, 8):
+            continue
         contact = data(a=acc.a, a_orig_idx=acc.a_orig_idx, d=don.d, d_orig_idx=don.d_orig_idx, h=don.h,
                        distance_ah=dist_ah, distance_ad=dist_ad, angle=v, type=typ, protisdon=protisdon,
                        resnr=resnr, restype=restype, reschain=reschain, resnr_l=resnr_l,
@@ -110,7 +119,8 @@ def hbonds(acceptors, donor_pairs, protisdon, typ):
 
 def pistacking(rings_bs, rings_lig):
     """Return all pi-stackings between the given aromatic ring systems in receptor and ligand."""
-    data = namedtuple('pistack', 'proteinring ligandring distance angle offset type restype resnr reschain restype_l resnr_l reschain_l')
+    data = namedtuple(
+        'pistack', 'proteinring ligandring distance angle offset type restype resnr reschain restype_l resnr_l reschain_l')
     pairings = []
     for r, l in itertools.product(rings_bs, rings_lig):
         # DISTANCE AND RING ANGLE CALCULATION
@@ -125,7 +135,8 @@ def pistacking(rings_bs, rings_lig):
 
         # RECEPTOR DATA
         resnr, restype, reschain = whichresnumber(r.atoms[0]), whichrestype(r.atoms[0]), whichchain(r.atoms[0])
-        resnr_l, restype_l, reschain_l = whichresnumber(l.orig_atoms[0]), whichrestype(l.orig_atoms[0]), whichchain(l.orig_atoms[0])
+        resnr_l, restype_l, reschain_l = whichresnumber(l.orig_atoms[0]), whichrestype(
+            l.orig_atoms[0]), whichchain(l.orig_atoms[0])
 
         # SELECTION BY DISTANCE, ANGLE AND OFFSET
         passed = False
@@ -149,7 +160,8 @@ def pication(rings, pos_charged, protcharged):
     """Return all pi-Cation interaction between aromatic rings and positively charged groups.
     For tertiary and quaternary amines, check also the angle between the ring and the nitrogen.
     """
-    data = namedtuple('pication', 'ring charge distance offset type restype resnr reschain restype_l resnr_l reschain_l protcharged')
+    data = namedtuple(
+        'pication', 'ring charge distance offset type restype resnr reschain restype_l resnr_l reschain_l protcharged')
     pairings = []
     if len(rings) == 0 or len(pos_charged) == 0:
         return pairings
@@ -198,7 +210,8 @@ def pication(rings, pos_charged, protcharged):
 
 def saltbridge(poscenter, negcenter, protispos):
     """Detect all salt bridges (pliprofiler between centers of positive and negative charge)"""
-    data = namedtuple('saltbridge', 'positive negative distance protispos resnr restype reschain resnr_l restype_l reschain_l')
+    data = namedtuple(
+        'saltbridge', 'positive negative distance protispos resnr restype reschain resnr_l restype_l reschain_l')
     pairings = []
     for pc, nc in itertools.product(poscenter, negcenter):
         if not config.MIN_DIST < euclidean3d(pc.center, nc.center) < config.SALTBRIDGE_DIST_MAX:
@@ -287,7 +300,8 @@ def water_bridges(bs_hba, lig_hba, bs_hbd, lig_hbd, water):
         if not config.WATER_BRIDGE_OMEGA_MIN < w_angle < config.WATER_BRIDGE_OMEGA_MAX:
             continue
         resnr, reschain, restype = whichresnumber(don.d), whichchain(don.d), whichrestype(don.d)
-        resnr_l, reschain_l, restype_l = whichresnumber(acc.a_orig_atom), whichchain(acc.a_orig_atom), whichrestype(acc.a_orig_atom)
+        resnr_l, reschain_l, restype_l = whichresnumber(acc.a_orig_atom), whichchain(
+            acc.a_orig_atom), whichrestype(acc.a_orig_atom)
         contact = data(a=acc.a, a_orig_idx=acc.a_orig_idx, atype=acc.a.type, d=don.d, d_orig_idx=don.d_orig_idx,
                        dtype=don.d.type, h=don.h, water=wl.oxy, water_orig_idx=wl.oxy_orig_idx,
                        distance_aw=distance_aw, distance_dw=distance_dw, d_angle=d_angle, w_angle=w_angle,
@@ -304,7 +318,8 @@ def water_bridges(bs_hba, lig_hba, bs_hbd, lig_hbd, water):
         if not config.WATER_BRIDGE_OMEGA_MIN < w_angle < config.WATER_BRIDGE_OMEGA_MAX:
             continue
         resnr, reschain, restype = whichresnumber(acc.a), whichchain(acc.a), whichrestype(acc.a)
-        resnr_l, reschain_l, restype_l = whichresnumber(don.d_orig_atom), whichchain(don.d_orig_atom), whichrestype(don.d_orig_atom)
+        resnr_l, reschain_l, restype_l = whichresnumber(don.d_orig_atom), whichchain(
+            don.d_orig_atom), whichrestype(don.d_orig_atom)
         contact = data(a=acc.a, a_orig_idx=acc.a_orig_idx, atype=acc.a.type, d=don.d, d_orig_idx=don.d_orig_idx,
                        dtype=don.d.type, h=don.h, water=wl.oxy, water_orig_idx=wl.oxy_orig_idx,
                        distance_aw=distance_aw, distance_dw=distance_dw,
@@ -453,12 +468,13 @@ def metal_complexation(metals, metal_binding_lig, metal_binding_bs):
         only_water = set([x[0].location for x in contact_pairs]) == {'water'}
         if not only_water:  # No complex if just with water as targets
             write_message("Metal ion %s complexed with %s geometry (coo. number %r/ %i observed).\n"
-                    % (metal.type, final_geom, final_coo, num_targets), indent=True)
+                          % (metal.type, final_geom, final_coo, num_targets), indent=True)
             for contact_pair in contact_pairs:
                 target, distance = contact_pair
                 if target.atom.idx not in excluded:
                     metal_orig_atom = metal_to_orig_atom[metal]
-                    restype_l, reschain_l, resnr_l = whichrestype(metal_orig_atom), whichchain(metal_orig_atom), whichresnumber(metal_orig_atom)
+                    restype_l, reschain_l, resnr_l = whichrestype(metal_orig_atom), whichchain(
+                        metal_orig_atom), whichresnumber(metal_orig_atom)
                     contact = data(metal=metal, metal_orig_idx=metal_to_id[metal], metal_type=metal.type,
                                    target=target, target_orig_idx=target.atom_orig_idx, target_type=target.type,
                                    coordination_num=final_coo, distance=distance, resnr=target.resnr,

@@ -62,6 +62,8 @@ git clone https://github.com/ssalentin/plip.git ~/pliptool
 ```
 You can use any other user directory, but we will use the one given above for the documentation.
 
+A third option is to use the [PLIP Conda package](https://anaconda.org/plip/plip).
+
 #### 3. Simplify access to PLIP
 
 The package manager `pip` will create symlinks for you so you can call PLIP using `plip` in the command line. If you cloned from Github, use the following command to do the same:
