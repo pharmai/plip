@@ -4,9 +4,12 @@
 
  Analyze non-covalent protein-ligand interactions in 3D structures
 
- <img src="https://github.com/ssalentin/plip/blob/development/pliplogo.png"  alt="PLIP Logo" height="100">
+ <img src="pliplogo.png"  alt="PLIP Logo" height="100">
 
 ## How to use PLIP
+
+This README provides instructions for setup and using basic functions of PLIP.
+For more details, see the [Documentation](DOCUMENTATION.md).
 
 #### 1. Clone the repository
 
