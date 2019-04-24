@@ -1,6 +1,9 @@
 Changelog
 ---------
 
+# 1.4.5
+* Updates contact info
+
 # 1.4.4
 * Improved parameters for water bridge detection
 * Added unit test for PDB structure 1HPX

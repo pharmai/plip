@@ -1,6 +1,6 @@
 package:
   name: plip
-  version: "1.4.4"
+  version: "1.4.5"
 
 source:
   git_rev: "recipe"
