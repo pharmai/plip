@@ -11,7 +11,10 @@ import numpy as np
 from collections import namedtuple
 
 # External Libraries
-from openbabel import OBAtomAtomIter
+try:  # for openbabel < 3.0.0
+    from openbabel import OBAtomAtomIter
+except ImportError: # for openbabel >= 3.0.0
+    from openbabel.openbabel import OBAtomAtomIter
 
 # Own modules
 from .supplemental import whichresnumber, whichrestype, whichchain, write_message

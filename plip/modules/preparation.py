@@ -25,7 +25,10 @@ from .supplemental import read, nucleotide_linkage, sort_members_by_importance
 from . import config
 
 # External modules
-import pybel
+try: # for openbabel < 3.0.0
+    import pybel
+except ImportError: # for openbabel >= 3.0.0
+    from openbabel import pybel
 
 
 ################
