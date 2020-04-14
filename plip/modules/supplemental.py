@@ -11,8 +11,12 @@ from __future__ import absolute_import
 
 # External Libraries
 import numpy as np
-import pybel
-from pybel import Atom
+try: # for openbabel < 3.0.0
+    import pybel
+    from pybel import Atom
+except ImportError: # for openbabel >= 3.0.0
+    from openbabel import pybel
+    from openbabel.pybel import Atom
 
 # PLIP Modules
 from . import config
