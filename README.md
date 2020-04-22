@@ -1,23 +1,62 @@
-# PLIP
+# Protein-Ligand Interaction Profiler (PLIP)
 
-**Protein-Ligand Interaction Profiler (PLIP)**
+(ADD CI-integrated build Badge Here)
+![GitHub](https://img.shields.io/github/license/pharmai/plip)
+![GitHub All Releases](https://img.shields.io/github/downloads/pharmai/plip/total)
+![Docker Build Status](https://img.shields.io/docker/build/pharmai/plip)
+![Docker Image Size (tag)](https://img.shields.io/docker/image-size/pharmai/plip/latest)
 
- Analyze non-covalent protein-ligand interactions in 3D structures
+Analyze non-covalent protein-ligand interactions in 3D structures with ease.
 
- <img src="pliplogo.png"  alt="PLIP Logo" height="100">
+<img src="pliplogo.png"  alt="PLIP Logo" height="100">
+
+## Quickstart
+If you have Docker installed, you can run a PLIP analysis for the structure `1vsn` with the following shell command:
+
+On Linux:
+```bash
+$ docker run pharmai/plip \
+    --rm \
+    -v ${PWD}:/results \
+    -w /results \
+    -u $(id -u ${USER}):$(id -g ${USER}) \
+    -i 1vsn -yv
+```
+
+On Windows:
+```bash
+$ docker run pharmai/plip \
+    --rm \
+    -v ${PWD}:/results \
+    -w /results \
+    -u $(id -u ${USER}):$(id -g ${USER}) \
+    -i 1vsn -yv
+```
+
+The equivalent command for our pre-built [Singularity](https://singularity.lbl.gov/) image for Linux (available under [Releases](https://github.com/pharmai/plip/releases)) is as follows:
+
+```
+./plip.simg -i 1vsn -yv
+```
 
 ## How to use PLIP
 
 This README provides instructions for setup and using basic functions of PLIP.
 For more details, see the [Documentation](DOCUMENTATION.md).
 
-#### 1. Clone the repository
+#### 1. (optional) Clone the repository
 
 Open a new system terminal and clone this repository using
 ```bash
 git clone https://github.com/ssalentin/plip.git ~/pliptool
 ```
-#### 2. Run PLIP
+
+#### 2. Install PLIP
+
+##### Docker Image
+We ship PLIP as a pre-built Docker container, available on the Docker Hub ([https://hub.docker.com/](https://hub.docker.com/)) or as pre-built Singularity image.
+
+#### 3. Run PLIP
 
 ##### As a command line tool
 
@@ -68,24 +107,25 @@ Newer commits from the stable and development branch may contain new but unteste
 
 ## Requirements
 Previous to using PLIP, make sure you have the following tools and libraries installed:
-* Python 2.7.x
-* OpenBabel >=2.3.2
-* PyMOL 1.7.x with Python bindings (optional, for visualization only)
-* Imagemagick >=6.9.x (optional)
+* Python (ADD NEW VERSIONS OF DOCKER BUILD)
+* OpenBabel  (ADD NEW VERSIONS OF DOCKER BUILD)
+* PyMOL  (ADD NEW VERSIONS OF DOCKER BUILD) with Python bindings (optional, for visualization only)
+* ImageMagick  (ADD NEW VERSIONS OF DOCKER BUILD) (optional)
 
-## Contributions
-Sebastian Salentin
-
-Joachim Haupt joachim.haupt (at) biotec.tu-dresden.de | https://github.com/vjhaupt
-
-Melissa F. Adasme Mora melissa.adasme (at) biotec.tu-dresden.de
+## Contributors
+- Sebastian Salentin (original author) | [github.com/ssalentin](https://github.com/ssalentin)
+- Joachim Haupt | [https://github.com/vjhaupt](https://github.com/vjhaupt)
+- Melissa F. Adasme Mora
+- Alexandre Mestiashvili
+- Christoph Leberecht  | [github.com/cleberecht](https://github.com/cleberecht)
+- Florian Kaiser  | [github.com/fkaiserbio](https://github.com/fkaiserbio)
 
 ## PLIP Web Server
 Visit our PLIP Web Server on https://plip.biotec.tu-dresden.de/plip-web
 
-## Contact Me
-Do you have feature requests, found a bug or want to use `PLIP` in your project?
-Write me an email to joachim.haupt (at) biotec.tu-dresden.de
+Do you have feature requests, found a bug or want to use  PLIP in your project?
+
+Write an email to `contact@pharm.ai`.
 
 ## License Information
 PLIP is published under the Apache License. For more information, please read the LICENSE.txt file.
@@ -104,3 +144,10 @@ If you are using PLIP in your work, please cite
 Make sure Open Babel is correctly installed. This error can occur if the installed Python bindings don't match the OpenBabel version on your machine.
 We don't offer technical support for installation of third-party packages.
 For an instruction how to install Open Babel, please refer to their [website](https://openbabel.org/docs/dev/Installation/install.html).
+
+## Contact / Maintainer
+As of April 2020 PLIP is now officially maintained by [PharmAI GmbH](https://pharm.ai). Do you have feature requests, found a bug or want to use  PLIP in your project? Commercial support is available upon request.
+
+ ![](https://www.pharm.ai/wp-content/uploads/2020/04/PharmAI_logo_color_no_slogan_500px.png)
+ 
+ Please get in touch: `contact@pharm.ai`

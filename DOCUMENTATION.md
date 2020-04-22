@@ -5,7 +5,7 @@ The Protein-Ligand Interaction Profiler (PLIP) is a tool to analyze and visualiz
 
 ## Why should I use PLIP?
 
-#### Comprehensive Detection of Interaction
+#### Comprehensive Detection of Interactions
 * Eight types of noncovalent interactions
 * Interaction between proteins and
   * small molecules
@@ -19,7 +19,7 @@ The Protein-Ligand Interaction Profiler (PLIP) is a tool to analyze and visualiz
 * Direct download of PDB structures from PDB server
 * Automatic detection and grouping of relevant ligands in a PDB file
 * No need for special preparation of a PDB file, works out of the box
-* Automatic fixiing of errors in PDB files
+* Automatic fixing of errors in PDB files
 
 #### Flexible Usage
 * Processing of custom PDB files containing protein-ligand complexes (e.g. from docking)
@@ -27,7 +27,7 @@ The Protein-Ligand Interaction Profiler (PLIP) is a tool to analyze and visualiz
 * Generation of PyMOL session files (.pse), enabling easy preparation of images for publications and talks
 * Rendering of 3D interaction diagram for each ligand and its interactions with the protein
 
-## Get PLIP running
+## Installing PLIP
 
 #### 1. Install dependencies
 The following instructions work on a unix machine.
@@ -36,17 +36,9 @@ Please refer to the webpages of the corresponding tools to get help for installa
 
 To install all dependencies for PLIP, either just install PyMOL and then use the `pip` installation routine or install all tools and clone from GitHub.
 The current version of PLIP depends on
-* OpenBabel >=2.3.2
-* PyMOL 1.7.x with Python bindings (optional, for visualization only)
-* Imagemagick >=6.9.x (optional)
-
-and should be executed with Python 2.7.x.
-
-Example command for Ubuntu using apt-get
-```bash
-sudo apt-get install pymol openbabel python-openbabel imagemagick swig
-```
-
+* OpenBabel (ADD NEW VERSIONS OF DOCKER BUILD)
+* PyMOL (ADD NEW VERSIONS OF DOCKER BUILD) **with Python bindings** (optional, for visualization only)
+* ImageMagick (ADD NEW VERSIONS OF DOCKER BUILD) (optional)
 
 #### 2. Get PLIP on your machine
 
