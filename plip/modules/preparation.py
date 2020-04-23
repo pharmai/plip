@@ -5,8 +5,7 @@ preparation.py - Prepare PDB input files for processing.
 
 
 # Python Standard Library
-from __future__ import absolute_import
-from builtins import filter
+# from __future__ import absolute_import
 from operator import itemgetter
 from collections import namedtuple
 import itertools

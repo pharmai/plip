@@ -1,6 +1,6 @@
 # Protein-Ligand Interaction Profiler (PLIP)
 
-(ADD CI-integrated build Badge Here)
+![.github/workflows/docker.yml](https://github.com/pharmai/plip/workflows/.github/workflows/docker.yml/badge.svg)
 ![GitHub](https://img.shields.io/github/license/pharmai/plip)
 ![GitHub All Releases](https://img.shields.io/github/downloads/pharmai/plip/total)
 ![Docker Build Status](https://img.shields.io/docker/build/pharmai/plip)
@@ -114,9 +114,9 @@ Previous to using PLIP, make sure you have the following tools and libraries ins
 
 ## Contributors
 - Sebastian Salentin (original author) | [github.com/ssalentin](https://github.com/ssalentin)
-- Joachim Haupt | [https://github.com/vjhaupt](https://github.com/vjhaupt)
-- Melissa F. Adasme Mora
-- Alexandre Mestiashvili
+- Joachim Haupt | [github.com/vjhaupt](https://github.com/vjhaupt)
+- Melissa F. Adasme Mora |  [github.com/madasme](https://github.com/madasme)
+- Alexandre Mestiashvili | [github.com/mestia](https://github.com/mestia)
 - Christoph Leberecht  | [github.com/cleberecht](https://github.com/cleberecht)
 - Florian Kaiser  | [github.com/fkaiserbio](https://github.com/fkaiserbio)
 

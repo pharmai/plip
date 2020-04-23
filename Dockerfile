@@ -26,6 +26,7 @@ RUN apt-get update && apt-get install -y \
     libpng-dev \
     libpython3-all-dev \
     python3 \
+    python3-lxml \
     python3-numpy \
     python3-pyqt5.qtopengl \
     swig
@@ -54,7 +55,7 @@ RUN cmake .. \
     -DPYTHON_INCLUDE_DIR=/usr/include/python3.6 \
     -DPYTHON_EXECUTABLE=/usr/bin/python3.6
 RUN make -j$(nproc --all) install
-ENV RDBASE /src/rdkit/
+ENV RDBASE /src/rdkit
 ENV LD_LIBRARY_PATH /usr/local/lib/:$RDBASE/lib
 ENV PYTHONPATH $PYTHONPATH:$RDBASE
 
@@ -74,3 +75,11 @@ WORKDIR /src/pymol-open-source
 RUN python3 setup.py build install \
     --prefix=/usr/local \
     --jobs=$(nproc --all)
+
+# copy PLIP source code
+WORKDIR /src
+ADD plip/ plip/
+RUN chmod +x plip/plipcmd.py
+
+# set entry point to plipcmd.py
+#ENTRYPOINT  ["python3", "/src/plip/plipcmd.py"]
