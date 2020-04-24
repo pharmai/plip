@@ -88,7 +88,6 @@ def whichchain(atom):
 def euclidean3d(v1, v2):
     """Faster implementation of euclidean distance for the 3D case."""
     if not len(v1) == 3 and len(v2) == 3:
-        print("Vectors are not in 3D space. Returning None.")
         return None
     return np.sqrt((v1[0] - v2[0]) ** 2 + (v1[1] - v2[1]) ** 2 + (v1[2] - v2[2]) ** 2)
 

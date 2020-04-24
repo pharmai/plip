@@ -468,9 +468,9 @@ class LiteratureValidatedTest(unittest.TestCase):
             if ':'.join([ligand.hetid, ligand.chain, str(ligand.position)]) == bsid:
                 tmpmol.characterize_complex(ligand)
         s = tmpmol.interaction_sets[bsid]
-        # Hydrogen bonds to Tht59 and Trp60
+        # Hydrogen bonds to Thr59
         hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
-        self.assertTrue({59, 60}.issubset(hbonds))
+        self.assertTrue({59}.issubset(hbonds))
         # Water bridges to Asp63 and Tyr100
         waterbridges = {wb.resnr for wb in s.water_bridges}
         # Water bridge to Tyr100 not detected due to prioritization
@@ -752,4 +752,3 @@ class LiteratureValidatedTest(unittest.TestCase):
         waterbridges = {str(wb.resnr)+wb.reschain for wb in s.water_bridges}
         # Waterbridge with Gly27 is detected instead of Ala28/Asp29
         self.assertTrue({'50A', '50B', '29A'}.issubset(waterbridges))
-        print(waterbridges)
