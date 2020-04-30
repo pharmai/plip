@@ -3,9 +3,9 @@ Protein-Ligand Interaction Profiler - Analyze and visualize protein-ligand inter
 test_special_cases.py - Unit Tests for special cases.
 """
 
-import unittest
 import subprocess
 import sys
+import unittest
 
 
 class SpecialCasesTest(unittest.TestCase):
