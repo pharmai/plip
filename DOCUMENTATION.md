@@ -171,9 +171,9 @@ PLIP offers further command line options which enables you to switch advanced se
 * Set number `n` of maximum threads used for parallel processing (`--maxthreads <n>`)
 * Do not automatically combine covalently bound ligands (`--breakcomposite`)
 * Do not discard alternate locations (`--altlocation`)
-* Set debug mode (`--debug`)
 * Turn off automatic fixing of errors in PDB files (`--nofix`)
 * Keep modified residues as ligands (`--keepmod`)
+* Do not protonate structures with non-deterministic OpenBabel routines (`--nohydro`)
 
 ## Web Service
 A web service for analysis of protein-ligand complexes using PLIP is available at
@@ -305,16 +305,6 @@ After assigning all target groups to one metal ions, the resulting set of angles
 The best fit with the least difference in observed targets is chosen as an estimated geometry and targets superfluous to the constellation are removed.
 
 ## Additional Information
-
-### Exit error codes
-
-| Exit code  | Description |
-| ------------- | ------------- |
-| **1**  | Unspecified Error  |
-| **2**  | Empty PDB file as input |
-| **3**  | Invalid PDB ID (wrong format)  |
-| **4**  | PDB file can't be read by OpenBabel  |
-| **5**  | Valid PDB ID, but no PDB file on wwwPDB  |
 
 ### Legend for PyMOL visualization
 
