@@ -6,7 +6,7 @@ test_literature_validated.py - Unit Tests for literature-validated cases.
 
 
 import unittest
-from plip.modules.preparation import PDBComplex
+from plip.structure.preparation import PDBComplex
 
 
 class LiteratureValidatedTest(unittest.TestCase):

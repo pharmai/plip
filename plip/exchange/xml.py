@@ -1,15 +1,6 @@
-"""
-Protein-Ligand Interaction Profiler - Analyze and visualize protein-ligand interactions in PDB files.
-plipxml.py - Read in PLIP XML files for further analysis.
-"""
-
-# Python standard library
 from lxml import etree
 
-try:  # Python 3
-    from urllib.request import urlopen
-except ImportError:  # Fallback Python 2.x
-    from urllib2 import urlopen
+from urllib.request import urlopen
 
 
 class XMLStorage:
@@ -250,7 +241,7 @@ class BSite(XMLStorage):
         """Parses the ligand atom mapping."""
         # Atom mappings
         smiles_to_pdb_mapping = self.bindingsite.xpath('mappings/smiles_to_pdb/text()')
-        if smiles_to_pdb_mapping == []:
+        if not smiles_to_pdb_mapping:
             self.mappings = {'smiles_to_pdb': None, 'pdb_to_smiles': None}
         else:
             smiles_to_pdb_mapping = {int(y[0]): int(y[1]) for y in [x.split(':')

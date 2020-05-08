@@ -1,9 +1,3 @@
-"""
-Protein-Ligand Interaction Profiler - Analyze and visualize protein-ligand interactions in PDB files.
-chimeraplip.py - Visualization class for Chimera.
-"""
-
-
 class ChimeraVisualizer():
     """Provides visualization for Chimera."""
 

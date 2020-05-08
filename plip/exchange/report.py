@@ -1,25 +1,11 @@
-"""
-Protein-Ligand Interaction Profiler - Analyze and visualize protein-ligand interactions in PDB files.
-report.py - Write PLIP results to output files.
-"""
-
-# Compatibility
-from __future__ import print_function
-from __future__ import absolute_import
-
-# Python Standard Library
+import sys
 import time
 from operator import itemgetter
-import sys
 
-# Own modules
-from . import config
-
-
-# External libraries
 import lxml.etree as et
 
-__version__ = '1.4.5'
+from plip.basic import config
+from plip.basic.config import __version__
 
 
 class StructureReport:
@@ -43,7 +29,7 @@ class StructureReport:
         date_of_creation.text = time.strftime("%Y/%m/%d")
         citation_information = et.SubElement(report, 'citation_information')
         citation_information.text = "Salentin,S. et al. PLIP: fully automated protein-ligand interaction profiler. " \
-            "Nucl. Acids Res. (1 July 2015) 43 (W1): W443-W447. doi: 10.1093/nar/gkv315"
+                                    "Nucl. Acids Res. (1 July 2015) 43 (W1): W443-W447. doi: 10.1093/nar/gkv315"
         mode = et.SubElement(report, 'mode')
         if config.DNARECEPTOR:
             mode.text = 'dna_receptor'
@@ -105,7 +91,8 @@ class StructureReport:
     def write_xml(self, as_string=False):
         """Write the XML report"""
         if not as_string:
-            et.ElementTree(self.xmlreport).write('{}/{}.xml'.format(self.outpath, self.outputprefix), pretty_print=True, xml_declaration=True)
+            et.ElementTree(self.xmlreport).write('{}/{}.xml'.format(self.outpath, self.outputprefix), pretty_print=True,
+                                                 xml_declaration=True)
         else:
             output = et.tostring(self.xmlreport, pretty_print=True)
             if config.RAWSTRING:
@@ -151,11 +138,14 @@ class BindingSiteReport:
         # HYDROPHOBIC INTERACTIONS #
         ############################
 
-        self.hydrophobic_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'RESNR_LIG', 'RESTYPE_LIG', 'RESCHAIN_LIG', 'DIST', 'LIGCARBONIDX', 'PROTCARBONIDX', 'LIGCOO',
-                                     'PROTCOO')
+        self.hydrophobic_features = (
+        'RESNR', 'RESTYPE', 'RESCHAIN', 'RESNR_LIG', 'RESTYPE_LIG', 'RESCHAIN_LIG', 'DIST', 'LIGCARBONIDX',
+        'PROTCARBONIDX', 'LIGCOO',
+        'PROTCOO')
         self.hydrophobic_info = []
         for hydroph in self.complex.hydrophobic_contacts:
-            self.hydrophobic_info.append((hydroph.resnr, hydroph.restype, hydroph.reschain, hydroph.resnr_l, hydroph.restype_l, hydroph.reschain_l, '%.2f' % hydroph.distance,
+            self.hydrophobic_info.append((hydroph.resnr, hydroph.restype, hydroph.reschain, hydroph.resnr_l,
+                                          hydroph.restype_l, hydroph.reschain_l, '%.2f' % hydroph.distance,
                                           hydroph.ligatom_orig_idx, hydroph.bsatom_orig_idx, hydroph.ligatom.coords,
                                           hydroph.bsatom.coords))
 
@@ -163,12 +153,15 @@ class BindingSiteReport:
         # HYDROGEN BONDS #
         ##################
 
-        self.hbond_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'RESNR_LIG', 'RESTYPE_LIG', 'RESCHAIN_LIG', 'SIDECHAIN', 'DIST_H-A', 'DIST_D-A', 'DON_ANGLE',
-                               'PROTISDON', 'DONORIDX', 'DONORTYPE', 'ACCEPTORIDX', 'ACCEPTORTYPE', 'LIGCOO', 'PROTCOO')
+        self.hbond_features = (
+        'RESNR', 'RESTYPE', 'RESCHAIN', 'RESNR_LIG', 'RESTYPE_LIG', 'RESCHAIN_LIG', 'SIDECHAIN', 'DIST_H-A', 'DIST_D-A',
+        'DON_ANGLE',
+        'PROTISDON', 'DONORIDX', 'DONORTYPE', 'ACCEPTORIDX', 'ACCEPTORTYPE', 'LIGCOO', 'PROTCOO')
         self.hbond_info = []
         for hbond in self.complex.hbonds_pdon + self.complex.hbonds_ldon:
             ligatom, protatom = (hbond.a, hbond.d) if hbond.protisdon else (hbond.d, hbond.a)
-            self.hbond_info.append((hbond.resnr, hbond.restype, hbond.reschain, hbond.resnr_l, hbond.restype_l, hbond.reschain_l, hbond.sidechain,
+            self.hbond_info.append((hbond.resnr, hbond.restype, hbond.reschain, hbond.resnr_l, hbond.restype_l,
+                                    hbond.reschain_l, hbond.sidechain,
                                     '%.2f' % hbond.distance_ah, '%.2f' % hbond.distance_ad, '%.2f' % hbond.angle,
                                     hbond.protisdon, hbond.d_orig_idx, hbond.dtype, hbond.a_orig_idx, hbond.atype,
                                     ligatom.coords, protatom.coords))
@@ -177,14 +170,17 @@ class BindingSiteReport:
         # WATER-BRIDGES #
         #################
 
-        self.waterbridge_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'RESNR_LIG', 'RESTYPE_LIG', 'RESCHAIN_LIG', 'DIST_A-W', 'DIST_D-W', 'DON_ANGLE', 'WATER_ANGLE',
-                                     'PROTISDON', 'DONOR_IDX', 'DONORTYPE', 'ACCEPTOR_IDX', 'ACCEPTORTYPE', 'WATER_IDX',
-                                     'LIGCOO', 'PROTCOO', 'WATERCOO')
+        self.waterbridge_features = (
+        'RESNR', 'RESTYPE', 'RESCHAIN', 'RESNR_LIG', 'RESTYPE_LIG', 'RESCHAIN_LIG', 'DIST_A-W', 'DIST_D-W', 'DON_ANGLE',
+        'WATER_ANGLE',
+        'PROTISDON', 'DONOR_IDX', 'DONORTYPE', 'ACCEPTOR_IDX', 'ACCEPTORTYPE', 'WATER_IDX',
+        'LIGCOO', 'PROTCOO', 'WATERCOO')
         # The coordinate format is an exception here, since the interaction is not only between ligand and protein
         self.waterbridge_info = []
         for wbridge in self.complex.water_bridges:
             lig, prot = (wbridge.a, wbridge.d) if wbridge.protisdon else (wbridge.d, wbridge.a)
-            self.waterbridge_info.append((wbridge.resnr, wbridge.restype, wbridge.reschain, wbridge.resnr_l, wbridge.restype_l, wbridge.reschain_l,
+            self.waterbridge_info.append((wbridge.resnr, wbridge.restype, wbridge.reschain, wbridge.resnr_l,
+                                          wbridge.restype_l, wbridge.reschain_l,
                                           '%.2f' % wbridge.distance_aw, '%.2f' % wbridge.distance_dw,
                                           '%.2f' % wbridge.d_angle, '%.2f' % wbridge.w_angle, wbridge.protisdon,
                                           wbridge.d_orig_idx, wbridge.dtype, wbridge.a_orig_idx, wbridge.atype,
@@ -194,18 +190,22 @@ class BindingSiteReport:
         # SALT BRIDGES #
         ################
 
-        self.saltbridge_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'RESNR_LIG', 'RESTYPE_LIG', 'RESCHAIN_LIG', 'DIST', 'PROTISPOS', 'LIG_GROUP', 'LIG_IDX_LIST',
-                                    'LIGCOO', 'PROTCOO')
+        self.saltbridge_features = (
+        'RESNR', 'RESTYPE', 'RESCHAIN', 'RESNR_LIG', 'RESTYPE_LIG', 'RESCHAIN_LIG', 'DIST', 'PROTISPOS', 'LIG_GROUP',
+        'LIG_IDX_LIST',
+        'LIGCOO', 'PROTCOO')
         self.saltbridge_info = []
         for sb in self.complex.saltbridge_lneg + self.complex.saltbridge_pneg:
             if sb.protispos:
                 group, ids = sb.negative.fgroup, [str(x) for x in sb.negative.atoms_orig_idx]
-                self.saltbridge_info.append((sb.resnr, sb.restype, sb.reschain, sb.resnr_l, sb.restype_l, sb.reschain_l, '%.2f' % sb.distance, sb.protispos,
+                self.saltbridge_info.append((sb.resnr, sb.restype, sb.reschain, sb.resnr_l, sb.restype_l, sb.reschain_l,
+                                             '%.2f' % sb.distance, sb.protispos,
                                              group.capitalize(), ",".join(ids),
                                              tuple(sb.negative.center), tuple(sb.positive.center)))
             else:
                 group, ids = sb.positive.fgroup, [str(x) for x in sb.positive.atoms_orig_idx]
-                self.saltbridge_info.append((sb.resnr, sb.restype, sb.reschain, sb.resnr_l, sb.restype_l, sb.reschain_l, '%.2f' % sb.distance, sb.protispos,
+                self.saltbridge_info.append((sb.resnr, sb.restype, sb.reschain, sb.resnr_l, sb.restype_l, sb.reschain_l,
+                                             '%.2f' % sb.distance, sb.protispos,
                                              group.capitalize(), ",".join(ids),
                                              tuple(sb.positive.center), tuple(sb.negative.center)))
 
@@ -213,12 +213,15 @@ class BindingSiteReport:
         # PI-STACKING #
         ###############
 
-        self.pistacking_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'RESNR_LIG', 'RESTYPE_LIG', 'RESCHAIN_LIG', 'CENTDIST', 'ANGLE', 'OFFSET', 'TYPE',
-                                    'LIG_IDX_LIST', 'LIGCOO', 'PROTCOO')
+        self.pistacking_features = (
+        'RESNR', 'RESTYPE', 'RESCHAIN', 'RESNR_LIG', 'RESTYPE_LIG', 'RESCHAIN_LIG', 'CENTDIST', 'ANGLE', 'OFFSET',
+        'TYPE',
+        'LIG_IDX_LIST', 'LIGCOO', 'PROTCOO')
         self.pistacking_info = []
         for stack in self.complex.pistacking:
             ids = [str(x) for x in stack.ligandring.atoms_orig_idx]
-            self.pistacking_info.append((stack.resnr, stack.restype, stack.reschain, stack.resnr_l, stack.restype_l, stack.reschain_l, '%.2f' % stack.distance,
+            self.pistacking_info.append((stack.resnr, stack.restype, stack.reschain, stack.resnr_l, stack.restype_l,
+                                         stack.reschain_l, '%.2f' % stack.distance,
                                          '%.2f' % stack.angle, '%.2f' % stack.offset, stack.type, ",".join(ids),
                                          tuple(stack.ligandring.center), tuple(stack.proteinring.center)))
 
@@ -226,20 +229,24 @@ class BindingSiteReport:
         # PI-CATION INTERACTIONS #
         ##########################
 
-        self.pication_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'RESNR_LIG', 'RESTYPE_LIG', 'RESCHAIN_LIG', 'DIST', 'OFFSET', 'PROTCHARGED', 'LIG_GROUP',
-                                  'LIG_IDX_LIST', 'LIGCOO', 'PROTCOO')
+        self.pication_features = (
+        'RESNR', 'RESTYPE', 'RESCHAIN', 'RESNR_LIG', 'RESTYPE_LIG', 'RESCHAIN_LIG', 'DIST', 'OFFSET', 'PROTCHARGED',
+        'LIG_GROUP',
+        'LIG_IDX_LIST', 'LIGCOO', 'PROTCOO')
         self.pication_info = []
         for picat in self.complex.pication_laro + self.complex.pication_paro:
             if picat.protcharged:
                 ids = [str(x) for x in picat.ring.atoms_orig_idx]
                 group = 'Aromatic'
-                self.pication_info.append((picat.resnr, picat.restype, picat.reschain, picat.resnr_l, picat.restype_l, picat.reschain_l, '%.2f' % picat.distance,
+                self.pication_info.append((picat.resnr, picat.restype, picat.reschain, picat.resnr_l, picat.restype_l,
+                                           picat.reschain_l, '%.2f' % picat.distance,
                                            '%.2f' % picat.offset, picat.protcharged, group, ",".join(ids),
                                            tuple(picat.ring.center), tuple(picat.charge.center)))
             else:
                 ids = [str(x) for x in picat.charge.atoms_orig_idx]
                 group = picat.charge.fgroup
-                self.pication_info.append((picat.resnr, picat.restype, picat.reschain, picat.resnr_l, picat.restype_l, picat.reschain_l, '%.2f' % picat.distance,
+                self.pication_info.append((picat.resnr, picat.restype, picat.reschain, picat.resnr_l, picat.restype_l,
+                                           picat.reschain_l, '%.2f' % picat.distance,
                                            '%.2f' % picat.offset, picat.protcharged, group, ",".join(ids),
                                            tuple(picat.charge.center), tuple(picat.ring.center)))
 
@@ -247,11 +254,14 @@ class BindingSiteReport:
         # HALOGEN BONDS #
         #################
 
-        self.halogen_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'RESNR_LIG', 'RESTYPE_LIG', 'RESCHAIN_LIG', 'SIDECHAIN', 'DIST', 'DON_ANGLE', 'ACC_ANGLE',
-                                 'DON_IDX', 'DONORTYPE', 'ACC_IDX', 'ACCEPTORTYPE', 'LIGCOO', 'PROTCOO')
+        self.halogen_features = (
+        'RESNR', 'RESTYPE', 'RESCHAIN', 'RESNR_LIG', 'RESTYPE_LIG', 'RESCHAIN_LIG', 'SIDECHAIN', 'DIST', 'DON_ANGLE',
+        'ACC_ANGLE',
+        'DON_IDX', 'DONORTYPE', 'ACC_IDX', 'ACCEPTORTYPE', 'LIGCOO', 'PROTCOO')
         self.halogen_info = []
         for halogen in self.complex.halogen_bonds:
-            self.halogen_info.append((halogen.resnr, halogen.restype, halogen.reschain, halogen.resnr_l, halogen.restype_l, halogen.reschain_l, halogen.sidechain,
+            self.halogen_info.append((halogen.resnr, halogen.restype, halogen.reschain, halogen.resnr_l,
+                                      halogen.restype_l, halogen.reschain_l, halogen.sidechain,
                                       '%.2f' % halogen.distance, '%.2f' % halogen.don_angle, '%.2f' % halogen.acc_angle,
                                       halogen.don_orig_idx, halogen.donortype,
                                       halogen.acc_orig_idx, halogen.acctype,
@@ -261,16 +271,19 @@ class BindingSiteReport:
         # METAL COMPLEXES #
         ###################
 
-        self.metal_features = ('RESNR', 'RESTYPE', 'RESCHAIN', 'RESNR_LIG', 'RESTYPE_LIG', 'RESCHAIN_LIG', 'METAL_IDX', 'METAL_TYPE', 'TARGET_IDX', 'TARGET_TYPE',
-                               'COORDINATION', 'DIST', 'LOCATION', 'RMS', 'GEOMETRY', 'COMPLEXNUM', 'METALCOO',
-                               'TARGETCOO')
+        self.metal_features = (
+        'RESNR', 'RESTYPE', 'RESCHAIN', 'RESNR_LIG', 'RESTYPE_LIG', 'RESCHAIN_LIG', 'METAL_IDX', 'METAL_TYPE',
+        'TARGET_IDX', 'TARGET_TYPE',
+        'COORDINATION', 'DIST', 'LOCATION', 'RMS', 'GEOMETRY', 'COMPLEXNUM', 'METALCOO',
+        'TARGETCOO')
         self.metal_info = []
         # Coordinate format here is non-standard since the interaction partner can be either ligand or protein
         for m in self.complex.metal_complexes:
-            self.metal_info.append((m.resnr, m.restype, m.reschain, m.resnr_l, m.restype_l, m.reschain_l, m.metal_orig_idx, m.metal_type,
-                                    m.target_orig_idx, m.target_type, m.coordination_num, '%.2f' % m.distance,
-                                    m.location, '%.2f' % m.rms, m.geometry, str(m.complexnum), m.metal.coords,
-                                    m.target.atom.coords))
+            self.metal_info.append(
+                (m.resnr, m.restype, m.reschain, m.resnr_l, m.restype_l, m.reschain_l, m.metal_orig_idx, m.metal_type,
+                 m.target_orig_idx, m.target_type, m.coordination_num, '%.2f' % m.distance,
+                 m.location, '%.2f' % m.rms, m.geometry, str(m.complexnum), m.metal.coords,
+                 m.target.atom.coords))
 
     def write_section(self, name, features, info, f):
         """Provides formatting for one section (e.g. hydrogen bonds)"""
@@ -469,8 +482,9 @@ class BindingSiteReport:
         bsid = ':'.join([self.ligand.hetid, self.ligand.chain, str(self.ligand.position)])
         if self.ligand.atomorder is not None:
             smiles_to_pdb_map = [(key, self.ligand.Mapper.mapid(self.ligand.can_to_pdb[key],
-                                                                mtype='protein', bsid=bsid)) for key in self.ligand.can_to_pdb]
-            smiles_to_pdb.text = ','.join([str(mapping[0])+':'+str(mapping[1]) for mapping in smiles_to_pdb_map])
+                                                                mtype='protein', bsid=bsid)) for key in
+                                 self.ligand.can_to_pdb]
+            smiles_to_pdb.text = ','.join([str(mapping[0]) + ':' + str(mapping[1]) for mapping in smiles_to_pdb_map])
         else:
             smiles_to_pdb.text = ''
 

@@ -1,6 +1,6 @@
 import unittest
 
-from plip.modules.preparation import PDBComplex, PLInteraction
+from plip.structure.preparation import PDBComplex, PLInteraction
 
 
 def characterize_complex(pdb_file: str, binding_site_id: str) -> PLInteraction:

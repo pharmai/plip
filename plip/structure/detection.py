@@ -1,28 +1,15 @@
-"""
-Protein-Ligand Interaction Profiler - Analyze and visualize protein-ligand interactions in PDB files.
-detection.py - Detect non-covalent interactions.
-"""
-
-# Python standard library
-from __future__ import absolute_import
 import itertools
 from collections import defaultdict
-import numpy as np
 from collections import namedtuple
 
-# external Libraries
-try:
-    # for openbabel >= 3.0.0
-    from openbabel.openbabel import OBAtomAtomIter
-except ImportError:
-    # for openbabel < 3.0.0
-    from openbabel import OBAtomAtomIter
+import numpy as np
+from openbabel.openbabel import OBAtomAtomIter
 
-# Own modules
-from .supplemental import whichresnumber, whichrestype, whichchain, write_message
-from .supplemental import vecangle, vector, euclidean3d, projection
-from . import config
+from plip.basic import config, logger
+from plip.basic.supplemental import vecangle, vector, euclidean3d, projection
+from plip.basic.supplemental import whichresnumber, whichrestype, whichchain
 
+logger = logger.get_logger()
 
 def filter_contacts(pairings):
     """Filter interactions by two criteria:
@@ -111,7 +98,9 @@ def hbonds(acceptors, donor_pairs, protisdon, typ):
         if config.INTRA is not None and whichresnumber(don.d) == whichresnumber(acc.a):
             continue
         # Next line prevents backbone-backbone H-Bonds
-        if config.INTRA is not None and protatom.GetResidue().GetAtomProperty(protatom, 8) and ligatom.GetResidue().GetAtomProperty(ligatom, 8):
+        if config.INTRA is not None and protatom.GetResidue().GetAtomProperty(protatom,
+                                                                              8) and ligatom.GetResidue().GetAtomProperty(
+                ligatom, 8):
             continue
         contact = data(a=acc.a, a_orig_idx=acc.a_orig_idx, d=don.d, d_orig_idx=don.d_orig_idx, h=don.h,
                        distance_ah=dist_ah, distance_ad=dist_ad, angle=v, type=typ, protisdon=protisdon,
@@ -125,7 +114,8 @@ def hbonds(acceptors, donor_pairs, protisdon, typ):
 def pistacking(rings_bs, rings_lig):
     """Return all pi-stackings between the given aromatic ring systems in receptor and ligand."""
     data = namedtuple(
-        'pistack', 'proteinring ligandring distance angle offset type restype resnr reschain restype_l resnr_l reschain_l')
+        'pistack',
+        'proteinring ligandring distance angle offset type restype resnr reschain restype_l resnr_l reschain_l')
     pairings = []
     for r, l in itertools.product(rings_bs, rings_lig):
         # DISTANCE AND RING ANGLE CALCULATION
@@ -248,10 +238,10 @@ def halogen(acceptor, donor):
         acc_angle, don_angle = vecangle(vec1, vec2), vecangle(vec3, vec4)
         is_sidechain_hal = acc.o.OBAtom.GetResidue().GetAtomProperty(acc.o.OBAtom, 8)  # Check if sidechain atom
         if not config.HALOGEN_ACC_ANGLE - config.HALOGEN_ANGLE_DEV < acc_angle \
-                < config.HALOGEN_ACC_ANGLE + config.HALOGEN_ANGLE_DEV:
+               < config.HALOGEN_ACC_ANGLE + config.HALOGEN_ANGLE_DEV:
             continue
         if not config.HALOGEN_DON_ANGLE - config.HALOGEN_ANGLE_DEV < don_angle \
-                < config.HALOGEN_DON_ANGLE + config.HALOGEN_ANGLE_DEV:
+               < config.HALOGEN_DON_ANGLE + config.HALOGEN_ANGLE_DEV:
             continue
         restype, reschain, resnr = whichrestype(acc.o), whichchain(acc.o), whichresnumber(acc.o)
         restype_l, reschain_l, resnr_l = whichrestype(don.orig_x), whichchain(don.orig_x), whichresnumber(don.orig_x)
@@ -472,8 +462,7 @@ def metal_complexation(metals, metal_binding_lig, metal_binding_bs):
         # Record all contact pairing, excluding those with targets superfluous for chosen geometry
         only_water = set([x[0].location for x in contact_pairs]) == {'water'}
         if not only_water:  # No complex if just with water as targets
-            write_message("Metal ion %s complexed with %s geometry (coo. number %r/ %i observed).\n"
-                          % (metal.type, final_geom, final_coo, num_targets), indent=True)
+            logger.info(f'metal ion {metal.type} complexed with {final_geom} geometry (coo. number {final_coo}/ {num_targets} observed)')
             for contact_pair in contact_pairs:
                 target, distance = contact_pair
                 if target.atom.idx not in excluded:

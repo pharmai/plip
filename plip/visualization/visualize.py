@@ -1,33 +1,10 @@
-"""
-Protein-Ligand Interaction Profiler - Analyze and visualize protein-ligand interactions in PDB files.
-visualize.py - Visualization of PLIP results using PyMOL.
-"""
-
-# Python standard library
-from __future__ import absolute_import
-
-# Own modules
-from .supplemental import start_pymol, write_message
-from . import config
-from .pymolplip import PyMOLVisualizer
-
-# Special imports
 from pymol import cmd
 
+from plip.basic import config, logger
+from plip.basic.supplemental import start_pymol
+from plip.visualization.pymol import PyMOLVisualizer
 
-def select_by_ids(selname, idlist, selection_exists=False, chunksize=20, restrict=None):
-    """Selection with a large number of ids concatenated into a selection
-    list can cause buffer overflow in PyMOL. This function takes a selection
-    name and and list of IDs (list of integers) as input and makes a careful
-    step-by-step selection (packages of 20 by default)"""
-    idlist = list(set(idlist))  # Remove duplicates
-    if not selection_exists:
-        cmd.select(selname, 'None')  # Empty selection first
-    idchunks = [idlist[i:i+chunksize] for i in range(0, len(idlist), chunksize)]
-    for idchunk in idchunks:
-        cmd.select(selname, '%s or (id %s)' % (selname, '+'.join(map(str, idchunk))))
-    if restrict is not None:
-        cmd.select(selname, '%s and %s' % (selname, restrict))
+logger = logger.get_logger()
 
 
 def visualize_in_pymol(plcomplex):
@@ -42,7 +19,7 @@ def visualize_in_pymol(plcomplex):
     pdbid = plcomplex.pdbid
     lig_members = plcomplex.lig_members
     chain = plcomplex.chain
-    if config.PEPTIDES != []:
+    if config.PEPTIDES:
         vis.ligname = 'PeptideChain%s' % plcomplex.chain
     if config.INTRA is not None:
         vis.ligname = 'Intra%s' % plcomplex.chain
@@ -57,20 +34,20 @@ def visualize_in_pymol(plcomplex):
     # Basic visualizations #
     ########################
 
-    start_pymol(run=True, options='-pcq', quiet=not config.DEBUG)
+    start_pymol(run=True, options='-pcq', quiet=not config.VERBOSE and not config.SILENT)
     vis.set_initial_representations()
 
     cmd.load(plcomplex.sourcefile)
     current_name = cmd.get_object_list(selection='(all)')[0]
-    write_message('Setting current_name to "%s" and pdbid to "%s\n"' % (current_name, pdbid), mtype='debug')
+    logger.debug(f'setting current_name to {current_name} and pdbid to {pdbid}')
     cmd.set_name(current_name, pdbid)
     cmd.hide('everything', 'all')
-    if config.PEPTIDES != []:
+    if config.PEPTIDES:
         cmd.select(ligname, 'chain %s and not resn HOH' % plcomplex.chain)
     else:
         cmd.select(ligname, 'resn %s and chain %s and resi %s*' % (hetid, chain, plcomplex.position))
-    write_message("Selecting ligand for PDBID %s and ligand name %s with: " % (pdbid, ligname), mtype='debug')
-    write_message('resn %s and chain %s and resi %s*' % (hetid, chain, plcomplex.position), mtype='debug')
+    logger.debug(f'selecting ligand for PDBID {pdbid} and ligand name {ligname}')
+    logger.debug(f'resn {hetid} and chain {chain} and resi {plcomplex.position}')
 
     # Visualize and color metal ions if there are any
     if not len(metal_ids) == 0:
@@ -80,8 +57,8 @@ def visualize_in_pymol(plcomplex):
     # Additionally, select all members of composite ligands
     if len(lig_members) > 1:
         for member in lig_members:
-           resid, chain, resnr = member[0], member[1], str(member[2])
-           cmd.select(ligname, '%s or (resn %s and chain %s and resi %s)' % (ligname, resid, chain, resnr))
+            resid, chain, resnr = member[0], member[1], str(member[2])
+            cmd.select(ligname, '%s or (resn %s and chain %s and resi %s)' % (ligname, resid, chain, resnr))
 
     cmd.show('sticks', ligname)
     cmd.color('myblue')
@@ -118,7 +95,7 @@ def visualize_in_pymol(plcomplex):
         cmd.hide('cartoon', '%sLines' % plcomplex.pdbid)
         cmd.show('lines', '%sLines' % plcomplex.pdbid)
 
-    if config.PEPTIDES != []:
+    if config.PEPTIDES:
         filename = "%s_PeptideChain%s" % (pdbid.upper(), plcomplex.chain)
         if config.PYMOL:
             vis.save_session(config.OUTPATH, override=filename)

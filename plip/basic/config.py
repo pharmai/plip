@@ -1,10 +1,11 @@
-"""
-Protein-Ligand Interaction Profiler - Analyze and visualize protein-ligand interactions in PDB files.
-config.py - Store thresholds used by PLIP.
-"""
+__version__ = '2.0.0'
 
+import logging
+
+DEFAULT_LOG_LEVEL = logging.INFO
 VERBOSE = False  # Set verbose mode
-DEBUG = False  # Set debug mode
+QUIET = False  # Set verbose mode
+SILENT = False  # Set verbose mode
 MAXTHREADS = 1  # Maximum number of main threads for binding site visualization
 XML = False
 TXT = False
@@ -25,6 +26,7 @@ KEEPMOD = False
 DNARECEPTOR = False
 OUTPUTFILENAME = "report"  # Naming for the TXT and XML report files
 NOPDBCANMAP = False  # Skip calculation of mapping canonical atom order: PDB atom order
+NOHYDRO = False  # Do not add hydrogen bonds (in case already present in the structure)
 
 # Configuration file for Protein-Ligand Interaction Profiler (PLIP)
 # Set thresholds for detection of interactions
@@ -73,7 +75,6 @@ DNA = ['DT', 'DA', 'DC', 'DG']
 METAL_IONS = ['CA', 'CO', 'MG', 'MN', 'FE', 'CU', 'ZN', 'FE2', 'FE3', 'FE4', 'LI', 'NA', 'K', 'RB', 'SR', 'CS', 'BA',
               'CR', 'NI', 'FE1', 'NI', 'RU', 'RU1', 'RH', 'RH1', 'PD', 'AG', 'CD', 'LA', 'W', 'W1', 'OS', 'IR', 'PT',
               'PT1', 'AU', 'HG', 'CE', 'PR', 'SM', 'EU', 'GD', 'TB', 'YB', 'LU', 'AL', 'GA', 'IN', 'SB', 'TL', 'PB']
-
 
 ##############
 # Blacklists #

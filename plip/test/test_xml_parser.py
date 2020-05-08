@@ -6,7 +6,7 @@ test_xml_parser.py - Unit Tests for XML Parser.
 
 
 import unittest
-from plip.modules.plipxml import PLIPXML
+from plip.exchange.xml import PLIPXML
 
 
 class XMLParserTest(unittest.TestCase):

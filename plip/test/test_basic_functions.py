@@ -10,9 +10,9 @@ import numpy
 import random
 
 # Own modules
-from plip.modules.preparation import PDBComplex
-from plip.modules.supplemental import euclidean3d, vector, vecangle, projection
-from plip.modules.supplemental import normalize_vector, cluster_doubles, centroid
+from plip.structure.preparation import PDBComplex
+from plip.basic.supplemental import euclidean3d, vector, vecangle, projection
+from plip.basic.supplemental import normalize_vector, cluster_doubles, centroid
 
 
 class TestLigandSupport(unittest.TestCase):
@@ -27,7 +27,7 @@ class TestLigandSupport(unittest.TestCase):
         for ligset in [set((x[0] for x in ligand.members)) for ligand in tmpmol.ligands]:
             if len(ligset) == 4:
                 # DNA only contains four bases
-                self.assertEqual(ligset, set(['DG', 'DC', 'DA', 'DT']))
+                self.assertEqual(ligset, {'DG', 'DC', 'DA', 'DT'})
 
 
 class TestMapping(unittest.TestCase):
