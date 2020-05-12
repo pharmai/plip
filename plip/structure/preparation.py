@@ -8,13 +8,13 @@ import numpy as np
 from openbabel import pybel
 
 from plip.basic import config, logger
-from plip.structure.detection import halogen, pication, water_bridges, metal_complexation
-from plip.structure.detection import hydrophobic_interactions, pistacking, hbonds, saltbridge
 from plip.basic.supplemental import centroid, tilde_expansion, tmpfile, classify_by_name
 from plip.basic.supplemental import cluster_doubles, is_lig, normalize_vector, vector, ring_is_planar
 from plip.basic.supplemental import extract_pdbid, read_pdb, create_folder_if_not_exists, canonicalize
 from plip.basic.supplemental import read, nucleotide_linkage, sort_members_by_importance
 from plip.basic.supplemental import whichchain, whichrestype, whichresnumber, euclidean3d, int32_to_negative
+from plip.structure.detection import halogen, pication, water_bridges, metal_complexation
+from plip.structure.detection import hydrophobic_interactions, pistacking, hbonds, saltbridge
 
 logger = logger.get_logger()
 
@@ -533,11 +533,16 @@ class Mol:
             r_atoms = sorted(r_atoms, key=lambda x: x.idx)
             if 4 < len(r_atoms) <= 6:
                 res = list(set([whichrestype(a) for a in r_atoms]))
+                # re-sort ring atoms for only ligands, because HETATM numbering is not canonical in OpenBabel
+                if res[0] == 'UNL':
+                    ligand_orig_idx = [self.Mapper.ligandmaps[self.bsid][a.idx] for a in r_atoms]
+                    sort_order = np.argsort(np.array(ligand_orig_idx))
+                    r_atoms = [r_atoms[i] for i in sort_order]
                 if ring.IsAromatic() or res[0] in aromatic_amino or ring_is_planar(ring, r_atoms):
                     # Causes segfault with OpenBabel 2.3.2, so deactivated
                     # typ = ring.GetType() if not ring.GetType() == '' else 'unknown'
                     # Alternative typing
-                    typ = '%s-membered' % len(r_atoms)
+                    ring_type = '%s-membered' % len(r_atoms)
                     ring_atms = [r_atoms[a].coords for a in [0, 2, 4]]  # Probe atoms for normals, assuming planarity
                     ringv1 = vector(ring_atms[0], ring_atms[1])
                     ringv2 = vector(ring_atms[2], ring_atms[0])
@@ -550,7 +555,7 @@ class Mol:
                                       normal=normalize_vector(np.cross(ringv1, ringv2)),
                                       obj=ring,
                                       center=centroid([ra.coords for ra in r_atoms]),
-                                      type=typ))
+                                      type=ring_type))
         return rings
 
     def get_hydrophobic_atoms(self):
@@ -1306,7 +1311,7 @@ class PDBComplex:
             self.sourcefiles['pdbcomplex.original'] = pdbpath
             self.sourcefiles['pdbcomplex'] = pdbpath
         self.information['pdbfixes'] = False
-        pdbparser = PDBParser(pdbpath, as_string=as_string)  # Parse PDB file to find errors and get additonal data
+        pdbparser = PDBParser(pdbpath, as_string=as_string)  # Parse PDB file to find errors and get additional data
         # #@todo Refactor and rename here
         self.Mapper.proteinmap = pdbparser.proteinmap
         self.Mapper.reversed_proteinmap = {v: k for k, v in self.Mapper.proteinmap.items()}
@@ -1358,8 +1363,14 @@ class PDBComplex:
 
         # decide whether to add polar hydrogens
         if not config.NOHYDRO:
+            if not as_string:
+                basename = os.path.basename(pdbpath).split('.')[0]
+            else:
+                basename = "from_stdin"
             self.protcomplex.OBMol.AddPolarHydrogens()
-            logger.info('assigned polar hydrogens')
+            output_path = os.path.join(config.OUTPATH, f'{basename}_protonated.pdb')
+            self.protcomplex.write('pdb', output_path, overwrite=True)
+            logger.info(f'protonated structure written to {output_path}')
         else:
             logger.warning('no polar hydrogens will be assigned (make sure your structure contains hydrogens)')
 
@@ -1406,7 +1417,6 @@ class PDBComplex:
         if ligtype == 'INTRA':
             logger.info(f'chain {ligand.chain} will be processed in [INTRA-CHAIN] mode')
         any_in_biolip = len(set([x[0] for x in ligand.members]).intersection(config.biolip_list)) != 0
-
 
         if ligtype not in ['POLYMER', 'DNA', 'ION', 'DNA+ION', 'RNA+ION', 'SMALLMOLECULE+ION'] and any_in_biolip:
             logger.info('may be biologically irrelevant')

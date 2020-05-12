@@ -18,7 +18,7 @@ from plip.basic import config, logger
 logger = logger.get_logger()
 
 # Windows and MacOS
-if os.name != 'nt' and platform.system() != 'Darwin': # Resource module not available for Windows
+if os.name != 'nt' and platform.system() != 'Darwin':  # Resource module not available for Windows
     import resource
 
 # Settings
@@ -96,7 +96,7 @@ def vecangle(v1, v2, deg=True):
         return 0.0
     dm = np.dot(v1, v2)
     cm = np.linalg.norm(v1) * np.linalg.norm(v2)
-    angle = np.arccos(round(dm / cm, 10))  # Round here to prevent floating point errors
+    angle = np.arccos(dm / cm)  # Round here to prevent floating point errors
     return np.degrees([angle, ])[0] if deg else angle
 
 
@@ -381,7 +381,7 @@ def read_pdb(pdbfname, as_string=False):
     if os.name != 'nt':  # Resource module not available for Windows
         maxsize = resource.getrlimit(resource.RLIMIT_STACK)[-1]
         resource.setrlimit(resource.RLIMIT_STACK, (min(2 ** 28, maxsize), maxsize))
-    sys.setrecursionlimit(10 ** 5)  # increase Python recoursion limit
+    sys.setrecursionlimit(10 ** 5)  # increase Python recursion limit
     return readmol(pdbfname, as_string=as_string)
 
 
