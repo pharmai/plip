@@ -6,3 +6,5 @@ with:
   repository: pharmai/plip
   tag_with_ref: true
   push: ${{ startsWith(github.ref, 'refs/tags/') }}
+on:
+  push
