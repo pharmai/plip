@@ -6,7 +6,7 @@
 ![Docker Build Status](https://img.shields.io/docker/build/pharmai/plip)
 ![Docker Image Size (tag)](https://img.shields.io/docker/image-size/pharmai/plip/latest)
 
-Analyze non-covalent protein-ligand interactions in 3D structures with ease.
+Analyze noncovalent protein-ligand interactions in 3D structures with ease.
 
 <img src="pliplogo.png"  alt="PLIP Logo" height="100">
 
@@ -142,14 +142,21 @@ If you are using PLIP in your work, please cite
 ## FAQ
 > I try to run PLIP, but I'm getting an error message saying:
 > ValueError: [...] is not a recognised Open Babel descriptor type
-
+>
 Make sure OpenBabel is correctly installed. This error can occur if the installed Python bindings don't match the OpenBabel version on your machine.
 We don't offer technical support for installation of third-party packages.
 For an instruction how to install Open Babel, please refer to their [website](https://openbabel.org/docs/dev/Installation/install.html).
 
 > I'm unsure on how to run PLIP and don't have much Linux experience.
-
+>
 You should consider running PLIP as Docker image, as we describe above.
+
+> PLIP is reporting different interactions on several runs!
+>
+Due to the non-deterministic nature on how hydrogen atoms can be added to the input structure, it cannot be guaranteed that each run returns exactly the same set of interactions. If you want to make sure to achieve consistent results, you can:
+
+- protonate the input structure once with PLIP or your tool of preference
+- run PLIP with `--nohydro`
 
 ## Contact / Maintainer
 As of April 2020 PLIP is now officially maintained by [PharmAI GmbH](https://pharm.ai). Do you have feature requests, found a bug or want to use  PLIP in your project? Commercial support is available upon request.
