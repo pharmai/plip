@@ -2,7 +2,7 @@
 Protein-Ligand Interaction Profiler - Analyze and visualize protein-ligand interactions in PDB files.
 test_command_line.py - Unit Tests for special cases.
 """
-
+import os
 import subprocess
 import sys
 import tempfile
@@ -42,5 +42,7 @@ class CommandLineTest(unittest.TestCase):
 
     def test_valid_pdb(self):
         """A PDB ID with no valid PDB record is provided."""
-        exitcode = subprocess.call(f'{sys.executable} ../plipcmd.py -f ./pdb/1eve.pdb -o {self.tmp_dir.name}', shell=True)
+        exitcode = subprocess.call(f'{sys.executable} ../plipcmd.py -x -f ./pdb/1eve.pdb -o {self.tmp_dir.name}',
+                                   shell=True)
+        self.assertEqual(len(os.listdir(self.tmp_dir.name)), 2)
         self.assertEqual(exitcode, 0)

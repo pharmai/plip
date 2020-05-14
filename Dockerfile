@@ -82,4 +82,4 @@ ADD plip/ plip/
 RUN chmod +x plip/plipcmd.py
 
 # set entry point to plipcmd.py
-#ENTRYPOINT  ["python3", "/src/plip/plipcmd.py"]
+ENTRYPOINT  ["python3", "/src/plip/plipcmd.py"]

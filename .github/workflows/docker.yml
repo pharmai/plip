@@ -1,8 +1,8 @@
-- name: Docker Hub Depolyment
-  uses: docker/build-push-action@v1
-  with:
-    username: ${{ secrets.DOCKER_USERNAME }}
-    password: ${{ secrets.DOCKER_PASSWORD }}
-    repository: myorg/myrepository
-    tag_with_ref: true
-    push: ${{ startsWith(github.ref, 'refs/tags/') }}
+name: PLIP Docker Hub Depolyment
+uses: docker/build-push-action@v1
+with:
+  username: ${{ secrets.DOCKER_USERNAME }}
+  password: ${{ secrets.DOCKER_PASSWORD }}
+  repository: pharmai/plip
+  tag_with_ref: true
+  push: ${{ startsWith(github.ref, 'refs/tags/') }}

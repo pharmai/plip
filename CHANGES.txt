@@ -9,6 +9,8 @@ Changelog
 * migrates to proper logging pattern
 * code quality enhancements
 * adds option to disable non-deterministic protonation of structures (`--nohydro`)
+* protonated structures are now stored to guarantee consistent logs
+* new options to change verbosity levels
 
 # 1.4.5
 * Updates contact info

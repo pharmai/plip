@@ -262,7 +262,7 @@ class BSite(XMLStorage):
         return counts
 
 
-class PLIPXML(XMLStorage):
+class PlipXML(XMLStorage):
     """Parses and stores all information from a PLIP XML file."""
 
     def __init__(self, xmlfile):
@@ -283,15 +283,3 @@ class PLIPXML(XMLStorage):
     def load_data(self, xmlfile):
         """Loads/parses an XML file and saves it as a tree if successful."""
         self.doc = etree.parse(xmlfile)
-
-
-class PLIPXMLREST(PLIPXML):
-    """Parses and stores all from a PLIP XML file from the PLIP REST service"""
-
-    def __init__(self, pdbid):
-        PLIPXML.__init__(self, pdbid)
-
-    def load_data(self, pdbid):
-        """Loads and parses an XML resource and saves it as a tree if successful"""
-        f = urlopen("http://projects.biotec.tu-dresden.de/plip-rest/pdb/%s?format=xml" % pdbid.lower())
-        self.doc = etree.parse(f)

@@ -30,7 +30,7 @@ description = f"The Protein-Ligand Interaction Profiler (PLIP) {__version__}" \
               "If you are using PLIP in your work, please cite: " \
               "Salentin,S. et al. PLIP: fully automated protein-ligand interaction profiler. " \
               "Nucl. Acids Res. (1 July 2015) 43 (W1): W443-W447. doi:10.1093/nar/gkv315" \
-              "Supported and maintained by: PharmAI GmbH (2020), www.pharm.ai <hello@pharm.ai>"
+              f"Supported and maintained by: {config.__maintainer__}"
 
 
 def threshold_limiter(aparser, arg):
@@ -123,7 +123,7 @@ def run_analysis(inputstructs, inputpdbids):
     # @todo For multiprocessing, implement better stacktracing for errors
     # Print title and version
     logger.info(f'Protein-Ligand Interaction Profiler (PLIP) {__version__}')
-    logger.info(f'PharmAI GmbH (2020), www.pharm.ai <hello@pharm.ai>')
+    logger.info(f'brought to you by: {config.__maintainer__}')
     logger.info(f'please cite: https://www.doi.org/10.1093/nar/gkv315')
     output_prefix = config.OUTPUTFILENAME
 

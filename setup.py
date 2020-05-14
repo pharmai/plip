@@ -1,8 +1,3 @@
-"""
-Protein-Ligand Interaction Profiler - Analyze and visualize protein-ligand interactions in PDB files.
-setup.py - Setup configuration file for pip, etc.
-"""
-
 from setuptools import setup
 
 setup(name='plip',
@@ -16,16 +11,16 @@ setup(name='plip',
           'Programming Language :: Python :: 3.6',
           'Topic :: Scientific/Engineering :: Bio-Informatics'
       ],
-      url='https://github.com/ssalentin/plip',
-      author='Sebastian Salentin, Joachim Haupt',
-      author_email='joachim.haupt@tu-dresden.de',
+      url='https://github.com/pharmai/plip',
+      author='PharmAI GmbH',
+      author_email='hello@pharm.ai',
       license='GPLv2',
-      packages=['plip', 'plip/modules'],
+      packages=['plip'],
       scripts=['plip/plipcmd.py'],
       install_requires=[
           'openbabel',
           'numpy',
           'lxml',
-          'future'
+          'pymol'
       ],
       zip_safe=False)

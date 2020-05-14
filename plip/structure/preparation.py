@@ -1,6 +1,7 @@
 import itertools
 import os
 import re
+import tempfile
 from collections import namedtuple
 from operator import itemgetter
 
@@ -1285,7 +1286,7 @@ class PDBComplex:
         self.sourcefiles = {}
         self.information = {}
         self.corrected_pdb = ''
-        self._output_path = '/tmp'
+        self._output_path = tempfile.gettempdir()
         self.pymol_name = None
         self.modres = set()
         self.resis = []
@@ -1368,7 +1369,7 @@ class PDBComplex:
             else:
                 basename = "from_stdin"
             self.protcomplex.OBMol.AddPolarHydrogens()
-            output_path = os.path.join(config.OUTPATH, f'{basename}_protonated.pdb')
+            output_path = os.path.join(self._output_path, f'{basename}_protonated.pdb')
             self.protcomplex.write('pdb', output_path, overwrite=True)
             logger.info(f'protonated structure written to {output_path}')
         else:

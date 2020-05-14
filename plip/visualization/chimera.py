@@ -1,4 +1,4 @@
-class ChimeraVisualizer():
+class ChimeraVisualizer:
     """Provides visualization for Chimera."""
 
     def __init__(self, plcomplex, chimera_module, tid):
