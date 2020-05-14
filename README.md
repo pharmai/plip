@@ -13,7 +13,7 @@ Analyze non-covalent protein-ligand interactions in 3D structures with ease.
 ## Quickstart
 If you have Docker installed, you can run a PLIP analysis for the structure `1vsn` with the following shell command:
 
-On Linux:
+On Linux / MacOS:
 ```bash
 $ docker run pharmai/plip \
     --rm \
@@ -39,26 +39,37 @@ The equivalent command for our pre-built [Singularity](https://singularity.lbl.g
 ./plip.simg -i 1vsn -yv
 ```
 
+Singularity allows to use PLIP with ease in HPC environments.
+
 ## How to use PLIP
 
 This README provides instructions for setup and using basic functions of PLIP.
 For more details, see the [Documentation](DOCUMENTATION.md).
 
-#### 1. (optional) Clone the repository
+### 1. (optional) Clone the repository
 
 Open a new system terminal and clone this repository using
 ```bash
 git clone https://github.com/ssalentin/plip.git ~/pliptool
 ```
 
-#### 2. Install PLIP
+### 2. Install PLIP
 
-##### Docker Image
+#### Containerized Image (no installation)
 We ship PLIP as a pre-built Docker container, available on the Docker Hub ([https://hub.docker.com/](https://hub.docker.com/)) or as pre-built Singularity image.
 
-#### 3. Run PLIP
+#### Python Module
+If you cannot use the Docker bundle or want to use PLIP sources, make sure you have the following requirements installed:
+- Python >= 3.6.9
+- OpenBabel >= 3.0.0
+- PyMOL >= 2.3.0 with Python bindings (optional, for visualization only)
+- ImageMagick >= 6.9 (optional)
 
-##### As a command line tool
+Set your `PYTHONPATH` environment variable to the root directory of this repository.
+
+### 3. Run PLIP
+
+#### As a command line tool
 
 Run the `plipcmd.py` script inside the PLIP folder to detect, report, and visualize interactions. The following example creates a PYMOL visualization for the interactions
 between the inhibitor NFT and its target protein in the PDB structure 1VSN.
@@ -70,12 +81,10 @@ plip -i 1vsn -yv
 pymol 1VSN_NFT_A_283.pse
 ```
 
-##### As a python library
-
-In your terminal, add the PLIP repository to your PYTHONPATH variable.
-For our example, we also download a PDB file for testing.
+#### As a python library
+In your terminal, add the PLIP repository to your PYTHONPATH variable. For our example, we also download a PDB file for testing.
 ```bash
-export PYTHONPATH=~/pliptool:${PYTHONPATH}
+export PYTHONPATH=~/plip:${PYTHONPATH}
 cd /tmp && wget http://files.rcsb.org/download/1EVE.pdb
 python
 ```
@@ -102,15 +111,8 @@ By default, all files are deposited in the working directory unless and output p
 For a full documentation of running options and output formats, please refear to the documentation.
 
 ## Versions and Branches
-For production environments, you should use the latest versioned commit from the stable branch.
-Newer commits from the stable and development branch may contain new but untested and not documented features.
-
-## Requirements
-Previous to using PLIP, make sure you have the following tools and libraries installed:
-* Python (ADD NEW VERSIONS OF DOCKER BUILD)
-* OpenBabel  (ADD NEW VERSIONS OF DOCKER BUILD)
-* PyMOL  (ADD NEW VERSIONS OF DOCKER BUILD) with Python bindings (optional, for visualization only)
-* ImageMagick  (ADD NEW VERSIONS OF DOCKER BUILD) (optional)
+For production environments, you should use the latest tagged commit from the `stable` branch or refer to the  [Releases](https://github.com/pharmai/plip/releases)) page.
+Newer commits from the `stable` and `development` branch may contain new but untested and not documented features.
 
 ## Contributors
 - Sebastian Salentin (original author) | [github.com/ssalentin](https://github.com/ssalentin)
@@ -141,9 +143,13 @@ If you are using PLIP in your work, please cite
 > I try to run PLIP, but I'm getting an error message saying:
 > ValueError: [...] is not a recognised Open Babel descriptor type
 
-Make sure Open Babel is correctly installed. This error can occur if the installed Python bindings don't match the OpenBabel version on your machine.
+Make sure OpenBabel is correctly installed. This error can occur if the installed Python bindings don't match the OpenBabel version on your machine.
 We don't offer technical support for installation of third-party packages.
 For an instruction how to install Open Babel, please refer to their [website](https://openbabel.org/docs/dev/Installation/install.html).
+
+> I'm unsure on how to run PLIP and don't have much Linux experience.
+
+You should consider running PLIP as Docker image, as we describe above.
 
 ## Contact / Maintainer
 As of April 2020 PLIP is now officially maintained by [PharmAI GmbH](https://pharm.ai). Do you have feature requests, found a bug or want to use  PLIP in your project? Commercial support is available upon request.
