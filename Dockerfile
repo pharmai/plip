@@ -80,7 +80,13 @@ RUN python3 setup.py build install \
 WORKDIR /src
 ADD plip/ plip/
 RUN chmod +x plip/plipcmd.py
-ENV PYTHONPATH $PYTHONPATH:/src/plip
+ENV PYTHONPATH $PYTHONPATH:/src
+
+# execute tests
+WORKDIR /src/plip/test
+RUN chmod +x run_all_tests.sh
+RUN ./run_all_tests.sh
+WORKDIR /
 
 # set entry point to plipcmd.py
 ENTRYPOINT  ["python3", "/src/plip/plipcmd.py"]

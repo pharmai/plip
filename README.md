@@ -1,10 +1,10 @@
 # Protein-Ligand Interaction Profiler (PLIP)
 
-![.github/workflows/docker.yml](https://github.com/pharmai/plip/workflows/.github/workflows/docker.yml/badge.svg)
-![GitHub](https://img.shields.io/github/license/pharmai/plip)
-![GitHub All Releases](https://img.shields.io/github/downloads/pharmai/plip/total)
-![Docker Build Status](https://img.shields.io/docker/build/pharmai/plip)
-![Docker Image Size (tag)](https://img.shields.io/docker/image-size/pharmai/plip/latest)
+![PLIP Docker Hub Depolyment](https://github.com/pharmai/plip/workflows/PLIP%20Docker%20Hub%20Depolyment/badge.svg)
+
+![GitHub](https://img.shields.io/github/license/pharmai/plip?style=social)
+![GitHub All Releases](https://img.shields.io/github/downloads/pharmai/plip/total?style=social)
+![Docker Image Size (tag)](https://img.shields.io/docker/image-size/pharmai/plip/latest?style=social)
 
 Analyze noncovalent protein-ligand interactions in 3D structures with ease.
 
@@ -15,22 +15,20 @@ If you have Docker installed, you can run a PLIP analysis for the structure `1vs
 
 On Linux / MacOS:
 ```bash
-$ docker run pharmai/plip \
-    --rm \
+$ docker run --rm \
     -v ${PWD}:/results \
     -w /results \
     -u $(id -u ${USER}):$(id -g ${USER}) \
-    -i 1vsn -yv
+    pharmai/plip:latest -i 1s3v -yv
 ```
 
 On Windows:
 ```bash
-$ docker run pharmai/plip \
-    --rm \
+$ docker run --rm \
     -v ${PWD}:/results \
     -w /results \
     -u $(id -u ${USER}):$(id -g ${USER}) \
-    -i 1vsn -yv
+    pharmai/plip:latest -i 1s3v -yv
 ```
 
 The equivalent command for our pre-built [Singularity](https://singularity.lbl.gov/) image for Linux (available under [Releases](https://github.com/pharmai/plip/releases)) is as follows:
@@ -55,7 +53,7 @@ git clone https://github.com/ssalentin/plip.git ~/pliptool
 
 ### 2. Install PLIP
 
-#### Containerized Image (no installation)
+#### Containerized Image (no installation) :exclamation:
 We ship PLIP as a pre-built Docker container, available on the Docker Hub ([https://hub.docker.com/](https://hub.docker.com/)) or as pre-built Singularity image.
 
 #### Python Module

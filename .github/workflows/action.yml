@@ -1,4 +1,4 @@
-name: PLIP Docker Hub Depolyment
+name: PLIP Build
 
 on:
   push
