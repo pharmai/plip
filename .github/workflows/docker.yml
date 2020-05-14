@@ -8,7 +8,7 @@ jobs:
     name: Deployment
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy
+      - name: Deploy Step
         uses: docker/build-push-action@v1
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
