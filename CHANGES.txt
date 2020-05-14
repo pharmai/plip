@@ -1,6 +1,6 @@
 Changelog
 ---------
-# 2.0.0
+# 2.1.0
 * maintainer changed to PharmAI GmbH
 * full compatibility to Python 3 and OpenBabel 3
 * Docker and Singularity support, Deployment to Docker Hub
@@ -9,7 +9,7 @@ Changelog
 * migrates to proper logging pattern
 * code quality enhancements
 * adds option to disable non-deterministic protonation of structures (`--nohydro`)
-* protonated structures are now stored to guarantee consistent logs
+* protonated structures are now stored to guarantee consistent interaction detection
 * new options to change verbosity levels
 
 # 1.4.5
