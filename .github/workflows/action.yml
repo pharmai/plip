@@ -8,8 +8,8 @@ jobs:
     name: Deployment
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy Step
       - uses: actions/checkout@v2
+      - name: Deploy Step
       - uses: docker/build-push-action@v1
         with:
           username: ${{ secrets.DOCKER_HUB_USER }}
