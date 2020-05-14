@@ -44,20 +44,20 @@ RUN cmake .. \
 RUN make -j$(nproc --all) install
 
 # build RDkit
-WORKDIR /src
-RUN git clone -b $RDKIT_TAG \
-    https://github.com/rdkit/rdkit.git
-WORKDIR /src/rdkit/build
-RUN cmake .. \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DRDK_BUILD_INCHI_SUPPORT=ON \
-    -DPYTHON_LIBRARY=/usr/lib/x86_64-linux-gnu/libpython3.6m.so \
-    -DPYTHON_INCLUDE_DIR=/usr/include/python3.6 \
-    -DPYTHON_EXECUTABLE=/usr/bin/python3.6
-RUN make -j$(nproc --all) install
-ENV RDBASE /src/rdkit
-ENV LD_LIBRARY_PATH /usr/local/lib/:$RDBASE/lib
-ENV PYTHONPATH $PYTHONPATH:$RDBASE
+#WORKDIR /src
+#RUN git clone -b $RDKIT_TAG \
+#    https://github.com/rdkit/rdkit.git
+#WORKDIR /src/rdkit/build
+#RUN cmake .. \
+#    -DCMAKE_BUILD_TYPE=Release \
+#    -DRDK_BUILD_INCHI_SUPPORT=ON \
+#    -DPYTHON_LIBRARY=/usr/lib/x86_64-linux-gnu/libpython3.6m.so \
+#    -DPYTHON_INCLUDE_DIR=/usr/include/python3.6 \
+#    -DPYTHON_EXECUTABLE=/usr/bin/python3.6
+#RUN make -j$(nproc --all) install
+#ENV RDBASE /src/rdkit
+#ENV LD_LIBRARY_PATH /usr/local/lib/:$RDBASE/lib
+#ENV PYTHONPATH $PYTHONPATH:$RDBASE
 
 # build mmtf-cpp
 WORKDIR /src
