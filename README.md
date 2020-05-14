@@ -108,8 +108,7 @@ By default, all files are deposited in the working directory unless and output p
 For a full documentation of running options and output formats, please refear to the documentation.
 
 ## Versions and Branches
-For production environments, you should use the latest tagged commit from the `stable` branch or refer to the  [Releases](https://github.com/pharmai/plip/releases)) page.
-Newer commits from the `stable` and `development` branch may contain new but untested and not documented features.
+For production environments, you should use the latest tagged commit from the `master` branch or refer to the  [Releases](https://github.com/pharmai/plip/releases)) page. Newer commits from the `master` and `development` branch may contain new but untested and not documented features.
 
 ## Contributors
 - Sebastian Salentin (original author) | [github.com/ssalentin](https://github.com/ssalentin)
