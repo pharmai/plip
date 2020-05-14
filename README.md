@@ -1,7 +1,6 @@
 # Protein-Ligand Interaction Profiler (PLIP)
 
-![PLIP Docker Hub Depolyment](https://github.com/pharmai/plip/workflows/PLIP%20Docker%20Hub%20Depolyment/badge.svg)
-
+![PLIP Build](https://github.com/pharmai/plip/workflows/PLIP%20Build/badge.svg)
 ![GitHub](https://img.shields.io/github/license/pharmai/plip?style=social)
 ![GitHub All Releases](https://img.shields.io/github/downloads/pharmai/plip/total?style=social)
 ![Docker Image Size (tag)](https://img.shields.io/docker/image-size/pharmai/plip/latest?style=social)
