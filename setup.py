@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(name='plip',
       version='2.1.0-beta',
@@ -15,7 +15,7 @@ setup(name='plip',
       author='PharmAI GmbH',
       author_email='hello@pharm.ai',
       license='GPLv2',
-      packages=['plip'],
+      packages=find_packages(),
       scripts=['plip/plipcmd.py'],
       install_requires=[
           'openbabel',
