@@ -33,7 +33,7 @@ $ docker run --rm \
 The equivalent command for our pre-built [Singularity](https://singularity.lbl.gov/) image for Linux (available under [Releases](https://github.com/pharmai/plip/releases)) is as follows:
 
 ```
-./plip.simg -i 1vsn -yv
+$ ./plip.simg -i 1vsn -yv
 ```
 
 Singularity allows to use PLIP with ease in HPC environments.
@@ -47,7 +47,7 @@ For more details, see the [Documentation](DOCUMENTATION.md).
 
 Open a new system terminal and clone this repository using
 ```bash
-git clone https://github.com/ssalentin/plip.git ~/pliptool
+$ git clone https://github.com/ssalentin/plip.git ~/pliptool
 ```
 
 ### 2. Install PLIP
@@ -72,18 +72,18 @@ Run the `plipcmd.py` script inside the PLIP folder to detect, report, and visual
 between the inhibitor NFT and its target protein in the PDB structure 1VSN.
 
 ```bash
-alias plip='python ~/pliptool/plip/plipcmd.py'
-mkdir /tmp/1vsn && cd /tmp/1vsn
-plip -i 1vsn -yv
-pymol 1VSN_NFT_A_283.pse
+$ alias plip='python ~/pliptool/plip/plipcmd.py'
+$ mkdir /tmp/1vsn && cd /tmp/1vsn
+$ plip -i 1vsn -yv
+$ pymol 1VSN_NFT_A_283.pse
 ```
 
 #### As a python library
 In your terminal, add the PLIP repository to your PYTHONPATH variable. For our example, we also download a PDB file for testing.
 ```bash
-export PYTHONPATH=~/plip:${PYTHONPATH}
-cd /tmp && wget http://files.rcsb.org/download/1EVE.pdb
-python
+$ export PYTHONPATH=~/plip:${PYTHONPATH}
+$ cd /tmp && wget http://files.rcsb.org/download/1EVE.pdb
+$ python
 ```
 In python, import the PLIP modules, load a PDB structure and run the analysis.
 This small example shows how to print all numbers of residues involved in pi-stacking:
@@ -159,4 +159,4 @@ As of April 2020 PLIP is now officially maintained by [PharmAI GmbH](https://pha
 
  ![](https://www.pharm.ai/wp-content/uploads/2020/04/PharmAI_logo_color_no_slogan_500px.png)
  
- Please get in touch: `contact@pharm.ai`
+ Please get in touch: `hello@pharm.ai`
