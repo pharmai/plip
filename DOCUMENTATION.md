@@ -12,7 +12,7 @@ The Protein-Ligand Interaction Profiler (PLIP) is a tool to analyze and visualiz
   * ions
   * polymers
   * DNA / RNA
-* Rich additiona information on binding, e.g. unpaired functional groups
+* Rich additional information on binding, e.g. unpaired functional groups
 
 ### Everything Is Automated
 
