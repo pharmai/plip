@@ -10,6 +10,14 @@ Analyze noncovalent protein-ligand interactions in 3D structures with ease.
 <img src="pliplogo.png"  alt="PLIP Logo" height="100">
 
 ## Quickstart
+
+| Use Case                                                                  | [Web Server](https://projects.biotec.tu-dresden.de/plip-web/plip)         | Docker             | Singularity        | Source             |
+|---------------------------------------------------------------------------|--------------------|--------------------|--------------------|--------------------|
+| "I want to analyze my protein-ligand complex!"                            | :heavy_check_mark: | :yellow_circle:    | :yellow_circle:    | :x:                |
+| "I want to analyze *a billion* protein-ligand complex!"                   | :x:                | :yellow_circle:    | :heavy_check_mark: | :yellow_circle:    |
+| "I love the Linux command line and want to build a workflow around PLIP!" | :yellow_circle:    | :heavy_check_mark: | :heavy_check_mark: | :yellow_circle:    |
+| "I'm a Python programmer and want to use PLIP in my project."             | :x:                | :yellow_circle:    | :yellow_circle:    | :heavy_check_mark: |
+
 If you have Docker installed, you can run a PLIP analysis for the structure `1vsn` with the following shell command:
 
 On Linux / MacOS:
