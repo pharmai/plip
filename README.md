@@ -120,8 +120,8 @@ my_interactions = my_mol.interaction_sets[my_bsid] # Contains all interaction da
 print([pistack.resnr for pistack in my_interactions.pistacking]) # Prints [84, 129]
 ```
 
-#### 4. Investigate the Results
-PLIP offers various output formats, ranging from renderes images and PyMOL session files to human-readable text files and XML files. By default, all files are deposited in the working directory unless and output path is provided. For a full documentation of running options and output formats, please refer to the documentation.
+### 4. Investigate the Results
+PLIP offers various output formats, ranging from renderes images and PyMOL session files to human-readable text files and XML files. By default, all files are deposited in the working directory unless and output path is provided. For a full documentation of running options and output formats, please refer to the [Documentation](DOCUMENTATION.md).
 
 ## Versions and Branches
 For production environments, you should use the latest tagged commit from the `master` branch or refer to the [Releases](https://github.com/pharmai/plip/releases) page. Newer commits from the `master` and `development` branch may contain new but untested and not documented features.
