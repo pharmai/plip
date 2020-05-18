@@ -9,14 +9,16 @@ Analyze noncovalent protein-ligand interactions in 3D structures with ease.
 
 <img src="pliplogo.png"  alt="PLIP Logo" height="100">
 
-## Quickstart
 
-| Use Case                                                                  | [Web Server](https://projects.biotec.tu-dresden.de/plip-web/plip)         | Docker             | Singularity        | Source             |
+| Use Case                                                                  | [Web Server](https://projects.biotec.tu-dresden.de/plip-web/plip)         | Docker             | Singularity        | Python Module       |
 |---------------------------------------------------------------------------|--------------------|--------------------|--------------------|--------------------|
 | "I want to analyze my protein-ligand complex!"                            | :heavy_check_mark: | :yellow_circle:    | :yellow_circle:    | :x:                |
 | "I want to analyze *a billion* protein-ligand complexes!"                   | :x:                | :yellow_circle:    | :heavy_check_mark: | :yellow_circle:    |
 | "I love the Linux command line and want to build a workflow around PLIP!" | :x:    | :heavy_check_mark: | :heavy_check_mark: | :yellow_circle:    |
 | "I'm a Python programmer and want to use PLIP in my project!"             | :x:                | :yellow_circle:    | :yellow_circle:    | :heavy_check_mark: |
+
+
+## Quickstart
 
 If you have Docker installed, you can run a PLIP analysis for the structure `1vsn` with the following shell command:
 
@@ -40,11 +42,11 @@ $ docker run --rm \
 
 The equivalent command for our pre-built [Singularity](https://singularity.lbl.gov/) image for Linux (available under [Releases](https://github.com/pharmai/plip/releases)) is as follows:
 
-```
+```bash
 $ ./plip.simg -i 1vsn -yv
 ```
 
-Singularity allows to use PLIP with ease in HPC environments.
+Singularity allows to use PLIP with ease in HPC environments. Note that you need to have Singularity installed on your base system.
 
 ## How to use PLIP
 
@@ -60,11 +62,11 @@ $ git clone https://github.com/ssalentin/plip.git ~/pliptool
 
 ### 2. Install PLIP
 
-#### Containerized Image (no installation) :exclamation:
-We ship PLIP as a pre-built Docker container, available on the Docker Hub ([https://hub.docker.com/](https://hub.docker.com/)) or as pre-built Singularity image.
+#### Containerized Image (recommended :exclamation:)
+We ship PLIP as a pre-built containers, available on the [Docker Hub](https://hub.docker.com/r/pharmai/plip) or as pre-built Singularity image under [Releases](https://github.com/pharmai/plip/releases)).
 
-#### Python Module
-If you cannot use the Docker bundle or want to use PLIP sources, make sure you have the following requirements installed:
+#### From Source
+If you cannot use the containerized bundle or want to use PLIP sources, make sure you have the following requirements installed:
 - Python >= 3.6.9
 - OpenBabel >= 3.0.0
 - PyMOL >= 2.3.0 with Python bindings (optional, for visualization only)
@@ -72,12 +74,20 @@ If you cannot use the Docker bundle or want to use PLIP sources, make sure you h
 
 Set your `PYTHONPATH` environment variable to the root directory of this repository.
 
+#### Via PyPi
+We deploy the PLIP package to [PyPi](https://pypi.org/project/plip/). You can install PLIP as Python module with:
+
+```bash
+$ pip install plip`
+```
+
+**Note:** Be aware that you still have to install all other dependencies and link them correctly.
+
 ### 3. Run PLIP
 
-#### As a command line tool
+#### Command Line Tool
 
-Run the `plipcmd.py` script inside the PLIP folder to detect, report, and visualize interactions. The following example creates a PYMOL visualization for the interactions
-between the inhibitor NFT and its target protein in the PDB structure 1VSN.
+Run the `plipcmd.py` script inside the PLIP folder to detect, report, and visualize interactions. The following example creates a PYMOL visualization for the interactions between the inhibitor [NFT](https://www.rcsb.org/ligand/NFT) and its target protein in the PDB structure [1vsn](https://www.rcsb.org/structure/1VSN).
 
 ```bash
 $ alias plip='python ~/pliptool/plip/plipcmd.py'
@@ -86,8 +96,8 @@ $ plip -i 1vsn -yv
 $ pymol 1VSN_NFT_A_283.pse
 ```
 
-#### As a python library
-In your terminal, add the PLIP repository to your PYTHONPATH variable. For our example, we also download a PDB file for testing.
+#### Python Module
+In your terminal, add the PLIP repository to your `PYTHONPATH` variable. For our example, we also download a PDB file for testing.
 ```bash
 $ export PYTHONPATH=~/plip:${PYTHONPATH}
 $ cd /tmp && wget http://files.rcsb.org/download/1EVE.pdb
@@ -110,13 +120,11 @@ my_interactions = my_mol.interaction_sets[my_bsid] # Contains all interaction da
 print([pistack.resnr for pistack in my_interactions.pistacking]) # Prints [84, 129]
 ```
 
-#### 3. View and process the results
-PLIP offers various output formats, ranging from renderes images and PyMOL session files to human-readable text files and XML files.
-By default, all files are deposited in the working directory unless and output path is provided.
-For a full documentation of running options and output formats, please refear to the documentation.
+#### 4. Investigate the Results
+PLIP offers various output formats, ranging from renderes images and PyMOL session files to human-readable text files and XML files. By default, all files are deposited in the working directory unless and output path is provided. For a full documentation of running options and output formats, please refer to the documentation.
 
 ## Versions and Branches
-For production environments, you should use the latest tagged commit from the `master` branch or refer to the  [Releases](https://github.com/pharmai/plip/releases) page. Newer commits from the `master` and `development` branch may contain new but untested and not documented features.
+For production environments, you should use the latest tagged commit from the `master` branch or refer to the [Releases](https://github.com/pharmai/plip/releases) page. Newer commits from the `master` and `development` branch may contain new but untested and not documented features.
 
 ## Contributors
 - Sebastian Salentin (original author) | [github.com/ssalentin](https://github.com/ssalentin)
@@ -127,16 +135,11 @@ For production environments, you should use the latest tagged commit from the `m
 - Florian Kaiser  | [github.com/fkaiserbio](https://github.com/fkaiserbio)
 
 ## PLIP Web Server
-Visit our PLIP Web Server on https://plip.biotec.tu-dresden.de/plip-web
-
-Do you have feature requests, found a bug or want to use  PLIP in your project?
-
-Write an email to `contact@pharm.ai`.
+Visit our PLIP Web Server on [plip.biotec.tu-dresden.de/plip-web](https://plip.biotec.tu-dresden.de/plip-web).
 
 ## License Information
-PLIP is published under the GNU GPLv2. For more information, please read the LICENSE.txt file.
+PLIP is published under the GNU GPLv2. For more information, please read the `LICENSE.txt` file.
 Using PLIP in your commercial or non-commercial project is generally possible when giving a proper reference to this project and the publication in NAR.
-If you are unsure about usage options, don't hesitate to contact me.
 
 ## Citation Information
 If you are using PLIP in your work, please cite
