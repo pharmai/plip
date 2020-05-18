@@ -1,7 +1,9 @@
 from setuptools import setup, find_packages
 
+from plip.basic import config
+
 setup(name='plip',
-      version='2.1.0-beta',
+      version=config.__version__,
       description='PLIP - Fully automated protein-ligand interaction profiler',
       classifiers=[
           'Development Status :: 5 - Production/Stable',
