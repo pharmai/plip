@@ -17,6 +17,7 @@ Analyze noncovalent protein-ligand interactions in 3D structures with ease.
 | "I love the Linux command line and want to build a workflow around PLIP!" | :x:    | :heavy_check_mark: | :heavy_check_mark: | :yellow_circle:    |
 | "I'm a Python programmer and want to use PLIP in my project!"             | :x:                | :yellow_circle:    | :yellow_circle:    | :heavy_check_mark: |
 
+---
 
 ## Quickstart
 
@@ -48,7 +49,7 @@ $ ./plip.simg -i 1vsn -yv
 
 Singularity allows to use PLIP with ease in HPC environments. Note that you need to have Singularity installed on your base system.
 
-## How to use PLIP
+## Usage
 
 This README provides instructions for setup and using basic functions of PLIP.
 For more details, see the [Documentation](DOCUMENTATION.md).
