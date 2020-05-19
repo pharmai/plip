@@ -79,7 +79,7 @@ Set your `PYTHONPATH` environment variable to the root directory of this reposit
 We deploy the PLIP package to [PyPi](https://pypi.org/project/plip/). You can install PLIP as Python module with:
 
 ```bash
-$ pip install plip`
+$ pip install plip
 ```
 
 **Note:** Be aware that you still have to install all other dependencies and link them correctly.
