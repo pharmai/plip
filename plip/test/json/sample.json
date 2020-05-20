@@ -1,0 +1,164 @@
+{
+    "plip_version" : "v2.2.0",
+    "time_stamp" : "2020-05-19T15:35:00+02:00",
+    "input_file" : "1svn.pdb",
+    "input_file_md5" : "b7c0a267f22fb9400dc282a94876d691",
+    "excluded_ligands": ["ATP", "AMP"],
+    "binding_sites" : [
+        {
+            "smiles" : "CCoC",
+            "inchi" : "InChI=1S/C22H29F3N4O3S/c1-14(2)13-19(21(30)28-12-11-26)29-20(22(23,24)25)17-5-3-15(4-6-17)16-7-9-18(10-8-16)33(27,31)32/h3-10,14,19-20,29H,11-13,26H2,1-2H3,(H,28,30)(H2,27,31,32)/t19-,20-/m0/s1",
+            "inchi_key" : "QPXXBNKMAHUXBB-PMACEKPBSA-N",
+            "ligand_properties" : {
+                "heavy_atom_total" : 33,
+                "hydrogen_bond_donor_total" : 4,
+                "hydrogen_bond_donor_unpaired" : 0,
+                "hydrogen_bond_acceptor_total" : 2,
+                "hydrogen_bond_acceptor_unpaired" : 0,
+                "halogen_atom_total" : 0,
+                "halogen_atom_unpaired" : 0,
+                "aromatic_ring_total" : 0,
+                "rotatable_bonds_total" : 2,
+                "molecular_weight" : 483.81,
+                "logp" : 3.45
+            },
+            "ligand_members" : [
+                {
+                    "ligand_member_id" : 0,
+                    "het_id" : "NFT",
+                    "chain_id" : "A",
+                    "residue_number" : 238,
+                    "insertion_code" : ""
+                },
+                {
+                    "het_id" : "NFS",
+                    "chain_id" : "A",
+                    "residue_number" : 239,
+                    "insertion_code" : ""
+                }
+            ],
+            "binding_site_members" : [
+                {
+                    "binding_site_member_id" : 0,
+                    "amino_acid" : "ALA",
+                    "ligand_contact" : true,
+                    "minimal_distance" : 3.4,
+                    "chain_id" : "B",
+                    "residue_number" : 3000,
+                    "insertion_code" : "A"
+                }
+            ],
+            "interactions" : {
+                "hydrogen_bonds" : [
+                    {
+                        "binding_site_member_id" : 0,
+                        "ligand_member_id" : 0,
+                        "distance" : 2.4,
+                        "interacting_with_sidechain" : true,
+                        "distance_hydrogen_acceptor" : 2.4,
+                        "distance_donor_acceptor" : 2.1,
+                        "donor_angle" : 34.1,
+                        "protein_is_donor": true,
+                        "donor_atom_id" : 344,
+                        "donor_group_type" : "Nam",
+                        "acceptor_atom_id" : 33223,
+                        "acceptor_group_type" : "O2",
+                        "ligand_representative_position" : [-1.45, 1.50, 0.13],
+                        "protein_representative_position" : [0.45, 3.57, 0.17]
+                    }
+
+                ],
+                "hydrophobic_contacts" : [
+                    {
+                        "binding_site_member_id" : 0,
+                        "ligand_member_id" : 0,
+                        "distance" : 4.3,
+                        "ligand_atom_id" : 1234,
+                        "ligand_representative_position" : [-1.45, 1.57, 0.13],
+                        "protein_atom_id" : 324,
+                        "protein_representative_position" : [-2.45, 0.51, 7.13]
+                    }
+                ],
+                "water_bridges" : [{
+                    "binding_site_member_id" : 0,
+                    "ligand_member_id" : 0,
+                    "distance_acceptor_water" : 3.67,
+                    "distance_donor_water" : 3.67,
+                    "donor_angle" : 3.67,
+                    "water_angle" : 2.67, //TODO change name of this to more intuitive name?
+                    "protein_is_donor": true,
+                    "donor_atom_id" : 344,
+                    "donor_group_type" : "Nam",
+                    "acceptor_atom_id" : 34233,
+                    "acceptor_group_type" : "N2",
+                    "water_atom_id" : "N2",
+                    "water_atom_position" : [-2.45, 0.51, 7.13],
+                    "ligand_representative_position" : [-1.45, 1.50, 0.13],
+                    "protein_representative_position" : [0.45, 3.57, 0.17]
+                }],
+                "salt_bridges" : [{
+                    "binding_site_member_id" : 0,
+                    "ligand_member_id" : 2,
+                    "distance" : 2.4,
+                    "protein_is_positive_charge": true,
+                    "ligand_group_type" : "Nam",
+                    "ligand_atom_ids" : [4391,32784,23834],
+                    "ligand_representative_position" : [-2.45, 0.51, 7.13],
+                    "protein_representative_position" : [-2.45, 0.51, 7.13]
+                }],
+                "pi_stackings" : [{
+                    "binding_site_member_id" : 0,
+                    "ligand_member_id" : 2,
+                    "ring_center_distance" : 43.1,
+                    "ring_plane_angle" : 78.3,
+                    "ring_offset" : 2.23,
+                    "stacking_type" : "parallel",
+                    "ligand_atom_ids" : [4391,32784,23834,34343,23434],
+                    "protein_atom_ids" : [3,4,5,3,1], // TODO missing in original model
+                    "ligand_representative_position" : [-2.45, 0.51, 7.13],
+                    "protein_representative_position" : [-2.45, 0.51, 7.13]
+                }],
+                "pi_cations" : [{
+                    "binding_site_member_id" : 0,
+                    "ligand_member_id" : 2,
+                    "ring_center_distance" : 43.1,
+                    "ring_offset" : 2.23,
+                    "protein_is_positive_charge": true,
+                    "ligand_group_type" : "tetramine",
+                    "ligand_atom_ids" : [4391,32784,23834,34343,23434],
+                    "protein_atom_ids" : [3,4,5,3,1] // TODO missing in original model
+                }],
+                "halogen_bonds" : [{
+                    "binding_site_member_id" : 0,
+                    "ligand_member_id" : 2,
+                    "interacting_with_sidechain" : true,
+                    "distance" : 3.45,
+                    "donor_angle" : 78.4,
+                    "acceptor_angle" : 43.4,
+                    "ligand_atom_id" : 33434,
+                    "ligand_group_type" : "brome",
+                    "protein_atom_id" : 33434,
+                    "protein_group_type" : "O2",
+                    "ligand_representative_position" : [-2.45, 0.51, 7.13],
+                    "protein_representative_position" : [-2.45, 0.51, 7.13]
+                }],
+                "metal_complexes" : [{
+                    "binding_site_member_ids" : [3,4,5],
+                    "ligand_member_id" : 5,
+                    "coordination_order" : 2,
+                    "geometry" : "triangular",
+                    "geometry_fit_rmsd" : 0.04,
+                    "ligand_atom_id" : 1,
+                    "protein_atom_ids" : [3,4,5,3,1],
+                    "ligand_representative_position" : [-2.45, 0.51, 7.13],
+                    "protein_representative_positions" : [
+                      [-2.45, 0.51, 7.13],
+                      [-2.45, 0.51, 7.13],
+                      [-2.45, 0.51, 7.13]
+                    ]
+                  }
+                ]
+            }
+        }
+    ]
+}
