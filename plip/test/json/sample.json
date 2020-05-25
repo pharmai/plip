@@ -31,6 +31,7 @@
                     "insertion_code" : ""
                 },
                 {
+                    "ligand_member_id" : 1,
                     "het_id" : "NFS",
                     "chain_id" : "A",
                     "residue_number" : 239,
@@ -126,7 +127,9 @@
                     "protein_is_positive_charge": true,
                     "ligand_group_type" : "tetramine",
                     "ligand_atom_ids" : [4391,32784,23834,34343,23434],
-                    "protein_atom_ids" : [3,4,5,3,1] // TODO missing in original model
+                    "protein_atom_ids" : [3,4,5,3,1], // TODO missing in original model
+                    "ligand_representative_position" : [-2.45, 0.51, 7.13],
+                    "protein_representative_position" : [-2.45, 0.51, 7.13]
                 }],
                 "halogen_bonds" : [{
                     "binding_site_member_id" : 0,
