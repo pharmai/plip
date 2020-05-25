@@ -90,6 +90,8 @@ $ pip install plip`
 
 Run the `plipcmd.py` script inside the PLIP folder to detect, report, and visualize interactions. The following example creates a PYMOL visualization for the interactions between the inhibitor [NFT](https://www.rcsb.org/ligand/NFT) and its target protein in the PDB structure [1vsn](https://www.rcsb.org/structure/1VSN).
 
+**Note:** If you have installed PLIP with `python setup.py install`, you will not have to set an alias for the `plip` command.
+
 ```bash
 $ alias plip='python ~/pliptool/plip/plipcmd.py'
 $ mkdir /tmp/1vsn && cd /tmp/1vsn
