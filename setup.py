@@ -23,4 +23,9 @@ setup(name='plip',
           'lxml',
           'pymol'
       ],
+      entry_points={
+          "console_scripts": [
+              "plip = plip.plipcmd:main"
+          ]
+      },
       zip_safe=False)

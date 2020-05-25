@@ -166,7 +166,7 @@ def run_analysis(inputstructs, inputpdbids):
             logger.info(f'finished analysis, find the result files in {config.BASEPATH}')
 
 
-if __name__ == '__main__':
+def main():
     """Parse command line arguments and start main script for analysis."""
     parser = ArgumentParser(prog="PLIP", description=description)
     pdbstructure = parser.add_mutually_exclusive_group(required=True)  # Needs either PDB ID or file
@@ -240,9 +240,7 @@ if __name__ == '__main__':
     for t in thresholds:
         parser.add_argument('--%s' % t.name, dest=t.name, type=lambda val: threshold_limiter(parser, val),
                             help=argparse.SUPPRESS)
-
     arguments = parser.parse_args()
-
     # configure log levels
     config.VERBOSE = True if arguments.verbose else False
     config.QUIET = True if arguments.quiet else False
@@ -255,7 +253,6 @@ if __name__ == '__main__':
         logger.setLevel(logging.CRITICAL)
     else:
         logger.setLevel(config.DEFAULT_LOG_LEVEL)
-
     config.MAXTHREADS = arguments.maxthreads
     config.XML = arguments.xml
     config.TXT = arguments.txt
@@ -308,3 +305,7 @@ if __name__ == '__main__':
         parser.error("The water bridge omega minimum angle has to be smaller than the water bridge omega maximum angle")
     expanded_path = tilde_expansion(arguments.input) if arguments.input is not None else None
     run_analysis(expanded_path, arguments.pdbid)  # Start main script
+
+
+if __name__ == '__main__':
+    main()
