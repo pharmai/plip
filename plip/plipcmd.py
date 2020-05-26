@@ -178,7 +178,7 @@ def main():
     outputgroup.add_argument("-O", "--stdout", dest="stdout", action="store_true", default=False,
                              help="Write to stdout instead of file")
     parser.add_argument("--rawstring", dest="use_raw_string", default=False, action="store_true",
-                        help="Use Python raw strings for stdout and stdin")
+                        help="Use Python raw strings for stdin")
     parser.add_argument("-v", "--verbose", dest="verbose", default=False, help="Turn on verbose mode",
                         action="store_true")
     parser.add_argument("-q", "--quiet", dest="quiet", default=False, help="Turn on quiet mode", action="store_true")

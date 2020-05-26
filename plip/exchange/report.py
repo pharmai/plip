@@ -97,9 +97,7 @@ class StructureReport:
                                                  xml_declaration=True)
         else:
             output = et.tostring(self.xmlreport, pretty_print=True)
-            if config.RAWSTRING:
-                output = repr(output)
-            print(output)
+            print(output.decode('utf8'))
 
     def write_txt(self, as_string=False):
         """Write the TXT report"""
@@ -108,8 +106,6 @@ class StructureReport:
                 [f.write(textline + '\n') for textline in self.txtreport]
         else:
             output = '\n'.join(self.txtreport)
-            if config.RAWSTRING:
-                output = repr(output)
             print(output)
 
 
