@@ -9,6 +9,7 @@ LABEL maintainer="PharmAI GmbH <contact@pharm.ai>" \
         org.label-schema.name="PLIP: The Protein-Ligand Interaction Profiler" \
         org.label-schema.description="https://www.doi.org/10.1093/nar/gkv315"
 
+ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && apt-get install -y \
     cmake \
     git \
@@ -26,6 +27,7 @@ RUN apt-get update && apt-get install -y \
     libpng-dev \
     libpython3-all-dev \
     python3 \
+    python3-dateutil \
     python3-lxml \
     python3-numpy \
     python3-pyqt5.qtopengl \

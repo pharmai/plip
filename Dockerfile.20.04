@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
     libopenbabel-dev \
     libopenbabel6 \
     pymol \
+    python3-dateutil \
     python3-distutils \
     python3-lxml \
     python3-openbabel \
