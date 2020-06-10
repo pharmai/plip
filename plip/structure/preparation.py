@@ -290,20 +290,19 @@ class LigandFinder:
             ligtype = classify_by_name(names)
         logger.debug(f'ligand classified as {ligtype}')
 
-        hetatoms = set()
+        hetatoms = dict()
         for obresidue in kmer:
-            hetatoms_res = set([(obatom.GetIdx(), obatom) for obatom in pybel.ob.OBResidueAtomIter(obresidue)
-                                if obatom.GetAtomicNum() != 1])
-
+            cur_hetatoms = {obatom.GetIdx(): obatom for obatom in pybel.ob.OBResidueAtomIter(obresidue) if
+                            obatom.GetAtomicNum() != 1}
             if not config.ALTLOC:
                 # Remove alternative conformations (standard -> True)
-                hetatoms_res = set([atm for atm in hetatoms_res
-                                    if not self.mapper.mapid(atm[0], mtype='protein',
-                                                             to='internal') in self.altconformations])
-            hetatoms.update(hetatoms_res)
+                ids_to_remove = [atom_id for atom_id in hetatoms.keys() if
+                                 self.mapper.mapid(atom_id, mtype='protein', to='internal') in self.altconformations]
+                for atom_id in ids_to_remove:
+                    del cur_hetatoms[atom_id]
+            hetatoms.update(cur_hetatoms)
         logger.debug(f'hetero atoms determined (n={len(hetatoms)})')
 
-        hetatoms = dict(hetatoms)  # make it a dict with idx as key and OBAtom as value
         lig = pybel.ob.OBMol()  # new ligand mol
         neighbours = dict()
         for obatom in hetatoms.values():  # iterate over atom objects
