@@ -1,4 +1,4 @@
-### :exclamation: We have released a new major update [v2.1.0-beta](https://github.com/pharmai/plip/releases/tag/v2.1.0-beta) for testing. Please have a look on the [`development`](https://github.com/pharmai/plip/tree/development) branch.
+### :exclamation: We have released a new major update [v2.3.0-beta](https://github.com/pharmai/plip/releases/tag/v2.3.0-beta) for testing. Please have a look on the [`development`](https://github.com/pharmai/plip/tree/development) branch.
 
 ---
 
