@@ -3,7 +3,8 @@
 ![PLIP Build](https://github.com/pharmai/plip/workflows/PLIP%20Build/badge.svg)
 ![GitHub](https://img.shields.io/github/license/pharmai/plip?style=social)
 ![GitHub All Releases](https://img.shields.io/github/downloads/pharmai/plip/total?style=social)
-![Docker Image Size (tag)](https://img.shields.io/docker/image-size/pharmai/plip/latest?style=social)
+![Docker Pulls](https://img.shields.io/docker/pulls/pharmai/plip?style=social&logo=docker)
+![Docker Image Size (tag)](https://img.shields.io/docker/image-size/pharmai/plip/latest?style=social&logo=docker)
 
 Analyze noncovalent protein-ligand interactions in 3D structures with ease.
 
