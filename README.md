@@ -65,7 +65,7 @@ $ git clone https://github.com/ssalentin/plip.git ~/pliptool
 ### 2. Install PLIP
 
 #### Containerized Image (recommended)
-:exclamation: We ship PLIP as a pre-built containers, available on the [Docker Hub](https://hub.docker.com/r/pharmai/plip) or as pre-built Singularity image under [Releases](https://github.com/pharmai/plip/releases).
+:exclamation: We ship PLIP as a pre-built containers for multiple architectures (amd64/ARM), available on the [Docker Hub](https://hub.docker.com/r/pharmai/plip) or as pre-built Singularity image under [Releases](https://github.com/pharmai/plip/releases).
 
 #### From Source
 If you cannot use the containerized bundle or want to use PLIP sources, make sure you have the following requirements installed:

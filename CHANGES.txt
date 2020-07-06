@@ -1,5 +1,10 @@
 Changelog
 ---------
+# 2.2.0
+* bug fixes in code and deployment
+* multi-architecture builds on https://hub.docker.com/r/pharmai/plip
+* Docker build for Ubuntu 20.04 LTS
+
 # 2.1.0
 * maintainer changed to PharmAI GmbH
 * full compatibility to Python 3 and OpenBabel 3
