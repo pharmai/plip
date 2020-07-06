@@ -1,21 +1,16 @@
-"""
-Protein-Ligand Interaction Profiler - Analyze and visualize protein-ligand interactions in PDB files.
-mp.py - Functions for parallel processing
-"""
-
-# Python Standard Library
-from __future__ import division
-from builtins import zip
-import multiprocessing
 import itertools
-from numpy import asarray
+import multiprocessing
+from builtins import zip
 from functools import partial
+
+from numpy import asarray
 
 
 class SubProcessError(Exception):
     def __init__(self, e, exitcode=1):
         self.exitcode = exitcode
         super(SubProcessError, self).__init__(e)
+
     pass
 
 
@@ -53,4 +48,5 @@ def parallel_fn(f):
         cleaned = [x for x in result.get() if x is not None]  # getting results
         cleaned = asarray(cleaned)
         return cleaned
+
     return partial(simple_parallel, f)

@@ -1,9 +1,3 @@
-"""
-Protein-Ligand Interaction Profiler - Analyze and visualize protein-ligand interactions in PDB files.
-plipremote.py - Modules involved in multiprocessing and remote computation.
-"""
-
-# Python Standard Library
 from collections import namedtuple
 
 hbonds_info = namedtuple('hbonds_info', 'ldon_id lig_don_id prot_acc_id pdon_id prot_don_id lig_acc_id')
@@ -79,7 +73,7 @@ class VisualizerData:
                                        ring_atoms=picat.ring.atoms_orig_idx,
                                        charge_atoms=picat.charge.atoms_orig_idx,
                                        protcharged=picat.protcharged)
-                         for picat in pli.pication_paro+pli.pication_laro]
+                         for picat in pli.pication_paro + pli.pication_laro]
 
         # Salt Bridges
         self.saltbridges = [sbridge_info(positive_atoms=sbridge.positive.atoms_orig_idx,
@@ -87,7 +81,7 @@ class VisualizerData:
                                          positive_center=sbridge.positive.center,
                                          negative_center=sbridge.negative.center,
                                          protispos=sbridge.protispos)
-                            for sbridge in pli.saltbridge_lneg+pli.saltbridge_pneg]
+                            for sbridge in pli.saltbridge_lneg + pli.saltbridge_pneg]
 
         # Water Bridgese('wbridge_info', 'don_id acc_id water_id protisdon')
         self.waterbridges = [wbridge_info(don_id=wbridge.d_orig_idx,

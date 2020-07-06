@@ -1,39 +1,24 @@
-"""
-Protein-Ligand Interaction Profiler - Analyze and visualize protein-ligand interactions in PDB files.
-preparation.py - Prepare PDB input files for processing.
-"""
-
-
-# Python Standard Library
-from __future__ import absolute_import
-from builtins import filter
-from operator import itemgetter
-from collections import namedtuple
 import itertools
 import os
 import re
+import tempfile
+from collections import namedtuple
+from operator import itemgetter
+
 import numpy as np
+from openbabel import pybel
 
-# Own modules
-from .detection import halogen, pication, water_bridges, metal_complexation
-from .detection import hydrophobic_interactions, pistacking, hbonds, saltbridge
-from .supplemental import centroid, tilde_expansion, write_message, tmpfile, classify_by_name
-from .supplemental import whichchain, whichrestype, whichresnumber, euclidean3d, int32_to_negative
-from .supplemental import extract_pdbid, read_pdb, create_folder_if_not_exists, canonicalize
-from .supplemental import cluster_doubles, is_lig, normalize_vector, vector, ring_is_planar
-from .supplemental import read, nucleotide_linkage, sort_members_by_importance
-from . import config
+from plip.basic import config, logger
+from plip.basic.supplemental import centroid, tilde_expansion, tmpfile, classify_by_name
+from plip.basic.supplemental import cluster_doubles, is_lig, normalize_vector, vector, ring_is_planar
+from plip.basic.supplemental import extract_pdbid, read_pdb, create_folder_if_not_exists, canonicalize
+from plip.basic.supplemental import read, nucleotide_linkage, sort_members_by_importance
+from plip.basic.supplemental import whichchain, whichrestype, whichresnumber, euclidean3d, int32_to_negative
+from plip.structure.detection import halogen, pication, water_bridges, metal_complexation
+from plip.structure.detection import hydrophobic_interactions, pistacking, hbonds, saltbridge
 
-# External modules
-try: # for openbabel < 3.0.0
-    import pybel
-except ImportError: # for openbabel >= 3.0.0
-    from openbabel import pybel
+logger = logger.get_logger()
 
-
-################
-# MAIN CLASSES #
-################
 
 class PDBParser:
     def __init__(self, pdbpath, as_string):
@@ -81,7 +66,7 @@ class PDBParser:
                                     if model_num > 1:  # MODEL 2,3,4 etc.
                                         other_models = True
                                 except ValueError:
-                                    write_message("Ignoring invalid MODEL entry: %s\n" % corrected_line, mtype='debug')
+                                    logger.debug(f'ignoring invalid MODEL entry: {corrected_line}')
                             corrected_lines.append(corrected_line)
                             lastnum = newnum
                 corrected_pdb = ''.join(corrected_lines)
@@ -125,7 +110,7 @@ class PDBParser:
             "HD": "H", "HS": "H", "NA": "N",
             "NS": "N", "OA": "O", "OS": "O", "SA": "S"}
         fixed = False
-        newnum = 0
+        new_num = 0
         forbidden_characters = "[^a-zA-Z0-9_]"
         pdbline = pdbline.strip('\n')
         # Some MD / Docking tools produce empty lines, leading to segfaults
@@ -137,10 +122,10 @@ class PDBParser:
             return None, lastnum
         # TER Entries also have continuing numbering, consider them as well
         if pdbline.startswith('TER'):
-            newnum = lastnum + 1
+            new_num = lastnum + 1
         if pdbline.startswith('ATOM'):
-            newnum = lastnum + 1
-            currentnum = int(pdbline[6:11])
+            new_num = lastnum + 1
+            current_num = int(pdbline[6:11])
             resnum = pdbline[22:27].strip()
             resname = pdbline[17:21].strip()
             # Invalid residue number
@@ -153,8 +138,8 @@ class PDBParser:
             if re.match(forbidden_characters, resname.strip()):
                 pdbline = pdbline[:17] + 'UNK ' + pdbline[21:]
                 fixed = True
-            if lastnum + 1 != currentnum:
-                pdbline = pdbline[:6] + (5 - len(str(newnum))) * ' ' + str(newnum) + ' ' + pdbline[12:]
+            if lastnum + 1 != current_num:
+                pdbline = pdbline[:6] + (5 - len(str(new_num))) * ' ' + str(new_num) + ' ' + pdbline[12:]
                 fixed = True
             # No chain assigned
             if pdbline[21] == ' ':
@@ -169,14 +154,14 @@ class PDBParser:
                     pdbline = pdbline.strip()[:-2] + ' ' + pdbqt_conversion[pdbqttype] + '\n'
                     self.num_fixed_lines += 1
         if pdbline.startswith('HETATM'):
-            newnum = lastnum + 1
+            new_num = lastnum + 1
             try:
-                currentnum = int(pdbline[6:11])
+                current_num = int(pdbline[6:11])
             except ValueError:
-                currentnum = None
-                write_message("Invalid HETATM entry: %s\n" % pdbline, mtype='debug')
-            if lastnum + 1 != currentnum:
-                pdbline = pdbline[:6] + (5 - len(str(newnum))) * ' ' + str(newnum) + ' ' + pdbline[12:]
+                current_num = None
+                logger.debug(f'invalid HETATM entry: {pdbline}')
+            if lastnum + 1 != current_num:
+                pdbline = pdbline[:6] + (5 - len(str(new_num))) * ' ' + str(new_num) + ' ' + pdbline[12:]
                 fixed = True
             # No chain assigned or number assigned as chain
             if pdbline[21] == ' ':
@@ -206,7 +191,7 @@ class PDBParser:
                     pdbline = pdbline.strip()[:-2] + ' ' + pdbqt_conversion[pdbqttype] + ' '
                     self.num_fixed_lines += 1
         self.num_fixed_lines += 1 if fixed else 0
-        return pdbline + '\n', max(newnum, lastnum)
+        return pdbline + '\n', max(new_num, lastnum)
 
     def get_linkage(self, line):
         """Get the linkage information from a LINK entry PDB line."""
@@ -265,18 +250,18 @@ class LigandFinder:
                 res_kmers = self.identify_kmers(all_res_dict)
             else:
                 res_kmers = [[a, ] for a in ligand_residues]
-            write_message("{} ligand kmer(s) detected for closer inspection.\n".format(len(res_kmers)), mtype='debug')
+            logger.debug(f'{len(res_kmers)} ligand kmer(s) detected for closer inspection')
             for kmer in res_kmers:  # iterate over all ligands and extract molecules + information
                 if len(kmer) > config.MAX_COMPOSITE_LENGTH:
-                    write_message("Ligand kmer(s) filtered out with a length of {} fragments ({} allowed).\n".format(
-                        len(kmer), config.MAX_COMPOSITE_LENGTH), mtype='debug')
+                    logger.debug(
+                        f'ligand kmer(s) filtered out with a length of {len(kmer)} fragments ({config.MAX_COMPOSITE_LENGTH} allowed)')
                 else:
                     ligands.append(self.extract_ligand(kmer))
 
         else:
             # Extract peptides from given chains
             self.water = [o for o in pybel.ob.OBResidueIter(self.proteincomplex.OBMol) if o.GetResidueProperty(9)]
-            if config.PEPTIDES != []:
+            if config.PEPTIDES:
                 peptide_ligands = [self.getpeptides(chain) for chain in config.PEPTIDES]
             elif config.INTRA is not None:
                 peptide_ligands = [self.getpeptides(config.INTRA), ]
@@ -292,34 +277,32 @@ class LigandFinder:
         members = [(res.GetName(), res.GetChain(), int32_to_negative(res.GetNum())) for res in kmer]
         members = sort_members_by_importance(members)
         rname, rchain, rnum = members[0]
-        write_message("Finalizing extraction for ligand %s:%s:%s with %i elements\n" %
-                      (rname, rchain, rnum, len(kmer)), mtype='debug')
+        logger.debug(f'finalizing extraction for ligand {rname}:{rchain}:{rnum} with {len(kmer)} elements')
         names = [x[0] for x in members]
         longname = '-'.join([x[0] for x in members])
 
-        if config.PEPTIDES != []:
+        if config.PEPTIDES:
             ligtype = 'PEPTIDE'
         elif config.INTRA is not None:
             ligtype = 'INTRA'
         else:
             # Classify a ligand by its HETID(s)
             ligtype = classify_by_name(names)
-        write_message("Ligand classified as {}\n".format(ligtype), mtype='debug')
+        logger.debug(f'ligand classified as {ligtype}')
 
-        hetatoms = set()
+        hetatoms = dict()
         for obresidue in kmer:
-            hetatoms_res = set([(obatom.GetIdx(), obatom) for obatom in pybel.ob.OBResidueAtomIter(obresidue)
-                                if obatom.GetAtomicNum() != 1])
-
+            cur_hetatoms = {obatom.GetIdx(): obatom for obatom in pybel.ob.OBResidueAtomIter(obresidue) if
+                            obatom.GetAtomicNum() != 1}
             if not config.ALTLOC:
                 # Remove alternative conformations (standard -> True)
-                hetatoms_res = set([atm for atm in hetatoms_res
-                                    if not self.mapper.mapid(atm[0], mtype='protein',
-                                                             to='internal') in self.altconformations])
-            hetatoms.update(hetatoms_res)
-        write_message("Hetero atoms determined (n={})\n".format(len(hetatoms)), mtype='debug')
+                ids_to_remove = [atom_id for atom_id in hetatoms.keys() if
+                                 self.mapper.mapid(atom_id, mtype='protein', to='internal') in self.altconformations]
+                for atom_id in ids_to_remove:
+                    del cur_hetatoms[atom_id]
+            hetatoms.update(cur_hetatoms)
+        logger.debug(f'hetero atoms determined (n={len(hetatoms)})')
 
-        hetatoms = dict(hetatoms)  # make it a dict with idx as key and OBAtom as value
         lig = pybel.ob.OBMol()  # new ligand mol
         neighbours = dict()
         for obatom in hetatoms.values():  # iterate over atom objects
@@ -328,7 +311,7 @@ class LigandFinder:
             # ids of all neighbours of obatom
             neighbours[idx] = set([neighbour_atom.GetIdx() for neighbour_atom
                                    in pybel.ob.OBAtomAtomIter(obatom)]) & set(hetatoms.keys())
-        write_message("Atom neighbours mapped\n", mtype='debug')
+        logger.debug(f'atom neighbours mapped')
 
         ##############################################################
         # map the old atom idx of OBMol to the new idx of the ligand #
@@ -353,7 +336,7 @@ class LigandFinder:
         lig.title = ':'.join((rname, rchain, str(rnum)))
         self.mapper.ligandmaps[lig.title] = mapold
 
-        write_message("Renumerated molecule generated\n", mtype='debug')
+        logger.debug('renumerated molecule generated')
 
         if not config.NOPDBCANMAP:
             atomorder = canonicalize(lig)
@@ -362,7 +345,7 @@ class LigandFinder:
 
         can_to_pdb = {}
         if atomorder is not None:
-            can_to_pdb = {atomorder[key-1]: mapold[key] for key in mapold}
+            can_to_pdb = {atomorder[key - 1]: mapold[key] for key in mapold}
 
         ligand = data(mol=lig, hetid=rname, chain=rchain, position=rnum, water=self.water,
                       members=members, longname=longname, type=ligtype, atomorder=atomorder,
@@ -395,7 +378,7 @@ class LigandFinder:
             self.proteincomplex.OBMol) if not o.GetResidueProperty(9) and self.is_het_residue(o)]
 
         if config.DNARECEPTOR:  # If DNA is the receptor, don't consider DNA as a ligand
-            candidates1 = [res for res in candidates1 if res.GetName() not in config.DNA+config.RNA]
+            candidates1 = [res for res in candidates1 if res.GetName() not in config.DNA + config.RNA]
         all_lignames = set([a.GetName() for a in candidates1])
 
         water = [o for o in pybel.ob.OBResidueIter(self.proteincomplex.OBMol) if o.GetResidueProperty(9)]
@@ -404,7 +387,7 @@ class LigandFinder:
             candidates2 = [a for a in candidates1 if is_lig(a.GetName()) and a.GetName() not in self.modresidues]
         else:
             candidates2 = [a for a in candidates1 if is_lig(a.GetName())]
-        write_message("%i ligand(s) after first filtering step.\n" % len(candidates2), mtype='debug')
+        logger.debug(f'{len(candidates2)} ligand(s) after first filtering step')
 
         ############################################
         # Filtering by counting and artifacts list #
@@ -512,6 +495,7 @@ class Mol:
                 a_orig_idx = self.Mapper.mapid(atom.idx, mtype=self.mtype, bsid=self.bsid)
                 a_orig_atom = self.Mapper.id_to_atom(a_orig_idx)
                 a_set.append(data(a=atom, a_orig_atom=a_orig_atom, a_orig_idx=a_orig_idx, type='regular'))
+        a_set = sorted(a_set, key=lambda x: x.a_orig_idx)
         return a_set
 
     def find_hbd(self, all_atoms, hydroph_atoms):
@@ -532,6 +516,7 @@ class Mol:
                 d_orig_atom = self.Mapper.id_to_atom(d_orig_idx)
                 donor_pairs.append(data(d=carbon, d_orig_atom=d_orig_atom,
                                         d_orig_idx=d_orig_idx, h=pybel.Atom(adj_atom), type='weak'))
+        donor_pairs = sorted(donor_pairs, key=lambda x: (x.d_orig_idx, x.h.idx))
         return donor_pairs
 
     def find_rings(self, mol, all_atoms):
@@ -541,17 +526,23 @@ class Mol:
         rings = []
         aromatic_amino = ['TYR', 'TRP', 'HIS', 'PHE']
         ring_candidates = mol.OBMol.GetSSSR()
-        write_message("Number of aromatic ring candidates: %i\n" % len(ring_candidates), mtype="debug")
+        logger.debug(f'number of aromatic ring candidates: {len(ring_candidates)}')
         # Check here first for ligand rings not being detected as aromatic by Babel and check for planarity
         for ring in ring_candidates:
             r_atoms = [a for a in all_atoms if ring.IsMember(a.OBAtom)]
+            r_atoms = sorted(r_atoms, key=lambda x: x.idx)
             if 4 < len(r_atoms) <= 6:
                 res = list(set([whichrestype(a) for a in r_atoms]))
+                # re-sort ring atoms for only ligands, because HETATM numbering is not canonical in OpenBabel
+                if res[0] == 'UNL':
+                    ligand_orig_idx = [self.Mapper.ligandmaps[self.bsid][a.idx] for a in r_atoms]
+                    sort_order = np.argsort(np.array(ligand_orig_idx))
+                    r_atoms = [r_atoms[i] for i in sort_order]
                 if ring.IsAromatic() or res[0] in aromatic_amino or ring_is_planar(ring, r_atoms):
                     # Causes segfault with OpenBabel 2.3.2, so deactivated
                     # typ = ring.GetType() if not ring.GetType() == '' else 'unknown'
                     # Alternative typing
-                    typ = '%s-membered' % len(r_atoms)
+                    ring_type = '%s-membered' % len(r_atoms)
                     ring_atms = [r_atoms[a].coords for a in [0, 2, 4]]  # Probe atoms for normals, assuming planarity
                     ringv1 = vector(ring_atms[0], ring_atms[1])
                     ringv2 = vector(ring_atms[2], ring_atms[0])
@@ -564,7 +555,7 @@ class Mol:
                                       normal=normalize_vector(np.cross(ringv1, ringv2)),
                                       obj=ring,
                                       center=centroid([ra.coords for ra in r_atoms]),
-                                      type=typ))
+                                      type=ring_type))
         return rings
 
     def get_hydrophobic_atoms(self):
@@ -657,8 +648,8 @@ class PLInteraction:
         self.interacting_res = list(set([''.join([str(i.resnr), str(i.reschain)]) for i in self.all_itypes
                                          if i.restype not in ['LIG', 'HOH']]))
         if len(self.interacting_res) != 0:
-            write_message('Ligand interacts with %i binding site residue(s) in chain(s) %s.\n'
-                          % (len(self.interacting_res), '/'.join(self.interacting_chains)), indent=True)
+            logger.info(
+                f'ligand interacts with {len(self.interacting_res)} binding site residue(s) in chain(s) {self.interacting_chains}')
             interactions_list = []
             num_saltbridges = len(self.saltbridge_lneg + self.saltbridge_pneg)
             num_hbonds = len(self.hbonds_ldon + self.hbonds_pdon)
@@ -679,9 +670,9 @@ class PLInteraction:
             if num_waterbridges != 0:
                 interactions_list.append('%i water bridge(s)' % num_waterbridges)
             if not len(interactions_list) == 0:
-                write_message('Complex uses %s.\n' % ', '.join(interactions_list), indent=True)
+                logger.info(f'complex uses {interactions_list}')
         else:
-            write_message('No interactions for this ligand.\n', indent=True)
+            logger.info('no interactions for this ligand')
 
     def find_unpaired_ligand(self):
         """Identify unpaired functional in groups in ligands, involving H-Bond donors, acceptors, halogen bond donors.
@@ -774,7 +765,7 @@ class PLInteraction:
                 hydroph_final.append(min_h)
         before, reduced = len(all_h), len(hydroph_final)
         if not before == 0 and not before == reduced:
-            write_message('Reduced number of hydrophobic contacts from %i to %i.\n' % (before, reduced), indent=True)
+            logger.info(f'reduced number of hydrophobic contacts from {before} to {reduced}')
         return hydroph_final
 
     def refine_hbonds_ldon(self, all_hbonds, salt_lneg, salt_pneg):
@@ -865,7 +856,7 @@ class PLInteraction:
                 wb_dict2[water] = [(abs(omega - wb_dict[wb_tuple].w_angle), wb_dict[wb_tuple]), ]
             elif len(wb_dict2[water]) == 1:
                 wb_dict2[water].append((abs(omega - wb_dict[wb_tuple].w_angle), wb_dict[wb_tuple]))
-                wb_dict2[water] = sorted(wb_dict2[water])
+                wb_dict2[water] = sorted(wb_dict2[water], key=lambda x: x[0])
             else:
                 if wb_dict2[water][1][0] < abs(omega - wb_dict[wb_tuple].w_angle):
                     wb_dict2[water] = [wb_dict2[water][0], (wb_dict[wb_tuple].w_angle, wb_dict[wb_tuple])]
@@ -1005,7 +996,7 @@ class Ligand(Mol):
         if not len(self.smiles) == 0:
             self.smiles = self.smiles.split()[0]
         else:
-            write_message('Could not write SMILES for this ligand.\n', indent=True, mtype='warning')
+            logger.warning(f'could not write SMILES for ligand {ligand}')
             self.smiles = ''
         self.heavy_atoms = self.molecule.OBMol.NumHvyAtoms()  # Heavy atoms count
         self.all_atoms = self.molecule.atoms
@@ -1015,7 +1006,7 @@ class Ligand(Mol):
         self.hbond_acc_atoms = self.find_hba(self.all_atoms)
         self.num_rings = len(self.rings)
         if self.num_rings != 0:
-            write_message('Contains %i aromatic ring(s).\n' % self.num_rings, indent=True)
+            logger.info(f'contains {self.num_rings} aromatic ring(s)')
         descvalues = self.molecule.calcdesc()
         self.molweight, self.logp = float(descvalues['MW']), float(descvalues['logP'])
         self.num_rot_bonds = int(self.molecule.OBMol.NumRotors())
@@ -1071,7 +1062,7 @@ class Ligand(Mol):
 
     def get_canonical_num(self, atomnum):
         """Converts internal atom ID into canonical atom ID. Agrees with Canonical SMILES in XML."""
-        return self.atomorder[atomnum-1]
+        return self.atomorder[atomnum - 1]
 
     def is_functional_group(self, atom, group):
         """Given a pybel atom, look up if it belongs to a function group"""
@@ -1128,7 +1119,7 @@ class Ligand(Mol):
                 a_set.append(data(x=a, orig_x=orig_x, x_orig_idx=x_orig_idx,
                                   c=pybel.Atom(n_atoms[0]), c_orig_idx=c_orig_idx))
         if len(a_set) != 0:
-            write_message('Ligand contains %i halogen atom(s).\n' % len(a_set), indent=True)
+            logger.info(f'ligand contains {len(a_set)} halogen atom(s)')
         return a_set
 
     def find_charged(self, all_atoms):
@@ -1146,10 +1137,12 @@ class Ligand(Mol):
                 a_set.append(data(atoms=[a, ], orig_atoms=[a_orig, ], atoms_orig_idx=[a_orig_idx, ], type='positive',
                                   center=list(a.coords), fgroup='quartamine'))
             elif self.is_functional_group(a, 'tertamine'):
-                a_set.append(data(atoms=[a, ], orig_atoms=[a_orig, ], atoms_orig_idx=[a_orig_idx, ], type='positive', center=list(a.coords),
+                a_set.append(data(atoms=[a, ], orig_atoms=[a_orig, ], atoms_orig_idx=[a_orig_idx, ], type='positive',
+                                  center=list(a.coords),
                                   fgroup='tertamine'))
             if self.is_functional_group(a, 'sulfonium'):
-                a_set.append(data(atoms=[a, ], orig_atoms=[a_orig, ], atoms_orig_idx=[a_orig_idx, ], type='positive', center=list(a.coords),
+                a_set.append(data(atoms=[a, ], orig_atoms=[a_orig, ], atoms_orig_idx=[a_orig_idx, ], type='positive',
+                                  center=list(a.coords),
                                   fgroup='sulfonium'))
             if self.is_functional_group(a, 'phosphate'):
                 a_contributing = [a, ]
@@ -1158,8 +1151,10 @@ class Ligand(Mol):
                 [a_contributing_orig_idx.append(self.Mapper.mapid(neighbor.idx, mtype=self.mtype, bsid=self.bsid))
                  for neighbor in a_contributing]
                 orig_contributing = [self.Mapper.id_to_atom(idx) for idx in a_contributing_orig_idx]
-                a_set.append(data(atoms=a_contributing, orig_atoms=orig_contributing, atoms_orig_idx=a_contributing_orig_idx, type='negative',
-                                  center=a.coords, fgroup='phosphate'))
+                a_set.append(
+                    data(atoms=a_contributing, orig_atoms=orig_contributing, atoms_orig_idx=a_contributing_orig_idx,
+                         type='negative',
+                         center=a.coords, fgroup='phosphate'))
             if self.is_functional_group(a, 'sulfonicacid'):
                 a_contributing = [a, ]
                 a_contributing_orig_idx = [a_orig_idx, ]
@@ -1168,8 +1163,10 @@ class Ligand(Mol):
                 [a_contributing_orig_idx.append(self.Mapper.mapid(neighbor.idx, mtype=self.mtype, bsid=self.bsid))
                  for neighbor in a_contributing]
                 orig_contributing = [self.Mapper.id_to_atom(idx) for idx in a_contributing_orig_idx]
-                a_set.append(data(atoms=a_contributing, orig_atoms=orig_contributing, atoms_orig_idx=a_contributing_orig_idx, type='negative',
-                                  center=a.coords, fgroup='sulfonicacid'))
+                a_set.append(
+                    data(atoms=a_contributing, orig_atoms=orig_contributing, atoms_orig_idx=a_contributing_orig_idx,
+                         type='negative',
+                         center=a.coords, fgroup='sulfonicacid'))
             elif self.is_functional_group(a, 'sulfate'):
                 a_contributing = [a, ]
                 a_contributing_orig_idx = [a_orig_idx, ]
@@ -1177,24 +1174,30 @@ class Ligand(Mol):
                  for neighbor in a_contributing]
                 [a_contributing.append(pybel.Atom(neighbor)) for neighbor in pybel.ob.OBAtomAtomIter(a.OBAtom)]
                 orig_contributing = [self.Mapper.id_to_atom(idx) for idx in a_contributing_orig_idx]
-                a_set.append(data(atoms=a_contributing, orig_atoms=orig_contributing, atoms_orig_idx=a_contributing_orig_idx, type='negative',
-                                  center=a.coords, fgroup='sulfate'))
+                a_set.append(
+                    data(atoms=a_contributing, orig_atoms=orig_contributing, atoms_orig_idx=a_contributing_orig_idx,
+                         type='negative',
+                         center=a.coords, fgroup='sulfate'))
             if self.is_functional_group(a, 'carboxylate'):
                 a_contributing = [pybel.Atom(neighbor) for neighbor in pybel.ob.OBAtomAtomIter(a.OBAtom)
                                   if neighbor.GetAtomicNum() == 8]
                 a_contributing_orig_idx = [self.Mapper.mapid(neighbor.idx, mtype=self.mtype, bsid=self.bsid)
                                            for neighbor in a_contributing]
                 orig_contributing = [self.Mapper.id_to_atom(idx) for idx in a_contributing_orig_idx]
-                a_set.append(data(atoms=a_contributing, orig_atoms=orig_contributing, atoms_orig_idx=a_contributing_orig_idx, type='negative',
-                                  center=centroid([a.coords for a in a_contributing]), fgroup='carboxylate'))
+                a_set.append(
+                    data(atoms=a_contributing, orig_atoms=orig_contributing, atoms_orig_idx=a_contributing_orig_idx,
+                         type='negative',
+                         center=centroid([a.coords for a in a_contributing]), fgroup='carboxylate'))
             elif self.is_functional_group(a, 'guanidine'):
                 a_contributing = [pybel.Atom(neighbor) for neighbor in pybel.ob.OBAtomAtomIter(a.OBAtom)
                                   if neighbor.GetAtomicNum() == 7]
                 a_contributing_orig_idx = [self.Mapper.mapid(neighbor.idx, mtype=self.mtype, bsid=self.bsid)
                                            for neighbor in a_contributing]
                 orig_contributing = [self.Mapper.id_to_atom(idx) for idx in a_contributing_orig_idx]
-                a_set.append(data(atoms=a_contributing, orig_atoms=orig_contributing, atoms_orig_idx=a_contributing_orig_idx, type='positive',
-                                  center=a.coords, fgroup='guanidine'))
+                a_set.append(
+                    data(atoms=a_contributing, orig_atoms=orig_contributing, atoms_orig_idx=a_contributing_orig_idx,
+                         type='positive',
+                         center=a.coords, fgroup='guanidine'))
         return a_set
 
     def find_metal_binding(self, lig_atoms, water_oxygens):
@@ -1207,7 +1210,8 @@ class Ligand(Mol):
         for oxygen in water_oxygens:
             a_set.append(data(atom=oxygen.oxy, atom_orig_idx=oxygen.oxy_orig_idx, type='O', fgroup='water',
                               restype=whichrestype(oxygen.oxy), resnr=whichresnumber(oxygen.oxy),
-                              reschain=whichchain(oxygen.oxy), location='water', orig_atom=self.Mapper.id_to_atom(oxygen.oxy_orig_idx)))
+                              reschain=whichchain(oxygen.oxy), location='water',
+                              orig_atom=self.Mapper.id_to_atom(oxygen.oxy_orig_idx)))
         # #@todo Refactor code
         for a in lig_atoms:
             a_orig_idx = self.Mapper.mapid(a.idx, mtype='ligand', bsid=self.bsid)
@@ -1247,7 +1251,8 @@ class Ligand(Mol):
                         a_set.append(data(atom=pybel.Atom(neighbor), atom_orig_idx=neighbor_orig_idx, type='O',
                                           fgroup='phosphor.other', restype=self.hetid,
                                           resnr=self.position,
-                                          reschain=self.chain, location='ligand', orig_atom=self.Mapper.id_to_atom(a_orig_idx)))
+                                          reschain=self.chain, location='ligand',
+                                          orig_atom=self.Mapper.id_to_atom(a_orig_idx)))
             if a.atomicnum == 7:  # It's a nitrogen atom
                 if n_atoms_atomicnum.count(6) == 2:  # It's imidazole/pyrrole or similar
                     a_set.append(data(atom=a, atom_orig_idx=a_orig_idx, type='N', fgroup='imidazole/pyrrole',
@@ -1280,7 +1285,7 @@ class PDBComplex:
         self.sourcefiles = {}
         self.information = {}
         self.corrected_pdb = ''
-        self._output_path = '/tmp'
+        self._output_path = tempfile.gettempdir()
         self.pymol_name = None
         self.modres = set()
         self.resis = []
@@ -1292,7 +1297,8 @@ class PDBComplex:
 
     def __str__(self):
         formatted_lig_names = [":".join([x.hetid, x.chain, str(x.position)]) for x in self.ligands]
-        return "Protein structure %s with ligands:\n" % (self.pymol_name) + "\n".join([lig for lig in formatted_lig_names])
+        return "Protein structure %s with ligands:\n" % (self.pymol_name) + "\n".join(
+            [lig for lig in formatted_lig_names])
 
     def load_pdb(self, pdbpath, as_string=False):
         """Loads a pdb file with protein AND ligand(s), separates and prepares them.
@@ -1305,7 +1311,7 @@ class PDBComplex:
             self.sourcefiles['pdbcomplex.original'] = pdbpath
             self.sourcefiles['pdbcomplex'] = pdbpath
         self.information['pdbfixes'] = False
-        pdbparser = PDBParser(pdbpath, as_string=as_string)  # Parse PDB file to find errors and get additonal data
+        pdbparser = PDBParser(pdbpath, as_string=as_string)  # Parse PDB file to find errors and get additional data
         # #@todo Refactor and rename here
         self.Mapper.proteinmap = pdbparser.proteinmap
         self.Mapper.reversed_proteinmap = {v: k for k, v in self.Mapper.proteinmap.items()}
@@ -1316,7 +1322,7 @@ class PDBComplex:
 
         if not config.PLUGIN_MODE:
             if pdbparser.num_fixed_lines > 0:
-                write_message('%i lines automatically fixed in PDB input file.\n' % pdbparser.num_fixed_lines)
+                logger.info(f'{pdbparser.num_fixed_lines} lines automatically fixed in PDB input file')
                 # Save modified PDB file
                 if not as_string:
                     basename = os.path.basename(pdbpath).split('.')[0]
@@ -1337,7 +1343,7 @@ class PDBComplex:
 
         # Update the model in the Mapper class instance
         self.Mapper.original_structure = self.protcomplex.OBMol
-        write_message('PDB structure successfully read.\n')
+        logger.info('PDB structure successfully read')
 
         # Determine (temporary) PyMOL Name from Filename
         self.pymol_name = pdbpath.split('/')[-1].split('.')[0] + '-Protein'
@@ -1348,36 +1354,46 @@ class PDBComplex:
             potential_name = self.protcomplex.data['HEADER'][56:60].lower()
             if extract_pdbid(potential_name) != 'UnknownProtein':
                 self.pymol_name = potential_name
-        write_message("Pymol Name set as: '%s'\n" % self.pymol_name, mtype='debug')
+        logger.debug(f'PyMOL name set as: {self.pymol_name}')
 
         # Extract and prepare ligands
         ligandfinder = LigandFinder(self.protcomplex, self.altconf, self.modres, self.covalent, self.Mapper)
         self.ligands = ligandfinder.ligands
         self.excluded = ligandfinder.excluded
 
-        # Add polar hydrogens
-        self.protcomplex.OBMol.AddPolarHydrogens()
+        # decide whether to add polar hydrogens
+        if not config.NOHYDRO:
+            if not as_string:
+                basename = os.path.basename(pdbpath).split('.')[0]
+            else:
+                basename = "from_stdin"
+            self.protcomplex.OBMol.AddPolarHydrogens()
+            output_path = os.path.join(self._output_path, f'{basename}_protonated.pdb')
+            self.protcomplex.write('pdb', output_path, overwrite=True)
+            logger.info(f'protonated structure written to {output_path}')
+        else:
+            logger.warning('no polar hydrogens will be assigned (make sure your structure contains hydrogens)')
+
         for atm in self.protcomplex:
             self.atoms[atm.idx] = atm
-        write_message("Assigned polar hydrogens\n", mtype='debug')
 
         if len(self.excluded) != 0:
-            write_message("Excluded molecules as ligands: %s\n" % ','.join([lig for lig in self.excluded]))
+            logger.info(f'excluded molecules as ligands: {self.excluded}')
 
         if config.DNARECEPTOR:
             self.resis = [obres for obres in pybel.ob.OBResidueIter(
-                self.protcomplex.OBMol) if obres.GetName() in config.DNA+config.RNA]
+                self.protcomplex.OBMol) if obres.GetName() in config.DNA + config.RNA]
         else:
             self.resis = [obres for obres in pybel.ob.OBResidueIter(
                 self.protcomplex.OBMol) if obres.GetResidueProperty(0)]
 
         num_ligs = len(self.ligands)
         if num_ligs == 1:
-            write_message("Analyzing one ligand...\n")
+            logger.info('analyzing one ligand')
         elif num_ligs > 1:
-            write_message("Analyzing %i ligands...\n" % num_ligs)
+            logger.info(f'analyzing {num_ligs} ligands')
         else:
-            write_message("Structure contains no ligands.\n\n")
+            logger.info(f'structure contains no ligands')
 
     def analyze(self):
         """Triggers analysis of all complexes in structure"""
@@ -1393,18 +1409,17 @@ class PDBComplex:
         site = ' + '.join(single_sites)
         site = site if not len(site) > 20 else site[:20] + '...'
         longname = ligand.longname if not len(ligand.longname) > 20 else ligand.longname[:20] + '...'
-        ligtype = 'Unspecified type' if ligand.type == 'UNSPECIFIED' else ligand.type
-        ligtext = "\n%s [%s] -- %s" % (longname, ligtype, site)
+        ligtype = 'unspecified type' if ligand.type == 'UNSPECIFIED' else ligand.type
+        ligtext = f'{longname} [{ligtype}] -- {site}'
+        logger.info(f'processing ligand {ligtext}')
         if ligtype == 'PEPTIDE':
-            ligtext = '\n Chain %s [PEPTIDE / INTER-CHAIN]' % ligand.chain
+            logger.info(f'chain {ligand.chain} will be processed in [PEPTIDE / INTER-CHAIN] mode')
         if ligtype == 'INTRA':
-            ligtext = "\n Chain %s [INTRA-CHAIN]" % ligand.chain
+            logger.info(f'chain {ligand.chain} will be processed in [INTRA-CHAIN] mode')
         any_in_biolip = len(set([x[0] for x in ligand.members]).intersection(config.biolip_list)) != 0
-        write_message(ligtext)
-        write_message('\n' + '-' * len(ligtext) + '\n')
 
         if ligtype not in ['POLYMER', 'DNA', 'ION', 'DNA+ION', 'RNA+ION', 'SMALLMOLECULE+ION'] and any_in_biolip:
-            write_message('may be biologically irrelevant\n', mtype='info', indent=True)
+            logger.info('may be biologically irrelevant')
 
         lig_obj = Ligand(self, ligand)
         cutoff = lig_obj.max_dist_to_center + config.BS_DIST
@@ -1435,8 +1450,7 @@ class PDBComplex:
                 if distance <= config.BS_DIST and r not in bs_atoms_refined:
                     bs_atoms_refined.append(r)
         num_bs_atoms = len(bs_atoms_refined)
-        write_message('Binding site atoms in vicinity (%.1f A max. dist: %i).\n' % (config.BS_DIST, num_bs_atoms),
-                      indent=True)
+        logger.info(f'binding site atoms in vicinity ({config.BS_DIST} A max. dist: {num_bs_atoms})')
 
         bs_obj = BindingSite(bs_atoms_refined, self.protcomplex, self, self.altconf, min_dist, self.Mapper)
         pli_obj = PLInteraction(lig_obj, bs_obj, self)

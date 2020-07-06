@@ -6,7 +6,7 @@ test_remote_services.py - Unit Tests for remote services.
 
 
 import unittest
-from plip.modules.webservices import check_pdb_status
+from plip.exchange.webservices import check_pdb_status
 
 
 class TestPDB(unittest.TestCase):

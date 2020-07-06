@@ -4,43 +4,33 @@ Protein-Ligand Interaction Profiler - Analyze and visualize protein-ligand inter
 plipcmd.py - Main script for PLIP command line execution.
 """
 
-# Compatibility
-from __future__ import print_function
-from __future__ import absolute_import
-
-# Own modules
-try:
-    from plip.modules.preparation import tilde_expansion, write_message, PDBComplex
-    from plip.modules.preparation import create_folder_if_not_exists, extract_pdbid
-    from plip.modules.plipremote import VisualizerData
-    from plip.modules.report import StructureReport, __version__
-    from plip.modules import config
-    from plip.modules.mp import parallel_fn
-    from plip.modules.webservices import fetch_pdb
-    from plip.modules.supplemental import sysexit
-except ImportError:
-    from modules.preparation import tilde_expansion, write_message, PDBComplex
-    from modules.preparation import create_folder_if_not_exists, extract_pdbid
-    from modules.plipremote import VisualizerData
-    from modules.report import StructureReport, __version__
-    from modules import config
-    from modules.mp import parallel_fn
-    from modules.webservices import fetch_pdb
-    from modules.supplemental import sysexit
-
-# Python standard library
-import sys
+# system imports
 import argparse
-from argparse import ArgumentParser
+import logging
 import multiprocessing
-from collections import namedtuple
 import os
+import sys
+from argparse import ArgumentParser
+from collections import namedtuple
 
-descript = "Protein-Ligand Interaction Profiler (PLIP) v%s " \
-           "is a command-line based tool to analyze interactions in a protein-ligand complex. " \
-           "If you are using PLIP in your work, please cite: " \
-           "Salentin,S. et al. PLIP: fully automated protein-ligand interaction profiler. " \
-           "Nucl. Acids Res. (1 July 2015) 43 (W1): W443-W447. doi: 10.1093/nar/gkv315" % __version__
+from plip.basic import config, logger
+
+logger = logger.get_logger()
+
+from plip.basic.config import __version__
+from plip.basic.parallel import parallel_fn
+from plip.basic.remote import VisualizerData
+from plip.exchange.report import StructureReport
+from plip.exchange.webservices import fetch_pdb
+from plip.structure.preparation import create_folder_if_not_exists, extract_pdbid
+from plip.structure.preparation import tilde_expansion, PDBComplex
+
+description = f"The Protein-Ligand Interaction Profiler (PLIP) {__version__}" \
+              "is a command-line based tool to analyze interactions in a protein-ligand complex. " \
+              "If you are using PLIP in your work, please cite: " \
+              "Salentin,S. et al. PLIP: fully automated protein-ligand interaction profiler. " \
+              "Nucl. Acids Res. (1 July 2015) 43 (W1): W443-W447. doi:10.1093/nar/gkv315" \
+              f"Supported and maintained by: {config.__maintainer__}"
 
 
 def threshold_limiter(aparser, arg):
@@ -53,15 +43,15 @@ def threshold_limiter(aparser, arg):
 def process_pdb(pdbfile, outpath, as_string=False, outputprefix='report'):
     """Analysis of a single PDB file. Can generate textual reports XML, PyMOL session files and images as output."""
     if not as_string:
-        startmessage = '\nStarting analysis of %s\n' % pdbfile.split('/')[-1]
+        pdb_file_name = pdbfile.split('/')[-1]
+        startmessage = f'starting analysis of {pdb_file_name}'
     else:
-        startmessage = "Starting analysis from stdin.\n"
-    write_message(startmessage)
-    write_message('='*len(startmessage)+'\n')
+        startmessage = 'starting analysis from STDIN'
+    logger.info(startmessage)
     mol = PDBComplex()
     mol.output_path = outpath
     mol.load_pdb(pdbfile, as_string=as_string)
-    # #@todo Offers possibility for filter function from command line (by ligand chain, position, hetid)
+    # @todo Offers possibility for filter function from command line (by ligand chain, position, hetid)
     for ligand in mol.ligands:
         mol.characterize_complex(ligand)
 
@@ -77,14 +67,11 @@ def process_pdb(pdbfile, outpath, as_string=False, outputprefix='report'):
     ######################################
 
     if config.PYMOL or config.PICS:
-        try:
-            from plip.modules.visualize import visualize_in_pymol
-        except ImportError:
-            from modules.visualize import visualize_in_pymol
+        from plip.visualization.visualize import visualize_in_pymol
         complexes = [VisualizerData(mol, site) for site in sorted(mol.interaction_sets)
                      if not len(mol.interaction_sets[site].interacting_res) == 0]
         if config.MAXTHREADS > 1:
-            write_message('\nGenerating visualizations in parallel on %i cores ...' % config.MAXTHREADS)
+            logger.info(f'generating visualizations in parallel on {config.MAXTHREADS} cores')
             parfn = parallel_fn(visualize_in_pymol)
             parfn(complexes, processes=config.MAXTHREADS)
         else:
@@ -103,17 +90,19 @@ def download_structure(inputpdbid):
     Returns the path of the downloaded file."""
     try:
         if len(inputpdbid) != 4 or extract_pdbid(inputpdbid.lower()) == 'UnknownProtein':
-            sysexit(3, 'Invalid PDB ID (Wrong format)\n')
+            logger.error(f'invalid PDB-ID (wrong format): {inputpdbid}')
+            sys.exit(1)
         pdbfile, pdbid = fetch_pdb(inputpdbid.lower())
         pdbpath = tilde_expansion('%s/%s.pdb' % (config.BASEPATH.rstrip('/'), pdbid))
         create_folder_if_not_exists(config.BASEPATH)
         with open(pdbpath, 'w') as g:
             g.write(pdbfile)
-        write_message('file downloaded as %s\n\n' % pdbpath)
+        logger.info(f'file downloaded as {pdbpath}')
         return pdbpath, pdbid
 
     except ValueError:  # Invalid PDB ID, cannot fetch from RCBS server
-        sysexit(3, 'Invalid PDB ID (Entry does not exist)\n')
+        logger.error(f'PDB-ID does not exist: {inputpdbid}')
+        sys.exit(1)
 
 
 def remove_duplicates(slist):
@@ -122,22 +111,21 @@ def remove_duplicates(slist):
     unique = list(set(slist))
     difference = len(slist) - len(unique)
     if difference == 1:
-        write_message("Removed one duplicate entry from input list.\n")
+        logger.info('removed one duplicate entry from input list')
     if difference > 1:
-        write_message("Removed %i duplicate entries from input list.\n" % difference)
+        logger.info(f'Removed {difference} duplicate entries from input list')
     return unique
 
 
-def main(inputstructs, inputpdbids):
+def run_analysis(inputstructs, inputpdbids):
     """Main function. Calls functions for processing, report generation and visualization."""
     pdbid, pdbpath = None, None
-    # #@todo For multiprocessing, implement better stacktracing for errors
+    # @todo For multiprocessing, implement better stacktracing for errors
     # Print title and version
-    title = "* Protein-Ligand Interaction Profiler v%s *" % __version__
-    write_message('\n' + '*' * len(title) + '\n')
-    write_message(title)
-    write_message('\n' + '*' * len(title) + '\n\n')
-    outputprefix = config.OUTPUTFILENAME
+    logger.info(f'Protein-Ligand Interaction Profiler (PLIP) {__version__}')
+    logger.info(f'brought to you by: {config.__maintainer__}')
+    logger.info(f'please cite: https://www.doi.org/10.1093/nar/gkv315')
+    output_prefix = config.OUTPUTFILENAME
 
     if inputstructs is not None:  # Process PDB file(s)
         num_structures = len(inputstructs)
@@ -154,12 +142,13 @@ def main(inputstructs, inputpdbids):
                         inputstruct = bytes(inputstruct, 'utf8').decode('unicode_escape')
             else:
                 if os.path.getsize(inputstruct) == 0:
-                    sysexit(2, 'Empty PDB file\n')  # Exit if input file is empty
+                    logger.error('empty PDB file')
+                    sys.exit(1)
                 if num_structures > 1:
                     basename = inputstruct.split('.')[-2].split('/')[-1]
                     config.OUTPATH = '/'.join([config.BASEPATH, basename])
-                    outputprefix = 'report'
-            process_pdb(inputstruct, config.OUTPATH, as_string=read_from_stdin, outputprefix=outputprefix)
+                    output_prefix = 'report'
+            process_pdb(inputstruct, config.OUTPATH, as_string=read_from_stdin, outputprefix=output_prefix)
     else:  # Try to fetch the current PDB structure(s) directly from the RCBS server
         num_pdbids = len(inputpdbids)
         inputpdbids = remove_duplicates(inputpdbids)
@@ -167,32 +156,33 @@ def main(inputstructs, inputpdbids):
             pdbpath, pdbid = download_structure(inputpdbid)
             if num_pdbids > 1:
                 config.OUTPATH = '/'.join([config.BASEPATH, pdbid[1:3].upper(), pdbid.upper()])
-                outputprefix = 'report'
-            process_pdb(pdbpath, config.OUTPATH, outputprefix=outputprefix)
+                output_prefix = 'report'
+            process_pdb(pdbpath, config.OUTPATH, outputprefix=output_prefix)
 
     if (pdbid is not None or inputstructs is not None) and config.BASEPATH is not None:
         if config.BASEPATH in ['.', './']:
-            write_message('\nFinished analysis. Find the result files in the working directory.\n\n')
+            logger.info('finished analysis, find the result files in the working directory')
         else:
-            write_message('\nFinished analysis. Find the result files in %s\n\n' % config.BASEPATH)
-
-    ##############################
-    # Parse command line arguments
-    ##############################
+            logger.info(f'finished analysis, find the result files in {config.BASEPATH}')
 
 
-def main_init():
+def main():
     """Parse command line arguments and start main script for analysis."""
-    parser = ArgumentParser(prog="PLIP", description=descript)
+    parser = ArgumentParser(prog="PLIP", description=description)
     pdbstructure = parser.add_mutually_exclusive_group(required=True)  # Needs either PDB ID or file
     # '-' as file name reads from stdin
     pdbstructure.add_argument("-f", "--file", dest="input", nargs="+", help="Set input file, '-' reads from stdin")
     pdbstructure.add_argument("-i", "--input", dest="pdbid", nargs="+")
     outputgroup = parser.add_mutually_exclusive_group(required=False)  # Needs either outpath or stdout
     outputgroup.add_argument("-o", "--out", dest="outpath", default="./")
-    outputgroup.add_argument("-O", "--stdout", dest="stdout", action="store_true", default=False, help="Write to stdout instead of file")
-    parser.add_argument("--rawstring", dest="use_raw_string", default=False, action="store_true", help="Use Python raw strings for stdout and stdin")
-    parser.add_argument("-v", "--verbose", dest="verbose", default=False, help="Set verbose mode", action="store_true")
+    outputgroup.add_argument("-O", "--stdout", dest="stdout", action="store_true", default=False,
+                             help="Write to stdout instead of file")
+    parser.add_argument("--rawstring", dest="use_raw_string", default=False, action="store_true",
+                        help="Use Python raw strings for stdin")
+    parser.add_argument("-v", "--verbose", dest="verbose", default=False, help="Turn on verbose mode",
+                        action="store_true")
+    parser.add_argument("-q", "--quiet", dest="quiet", default=False, help="Turn on quiet mode", action="store_true")
+    parser.add_argument("-s", "--silent", dest="silent", default=False, help="Turn on silent mode", action="store_true")
     parser.add_argument("-p", "--pics", dest="pics", default=False, help="Additional pictures", action="store_true")
     parser.add_argument("-x", "--xml", dest="xml", default=False, help="Generate report file in XML format",
                         action="store_true")
@@ -210,9 +200,6 @@ def main_init():
     parser.add_argument("--altlocation", dest="altlocation", default=False,
                         help="Also consider alternate locations for atoms (e.g. alternate conformations).",
                         action="store_true")
-    parser.add_argument("--debug", dest="debug", default=False,
-                        help="Turn on DEBUG mode with extended log.",
-                        action="store_true")
     parser.add_argument("--nofix", dest="nofix", default=False,
                         help="Turns off fixing of PDB files.",
                         action="store_true")
@@ -229,11 +216,14 @@ def main_init():
                         help="Set a filename for the report TXT and XML files. Will only work when processing single structures.")
     ligandtype = parser.add_mutually_exclusive_group()  # Either peptide/inter or intra mode
     ligandtype.add_argument("--peptides", "--inter", dest="peptides", default=[],
-                        help="Allows to define one or multiple chains as peptide ligands or to detect inter-chain contacts",
-                        nargs="+")
+                            help="Allows to define one or multiple chains as peptide ligands or to detect inter-chain contacts",
+                            nargs="+")
     ligandtype.add_argument("--intra", dest="intra", help="Allows to define one chain to analyze intra-chain contacts.")
     parser.add_argument("--keepmod", dest="keepmod", default=False,
                         help="Keep modified residues as ligands",
+                        action="store_true")
+    parser.add_argument("--nohydro", dest="nohydro", default=False,
+                        help="Do not add polar hydrogens in case your structure already contains hydrogens.",
                         action="store_true")
     # Optional threshold arguments, not shown in help
     thr = namedtuple('threshold', 'name type')
@@ -250,10 +240,19 @@ def main_init():
     for t in thresholds:
         parser.add_argument('--%s' % t.name, dest=t.name, type=lambda val: threshold_limiter(parser, val),
                             help=argparse.SUPPRESS)
-
     arguments = parser.parse_args()
-    config.VERBOSE = True if (arguments.verbose or arguments.debug) else False
-    config.DEBUG = True if arguments.debug else False
+    # configure log levels
+    config.VERBOSE = True if arguments.verbose else False
+    config.QUIET = True if arguments.quiet else False
+    config.SILENT = True if arguments.silent else False
+    if config.VERBOSE:
+        logger.setLevel(logging.DEBUG)
+    elif config.QUIET:
+        logger.setLevel(logging.WARN)
+    elif config.SILENT:
+        logger.setLevel(logging.CRITICAL)
+    else:
+        logger.setLevel(config.DEFAULT_LOG_LEVEL)
     config.MAXTHREADS = arguments.maxthreads
     config.XML = arguments.xml
     config.TXT = arguments.txt
@@ -275,13 +274,14 @@ def main_init():
     config.KEEPMOD = arguments.keepmod
     config.DNARECEPTOR = arguments.dnareceptor
     config.OUTPUTFILENAME = arguments.outputfilename
+    config.NOHYDRO = arguments.nohydro
     # Make sure we have pymol with --pics and --pymol
     if config.PICS or config.PYMOL:
         try:
             import pymol
         except ImportError:
-            write_message("PyMOL is required for --pics and --pymol.\n", mtype='error')
-            raise
+            logger.error('PyMOL is required for the --pics and --pymol option')
+            sys.exit(1)
     # Assign values to global thresholds
     for t in thresholds:
         tvalue = getattr(arguments, t.name)
@@ -304,8 +304,8 @@ def main_init():
     if not config.WATER_BRIDGE_OMEGA_MIN < config.WATER_BRIDGE_OMEGA_MAX:
         parser.error("The water bridge omega minimum angle has to be smaller than the water bridge omega maximum angle")
     expanded_path = tilde_expansion(arguments.input) if arguments.input is not None else None
-    main(expanded_path, arguments.pdbid)  # Start main script
+    run_analysis(expanded_path, arguments.pdbid)  # Start main script
 
 
 if __name__ == '__main__':
-    main_init()
+    main()

@@ -6,7 +6,7 @@ test_metal_coordination.py - Unit Tests for Metal Coordination.
 
 
 import unittest
-from plip.modules.preparation import PDBComplex
+from plip.structure.preparation import PDBComplex
 
 
 class MetalCoordinationTest(unittest.TestCase):

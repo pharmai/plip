@@ -1,22 +1,12 @@
-"""
-Protein-Ligand Interaction Profiler - Analyze and visualize protein-ligand interactions in PDB files.
-webservices.py - Connect to various webservices to retrieve data
-"""
+import sys
+from urllib.error import HTTPError
+from urllib.request import urlopen
 
-# Python standard library
-from __future__ import absolute_import
-
-try:  # Python 3
-    from urllib.request import urlopen
-    from urllib.error import HTTPError
-except ImportError:  # Fallback Python 2.x
-    from urllib2 import urlopen, HTTPError
-
-# Own modules
-from .supplemental import write_message, sysexit
-
-# External libraries
 import lxml.etree as et
+
+from plip.basic import logger
+
+logger = logger.get_logger()
 
 
 def check_pdb_status(pdbid):
@@ -37,23 +27,28 @@ def check_pdb_status(pdbid):
 def fetch_pdb(pdbid):
     """Get the newest entry from the RCSB server for the given PDB ID. Exits with '1' if PDB ID is invalid."""
     pdbid = pdbid.lower()
-    write_message('\nChecking status of PDB ID %s ... ' % pdbid)
+    logger.info(f'checking status of PDB-ID {pdbid}')
     state, current_entry = check_pdb_status(pdbid)  # Get state and current PDB ID
 
     if state == 'OBSOLETE':
-        write_message('entry is obsolete, getting %s instead.\n' % current_entry)
+        logger.info(f'entry is obsolete, getting {current_entry} instead')
     elif state == 'CURRENT':
-        write_message('entry is up to date.\n')
+        logger.info('entry is up-to-date')
     elif state == 'UNKNOWN':
-        sysexit(3, 'Invalid PDB ID (Entry does not exist on PDB server)\n')
-    write_message('Downloading file from PDB ... ')
-    pdburl = 'http://www.rcsb.org/pdb/files/%s.pdb' % current_entry  # Get URL for current entry
+        logger.error('invalid PDB-ID (entry does not exist on PDB server)')
+        sys.exit(1)
+    logger.info('downloading file from PDB')
+    # get URL for current entry
+    # @todo needs update to react properly on response codes of RCSB servers
+    pdburl = f'http://www.rcsb.org/pdb/files/{current_entry}.pdb'
     try:
         pdbfile = urlopen(pdburl).read().decode()
         # If no PDB file is available, a text is now shown with "We're sorry, but ..."
         # Could previously be distinguished by an HTTP error
         if 'sorry' in pdbfile:
-            sysexit(5, "No file in PDB format available from wwPDB for the given PDB ID.\n")
+            logger.error('no file in PDB format available from wwPDB for the given PDB ID.')
+            sys.exit(1)
     except HTTPError:
-        sysexit(5, "No file in PDB format available from wwPDB for the given PDB ID.\n")
+        logger.error('no file in PDB format available from wwPDB for the given PDB ID')
+        sys.exit(1)
     return [pdbfile, current_entry]

@@ -1,42 +1,25 @@
-"""
-Protein-Ligand Interaction Profiler - Analyze and visualize protein-ligand interactions in PDB files.
-supplemental.py - Supplemental functions for PLIP analysis.
-"""
-
-# Compatibility
-from __future__ import print_function
-from __future__ import absolute_import
-
-# Python standard Library
-
-# External Libraries
-import numpy as np
-try: # for openbabel < 3.0.0
-    import pybel
-    from pybel import Atom
-except ImportError: # for openbabel >= 3.0.0
-    from openbabel import pybel
-    from openbabel.pybel import Atom
-
-# PLIP Modules
-from . import config
-
-# Python standard library
-import re
-from collections import namedtuple
-import os
-import sys
-import subprocess
-import itertools
 import gzip
-import zipfile
+import itertools
+import os
 import platform
+import re
+import subprocess
+import sys
 import tempfile
+import zipfile
+from collections import namedtuple
 
-# Windows
-if os.name != 'nt':  # Resource module not available for Windows
+import numpy as np
+from openbabel import pybel
+from openbabel.pybel import Atom
+
+from plip.basic import config, logger
+
+logger = logger.get_logger()
+
+# Windows and MacOS
+if os.name != 'nt' and platform.system() != 'Darwin':  # Resource module not available for Windows
     import resource
-
 
 # Settings
 np.seterr(all='ignore')  # No runtime warnings
@@ -80,6 +63,7 @@ def whichchain(atom):
     atom = atom if not isinstance(atom, Atom) else atom.OBAtom  # Convert to OpenBabel Atom
     return atom.GetResidue().GetChain() if atom.GetResidue() is not None else None
 
+
 #########################
 # Mathematical operations
 #########################
@@ -88,7 +72,6 @@ def whichchain(atom):
 def euclidean3d(v1, v2):
     """Faster implementation of euclidean distance for the 3D case."""
     if not len(v1) == 3 and len(v2) == 3:
-        print("Vectors are not in 3D space. Returning None.")
         return None
     return np.sqrt((v1[0] - v2[0]) ** 2 + (v1[1] - v2[1]) ** 2 + (v1[2] - v2[2]) ** 2)
 
@@ -106,13 +89,14 @@ def vecangle(v1, v2, deg=True):
     """Calculate the angle between two vectors
     :param v1: coordinates of vector v1
     :param v2: coordinates of vector v2
+    :param deg: whether to return degrees or radians
     :returns : angle in degree or rad
     """
     if np.array_equal(v1, v2):
         return 0.0
     dm = np.dot(v1, v2)
     cm = np.linalg.norm(v1) * np.linalg.norm(v2)
-    angle = np.arccos(round(dm / cm, 10))  # Round here to prevent floating point errors
+    angle = np.arccos(dm / cm)  # Round here to prevent floating point errors
     return np.degrees([angle, ])[0] if deg else angle
 
 
@@ -122,7 +106,7 @@ def normalize_vector(v):
     :returns : normalized vector v
     """
     norm = np.linalg.norm(v)
-    return v/norm if not norm == 0 else v
+    return v / norm if not norm == 0 else v
 
 
 def centroid(coo):
@@ -141,7 +125,7 @@ def projection(pnormal1, ppoint, tpoint):
     :returns : coordinates of point orthogonally projected on the plane
     """
     # Choose the plane normal pointing to the point to be projected
-    pnormal2 = [coo*(-1) for coo in pnormal1]
+    pnormal2 = [coo * (-1) for coo in pnormal1]
     d1 = euclidean3d(tpoint, pnormal1 + ppoint)
     d2 = euclidean3d(tpoint, pnormal2 + ppoint)
     pnormal = pnormal1 if d1 < d2 else pnormal2
@@ -167,10 +151,10 @@ def cluster_doubles(double_list):
             if location[a] != location[b]:
                 if location[a] < location[b]:
                     clusters[location[a]] = clusters[location[a]].union(clusters[location[b]])  # Merge clusters
-                    clusters = clusters[:location[b]] + clusters[location[b]+1:]
+                    clusters = clusters[:location[b]] + clusters[location[b] + 1:]
                 else:
                     clusters[location[b]] = clusters[location[b]].union(clusters[location[a]])  # Merge clusters
-                    clusters = clusters[:location[a]] + clusters[location[a]+1:]
+                    clusters = clusters[:location[a]] + clusters[location[a] + 1:]
                 # Rebuild index of locations for each element as they have changed now
                 location = {}
                 for i, cluster in enumerate(clusters):
@@ -218,6 +202,7 @@ def create_folder_if_not_exists(folder_path):
 
 def cmd_exists(c):
     return subprocess.call("type " + c, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
+
 
 ################
 # PyMOL-specific
@@ -338,8 +323,8 @@ def get_isomorphisms(reference, lig):
         isomorphs = pybel.ob.vpairUIntUInt()
         mappr.MapFirst(lig.OBMol, isomorphs)
         isomorphs = [isomorphs]
-    write_message("Number of isomorphisms: %i\n" % len(isomorphs), mtype='debug')
-    # #@todo Check which isomorphism to take
+    logger.debug(f'number of isomorphisms: {len(isomorphs)}')
+    # @todo Check which isomorphism to take
     return isomorphs
 
 
@@ -396,7 +381,7 @@ def read_pdb(pdbfname, as_string=False):
     if os.name != 'nt':  # Resource module not available for Windows
         maxsize = resource.getrlimit(resource.RLIMIT_STACK)[-1]
         resource.setrlimit(resource.RLIMIT_STACK, (min(2 ** 28, maxsize), maxsize))
-    sys.setrecursionlimit(10 ** 5)  # increase Python recoursion limit
+    sys.setrecursionlimit(10 ** 5)  # increase Python recursion limit
     return readmol(pdbfname, as_string=as_string)
 
 
@@ -422,83 +407,28 @@ def readmol(path, as_string=False):
     for sformat in supported_formats:
         obc = pybel.ob.OBConversion()
         obc.SetInFormat(sformat)
-        write_message("Detected {} as format. Trying to read file with OpenBabel...\n".format(sformat), mtype='debug')
+        logger.debug(f'detected {sformat} as format, trying to read file with OpenBabel')
 
         # Read molecules with single bond information
         if as_string:
             try:
                 mymol = pybel.readstring(sformat, path)
             except IOError:
-                sysexit(4, 'No valid file format provided.')
+                logger.error('no valid file format provided')
+                sys.exit(1)
         else:
             read_file = pybel.readfile(format=sformat, filename=path, opt={"s": None})
             try:
                 mymol = next(read_file)
             except StopIteration:
-                sysexit(4, 'File contains no valid molecules.\n')
+                logger.error('file contains no valid molecules')
+                sys.exit(1)
 
-        write_message("Molecule successfully read.\n", mtype='debug')
+        logger.debug('molecule successfully read')
 
         # Assign multiple bonds
         mymol.OBMol.PerceiveBondOrders()
         return mymol, sformat
 
-    sysexit(4, 'No valid file format provided.')
-
-
-def sysexit(code, msg):
-    """Exit using an custom error message and error code."""
-    write_message(msg, mtype='error')
-    sys.exit(code)
-
-#####################
-# Verbose and Debug #
-#####################
-
-
-def colorlog(msg, color, bold=False, blink=False):
-    """Colors messages on non-Windows systems supporting ANSI escape."""
-
-    # ANSI Escape Codes
-    PINK_COL = '\x1b[35m'
-    GREEN_COL = '\x1b[32m'
-    RED_COL = '\x1b[31m'
-    YELLOW_COL = '\x1b[33m'
-    BLINK = '\x1b[5m'
-    RESET = '\x1b[0m'
-
-    if platform.system() != 'Windows':
-        if blink:
-            msg = BLINK + msg + RESET
-        if color == 'yellow':
-            msg = YELLOW_COL + msg + RESET
-        if color == 'red':
-            msg = RED_COL + msg + RESET
-        if color == 'green':
-            msg = GREEN_COL + msg + RESET
-        if color == 'pink':
-            msg = PINK_COL + msg + RESET
-    return msg
-
-
-def write_message(msg, indent=False, mtype='standard', caption=False):
-    """Writes message if verbose mode is set."""
-    if (mtype == 'debug' and config.DEBUG) or (mtype != 'debug' and config.VERBOSE) or mtype == 'error':
-        message(msg, indent=indent, mtype=mtype, caption=caption)
-
-
-def message(msg, indent=False, mtype='standard', caption=False):
-    """Writes messages in verbose mode"""
-    if caption:
-        msg = '\n' + msg + '\n' + '-'*len(msg) + '\n'
-    if mtype == 'warning':
-        msg = colorlog('Warning:  ' + msg, 'yellow')
-    if mtype == 'error':
-        msg = colorlog('Error:  ' + msg, 'red')
-    if mtype == 'debug':
-        msg = colorlog('Debug:  ' + msg, 'pink')
-    if mtype == 'info':
-        msg = colorlog('Info:  ' + msg, 'green')
-    if indent:
-        msg = '  ' + msg
-    sys.stderr.write(msg)
+    logger.error('no valid file format provided')
+    sys.exit(1)

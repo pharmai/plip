@@ -6,14 +6,14 @@ test_xml_parser.py - Unit Tests for XML Parser.
 
 
 import unittest
-from plip.modules.plipxml import PLIPXML
+from plip.exchange.xml import PlipXML
 
 
 class XMLParserTest(unittest.TestCase):
     """Checks if the XML parser is working correctly"""
 
     def setUp(self):
-        self.px = PLIPXML('./xml/1vsn.report.xml')
+        self.px = PlipXML('./xml/1vsn.report.xml')
         self.bsite = self.px.bsites['NFT:A:283']
         self.smiles = 'CC(C)CC(NC(c1ccc(cc1)c1ccc(cc1)S(N)(=O)=O)C(F)(F)F)C(=O)NCC=N'
 
