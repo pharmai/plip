@@ -6,7 +6,8 @@ from urllib.request import urlopen
 class XMLStorage:
     """Generic class for storing XML data from PLIP XML files."""
 
-    def getdata(self, tree, location, force_string=False):
+    @staticmethod
+    def getdata(tree, location, force_string=False):
         """Gets XML data from a specific element and handles types."""
         found = tree.xpath('%s/text()' % location)
         if not found:
@@ -29,7 +30,8 @@ class XMLStorage:
                     # It's a string
                     return data
 
-    def getcoordinates(self, tree, location):
+    @staticmethod
+    def getcoordinates(tree, location):
         """Gets coordinates from a specific element in PLIP XML"""
         return tuple(float(x) for x in tree.xpath('.//%s/*/text()' % location))
 

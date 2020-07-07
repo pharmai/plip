@@ -71,7 +71,8 @@ class TestMapping(unittest.TestCase):
 class GeometryTest(unittest.TestCase):
     """Tests for geometrical calculations in PLIP"""
 
-    def vector_magnitude(self, v):
+    @staticmethod
+    def vector_magnitude(v):
         return numpy.sqrt(sum(x**2 for x in v))
 
     # noinspection PyUnusedLocal
