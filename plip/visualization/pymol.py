@@ -28,7 +28,8 @@ class PyMOLVisualizer:
         cmd.clip('far', -1000)
         cmd.clip('near', 1000)
 
-    def make_initial_selections(self):
+    @staticmethod
+    def make_initial_selections():
         """Make empty selections for structures and interactions"""
         for group in ['Hydrophobic-P', 'Hydrophobic-L', 'HBondDonor-P',
                       'HBondDonor-L', 'HBondAccept-P', 'HBondAccept-L',
@@ -49,7 +50,8 @@ class PyMOLVisualizer:
         cmd.set('dash_radius', 0.05)
         self.set_custom_colorset()
 
-    def set_custom_colorset(self):
+    @staticmethod
+    def set_custom_colorset():
         """Defines a colorset with matching colors. Provided by Joachim."""
         cmd.set_color('myorange', '[253, 174, 97]')
         cmd.set_color('mygreen', '[171, 221, 164]')
@@ -58,7 +60,8 @@ class PyMOLVisualizer:
         cmd.set_color('mylightblue', '[158, 202, 225]')
         cmd.set_color('mylightgreen', '[229, 245, 224]')
 
-    def select_by_ids(self, selname, idlist, selection_exists=False, chunksize=20, restrict=None):
+    @staticmethod
+    def select_by_ids(selname, idlist, selection_exists=False, chunksize=20, restrict=None):
         """Selection with a large number of ids concatenated into a selection
         list can cause buffer overflow in PyMOL. This function takes a selection
         name and and list of IDs (list of integers) as input and makes a careful
@@ -72,7 +75,8 @@ class PyMOLVisualizer:
         if restrict is not None:
             cmd.select(selname, '%s and %s' % (selname, restrict))
 
-    def object_exists(self, object_name):
+    @staticmethod
+    def object_exists(object_name):
         """Checks if an object exists in the open PyMOL session."""
         return object_name in cmd.get_names("objects")
 
@@ -326,7 +330,8 @@ class PyMOLVisualizer:
             filename = override
         cmd.save("/".join([outfolder, "%s.pse" % filename]))
 
-    def png_workaround(self, filepath, width=1200, height=800):
+    @staticmethod
+    def png_workaround(filepath, width=1200, height=800):
         """Workaround for (a) severe bug(s) in PyMOL preventing ray-traced images to be produced in command-line mode.
         Use this function in case neither cmd.ray() or cmd.png() work.
         """
@@ -378,7 +383,8 @@ class PyMOLVisualizer:
         self.set_fancy_ray()
         self.png_workaround("/".join([outfolder, filename]))
 
-    def set_fancy_ray(self):
+    @staticmethod
+    def set_fancy_ray():
         """Give the molecule a flat, modern look."""
         cmd.set('light_count', 6)
         cmd.set('spec_count', 1.5)
