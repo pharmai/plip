@@ -17,14 +17,14 @@ class HydrogenBondTestCase(unittest.TestCase):
 
     def test_4dst_nondeterministic_protonation(self):
         config.NOHYDRO = False
-        for i in range(0, 10):
+        for _ in range(0, 10):
             interactions = characterize_complex('./pdb/4dst.pdb', 'GCP:A:202')
             all_hbonds = interactions.hbonds_ldon + interactions.hbonds_pdon
             self.assertTrue(len(all_hbonds) == 16 or len(all_hbonds) == 17)
 
     def test_4dst_deterministic_protonation(self):
         config.NOHYDRO = True
-        for i in range(0, 10):
+        for _ in range(0, 10):
             interactions = characterize_complex('./pdb/4dst_protonated.pdb', 'GCP:A:202')
             all_hbonds = interactions.hbonds_ldon + interactions.hbonds_pdon
             self.assertTrue(len(all_hbonds) == 16)

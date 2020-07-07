@@ -851,7 +851,7 @@ class PLInteraction:
                 if abs(omega - wb_dict[(wbridge.water.idx, wbridge.a.idx)].w_angle) < abs(omega - wbridge.w_angle):
                     wb_dict[(wbridge.water.idx, wbridge.a.idx)] = wbridge
         for wb_tuple in wb_dict:
-            water, acceptor = wb_tuple
+            water, _ = wb_tuple
             if water not in wb_dict2:
                 wb_dict2[water] = [(abs(omega - wb_dict[wb_tuple].w_angle), wb_dict[wb_tuple]), ]
             elif len(wb_dict2[water]) == 1:

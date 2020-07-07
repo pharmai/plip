@@ -86,7 +86,7 @@ class ChimeraVisualizer:
         grp = self.getPseudoBondGroup("pi-Stacking-%i" % self.tid, associateWith=[self.model])
         grp.lineWidth = 3
         grp.lineType = self.chimera.Dash
-        for i, stack in enumerate(self.plcomplex.pistacking):
+        for _, stack in enumerate(self.plcomplex.pistacking):
 
             m = self.model
             r = m.newResidue("pseudoatoms", " ", 1, " ")
@@ -110,7 +110,7 @@ class ChimeraVisualizer:
         grp = self.getPseudoBondGroup("Cation-Pi-%i" % self.tid, associateWith=[self.model])
         grp.lineWidth = 3
         grp.lineType = self.chimera.Dash
-        for i, cat in enumerate(self.plcomplex.pication):
+        for _, cat in enumerate(self.plcomplex.pication):
 
             m = self.model
             r = m.newResidue("pseudoatoms", " ", 1, " ")
@@ -138,7 +138,7 @@ class ChimeraVisualizer:
         grp = self.getPseudoBondGroup("Salt Bridges-%i" % self.tid, associateWith=[self.model])
         grp.lineWidth = 3
         grp.lineType = self.chimera.Dash
-        for i, sbridge in enumerate(self.plcomplex.saltbridges):
+        for _, sbridge in enumerate(self.plcomplex.saltbridges):
 
             m = self.model
             r = m.newResidue("pseudoatoms", " ", 1, " ")
@@ -164,7 +164,7 @@ class ChimeraVisualizer:
         """Visualizes water bridges"""
         grp = self.getPseudoBondGroup("Water Bridges-%i" % self.tid, associateWith=[self.model])
         grp.lineWidth = 3
-        for i, wbridge in enumerate(self.plcomplex.waterbridges):
+        for _, wbridge in enumerate(self.plcomplex.waterbridges):
             c = grp.newPseudoBond(self.atoms[wbridge.water_id], self.atoms[wbridge.acc_id])
             c.color = self.colorbyname('cornflower blue')
             self.water_ids.append(wbridge.water_id)
@@ -180,7 +180,7 @@ class ChimeraVisualizer:
         """Visualizes metal coordination."""
         grp = self.getPseudoBondGroup("Metal Coordination-%i" % self.tid, associateWith=[self.model])
         grp.lineWidth = 3
-        for i, metal in enumerate(self.plcomplex.metal_complexes):
+        for _, metal in enumerate(self.plcomplex.metal_complexes):
             c = grp.newPseudoBond(self.atoms[metal.metal_id], self.atoms[metal.target_id])
             c.color = self.colorbyname('magenta')
 

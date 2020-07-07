@@ -407,7 +407,7 @@ def metal_complexation(metals, metal_binding_lig, metal_binding_bs):
                         best_target = None  # There's one best-matching target for each subsignature
                         best_target_score = 999
 
-                        for k, target in enumerate(angles_dict):
+                        for _, target in enumerate(angles_dict):
                             if target not in used_up_targets:
                                 observed_angles = angles_dict[target]  # Observed angles from perspective of one target
                                 single_target_scores = []

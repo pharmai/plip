@@ -18,7 +18,7 @@ class RingDetectionTest(unittest.TestCase):
     def test_consistent_ring_detection(self):
         config.NOHYDRO = True
         angles = set()
-        for i in range(0, 10):
+        for _ in range(0, 10):
             interactions = characterize_complex('./pdb/4dst_protonated.pdb', 'GCP:A:202')
             angles.add(interactions.pistacking[0].angle)
         self.assertTrue(len(angles) == 1)

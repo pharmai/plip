@@ -342,7 +342,7 @@ class BindingSiteReport:
         txt = []
         titletext = '%s (%s) - %s' % (self.bsid, self.longname, self.ligtype)
         txt.append(titletext)
-        for i, member in enumerate(self.lig_members[1:]):
+        for _, member in enumerate(self.lig_members[1:]):
             txt.append('  + %s' % ":".join(str(element) for element in member))
         txt.append("-" * len(titletext))
         txt.append("Interacting chain(s): %s\n" % ','.join([chain for chain in self.interacting_chains]))
