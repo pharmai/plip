@@ -22,8 +22,7 @@ setup(name='plip',
       install_requires=[
           'openbabel',
           'numpy',
-          'lxml',
-          'pymol'
+          'lxml'
       ],
       entry_points={
           "console_scripts": [

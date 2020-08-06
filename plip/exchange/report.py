@@ -287,7 +287,8 @@ class BindingSiteReport:
                  m.location, '%.2f' % m.rms, m.geometry, str(m.complexnum), m.metal.coords,
                  m.target.atom.coords))
 
-    def write_section(self, name, features, info, f):
+    @staticmethod
+    def write_section(name, features, info, f):
         """Provides formatting for one section (e.g. hydrogen bonds)"""
         if not len(info) == 0:
             f.write('\n\n### %s ###\n' % name)
@@ -295,7 +296,8 @@ class BindingSiteReport:
             for line in info:
                 f.write('%s\n' % '\t'.join(map(str, line)))
 
-    def rst_table(self, array):
+    @staticmethod
+    def rst_table(array):
         """Given an array, the function formats and returns and table in rST format."""
         # Determine cell width for each column
         cell_dict = {}

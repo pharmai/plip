@@ -352,7 +352,8 @@ class LigandFinder:
                       can_to_pdb=can_to_pdb)
         return ligand
 
-    def is_het_residue(self, obres):
+    @staticmethod
+    def is_het_residue(obres):
         """Given an OBResidue, determines if the residue is indeed a possible ligand
         in the PDB file"""
         if not obres.GetResidueProperty(0):
@@ -701,7 +702,8 @@ class PLInteraction:
 
         return unpaired_hba, unpaired_hbd, unpaired_hal
 
-    def refine_hydrophobic(self, all_h, pistacks):
+    @staticmethod
+    def refine_hydrophobic(all_h, pistacks):
         """Apply several rules to reduce the number of hydrophobic interactions."""
         sel = {}
         #  1. Rings interacting via stacking can't have additional hydrophobic contacts between each other.
@@ -768,7 +770,8 @@ class PLInteraction:
             logger.info(f'reduced number of hydrophobic contacts from {before} to {reduced}')
         return hydroph_final
 
-    def refine_hbonds_ldon(self, all_hbonds, salt_lneg, salt_pneg):
+    @staticmethod
+    def refine_hbonds_ldon(all_hbonds, salt_lneg, salt_pneg):
         """Refine selection of hydrogen bonds. Do not allow groups which already form salt bridges to form H-Bonds."""
         i_set = {}
         for hbond in all_hbonds:
@@ -793,7 +796,8 @@ class PLInteraction:
                     second_set[hbl.d.idx] = (hbl.angle, hbl)
         return [hb[1] for hb in second_set.values()]
 
-    def refine_hbonds_pdon(self, all_hbonds, salt_lneg, salt_pneg):
+    @staticmethod
+    def refine_hbonds_pdon(all_hbonds, salt_lneg, salt_pneg):
         """Refine selection of hydrogen bonds. Do not allow groups which already form salt bridges to form H-Bonds with
         atoms of the same group.
         """
@@ -820,7 +824,8 @@ class PLInteraction:
                     second_set[hbp.d.idx] = (hbp.angle, hbp)
         return [hb[1] for hb in second_set.values()]
 
-    def refine_pi_cation_laro(self, all_picat, stacks):
+    @staticmethod
+    def refine_pi_cation_laro(all_picat, stacks):
         """Just important for constellations with histidine involved. If the histidine ring is positioned in stacking
         position to an aromatic ring in the ligand, there is in most cases stacking and pi-cation interaction reported
         as histidine also carries a positive charge in the ring. For such cases, only report stacking.
@@ -835,7 +840,8 @@ class PLInteraction:
                 i_set.append(picat)
         return i_set
 
-    def refine_water_bridges(self, wbridges, hbonds_ldon, hbonds_pdon):
+    @staticmethod
+    def refine_water_bridges(wbridges, hbonds_ldon, hbonds_pdon):
         """A donor atom already forming a hydrogen bond is not allowed to form a water bridge. Each water molecule
         can only be donor for two water bridges, selecting the constellation with the omega angle closest to 110 deg."""
         donor_atoms_hbonds = [hb.d.idx for hb in hbonds_ldon + hbonds_pdon]
@@ -1064,7 +1070,8 @@ class Ligand(Mol):
         """Converts internal atom ID into canonical atom ID. Agrees with Canonical SMILES in XML."""
         return self.atomorder[atomnum - 1]
 
-    def is_functional_group(self, atom, group):
+    @staticmethod
+    def is_functional_group(atom, group):
         """Given a pybel atom, look up if it belongs to a function group"""
         n_atoms = [a_neighbor.GetAtomicNum() for a_neighbor in pybel.ob.OBAtomAtomIter(atom.OBAtom)]
 
@@ -1460,7 +1467,8 @@ class PDBComplex:
         """Return list of ids from residues belonging to the binding site"""
         return [obres.GetIdx() for obres in resis if self.res_belongs_to_bs(obres, cutoff, ligcentroid)]
 
-    def res_belongs_to_bs(self, res, cutoff, ligcentroid):
+    @staticmethod
+    def res_belongs_to_bs(res, cutoff, ligcentroid):
         """Check for each residue if its centroid is within a certain distance to the ligand centroid.
         Additionally checks if a residue belongs to a chain restricted by the user (e.g. by defining a peptide chain)"""
         rescentroid = centroid([(atm.x(), atm.y(), atm.z()) for atm in pybel.ob.OBResidueAtomIter(res)])
