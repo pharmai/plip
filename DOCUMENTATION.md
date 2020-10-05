@@ -102,7 +102,7 @@ PLIP will create subdirectories for each given structure in the output folder. I
 For the detection of ligands, PLIP relies on the separation of `ATOM` and `HETATM` entries in the PDB file. The latter are searched for suitable ligands when running in normal mode. Peptide ligands, however, are usually deposited as `ATOM` entries in a separate chain. PLIP can not detect these entities automatically. To switch into protein-peptide interaction mode, start PLIP with the option `--peptide`, followed by the peptide chain of interest, e.g.:
 
 ```bash
-$ plip -i 5hi4 --peptides I -vx
+$ plip -i 5hi4 --peptide I -vx
 ```
 
 ### Detection of Intra-Chain Interactions
