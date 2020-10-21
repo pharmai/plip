@@ -295,15 +295,16 @@ class LigandFinder:
             cur_hetatoms = {obatom.GetIdx(): obatom for obatom in pybel.ob.OBResidueAtomIter(obresidue) if
                             obatom.GetAtomicNum() != 1}
             if not config.ALTLOC:
-                # Remove alternative conformations (standard -> True)
-                ids_to_remove = [atom_id for atom_id in hetatoms.keys() if
+                # remove alternative conformations (standard -> True)
+                ids_to_remove = [atom_id for atom_id in cur_hetatoms.keys() if
                                  self.mapper.mapid(atom_id, mtype='protein', to='internal') in self.altconformations]
                 for atom_id in ids_to_remove:
                     del cur_hetatoms[atom_id]
             hetatoms.update(cur_hetatoms)
         logger.debug(f'hetero atoms determined (n={len(hetatoms)})')
 
-        lig = pybel.ob.OBMol()  # new ligand mol
+        # create a new ligand molecule representing any k-mer linked structures
+        lig = pybel.ob.OBMol()
         neighbours = dict()
         for obatom in hetatoms.values():  # iterate over atom objects
             idx = obatom.GetIdx()
