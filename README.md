@@ -13,10 +13,12 @@ Analyze noncovalent protein-ligand interactions in 3D structures with ease.
 
 | Use Case                                                                  | [Web Server](https://projects.biotec.tu-dresden.de/plip-web/plip)         | Docker             | Singularity        | Python Module       |
 |---------------------------------------------------------------------------|--------------------|--------------------|--------------------|--------------------|
-| "I want to analyze my protein-ligand complex!"                            | :heavy_check_mark: | :yellow_circle:    | :yellow_circle:    | :x:                |
-| "I want to analyze *a billion* protein-ligand complexes!"                   | :x:                | :yellow_circle:    | :heavy_check_mark: | :yellow_circle:    |
-| "I love the Linux command line and want to build a workflow around PLIP!" | :x:    | :heavy_check_mark: | :heavy_check_mark: | :yellow_circle:    |
+| "I want to analyze my protein-ligand complex!"                            | :heavy_check_mark: | :heavy_check_mark: | :yellow_circle:    | :x:                |
+| "I want to analyze *a billion* protein-ligand complexes!"                 | :x:                | :yellow_circle:    | :heavy_check_mark: | :yellow_circle:    |
+| "I love the Linux command line and want to build a workflow around PLIP!" | :x:                | :heavy_check_mark: | :heavy_check_mark: | :yellow_circle:    |
 | "I'm a Python programmer and want to use PLIP in my project!"             | :x:                | :yellow_circle:    | :yellow_circle:    | :heavy_check_mark: |
+
+:exclamation: **Note:** The web server is currently running an outdated version of PLIP, which will be replaced soon. For production use and data analysis we highly recommend to use the current command line release. :exclamation:
 
 ---
 
@@ -59,7 +61,7 @@ For more details, see the [Documentation](DOCUMENTATION.md).
 
 Open a new system terminal and clone this repository using
 ```bash
-$ git clone https://github.com/ssalentin/plip.git ~/pliptool
+$ git clone https://github.com/pharmai/plip.git
 ```
 
 ### 2. Install PLIP
