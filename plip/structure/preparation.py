@@ -51,25 +51,39 @@ class PDBParser:
         alt = []
         previous_ter = False
 
+        model_dict = {1: list()}
+
         # Standard without fixing
         if not config.NOFIX:
             if not config.PLUGIN_MODE:
                 lastnum = 0  # Atom numbering (has to be consecutive)
                 other_models = False
+                current_model = 1
                 for line in fil:
-                    if not other_models:  # Only consider the first model in an NRM structure
-                        corrected_line, newnum = self.fix_pdbline(line, lastnum)
-                        if corrected_line is not None:
-                            if corrected_line.startswith('MODEL'):
-                                try:  # Get number of MODEL (1,2,3)
-                                    model_num = int(corrected_line[10:14])
-                                    if model_num > 1:  # MODEL 2,3,4 etc.
-                                        other_models = True
-                                except ValueError:
-                                    logger.debug(f'ignoring invalid MODEL entry: {corrected_line}')
-                            corrected_lines.append(corrected_line)
-                            lastnum = newnum
-                corrected_pdb = ''.join(corrected_lines)
+                    corrected_line, newnum = self.fix_pdbline(line, lastnum)
+                    if corrected_line is not None:
+                        if corrected_line.startswith('MODEL'):
+                            try:  # Get number of MODEL (1,2,3)
+                                model_num = int(corrected_line[10:14])
+                                # initialize storage for new model
+                                model_dict[model_num] = list()
+                                current_model = model_num
+                                if model_num > 1:  # MODEL 2,3,4 etc.
+                                    other_models = True
+                            except ValueError:
+                                logger.debug(f'ignoring invalid MODEL entry: {corrected_line}')
+                        lastnum = newnum
+                        model_dict[current_model].append(corrected_line)
+                # select model
+                try:
+                    if other_models:
+                        logger.info(f'selecting model {config.MODEL} for analysis')
+                    corrected_pdb = ''.join(model_dict[config.MODEL])
+                    corrected_lines = model_dict[config.MODEL]
+                except KeyError:
+                    corrected_pdb = ''.join(model_dict[1])
+                    corrected_lines = model_dict[1]
+                    logger.warning('invalid model number specified, using first model instead')
             else:
                 corrected_pdb = self.pdbpath
                 corrected_lines = fil
@@ -295,15 +309,16 @@ class LigandFinder:
             cur_hetatoms = {obatom.GetIdx(): obatom for obatom in pybel.ob.OBResidueAtomIter(obresidue) if
                             obatom.GetAtomicNum() != 1}
             if not config.ALTLOC:
-                # Remove alternative conformations (standard -> True)
-                ids_to_remove = [atom_id for atom_id in hetatoms.keys() if
+                # remove alternative conformations (standard -> True)
+                ids_to_remove = [atom_id for atom_id in cur_hetatoms.keys() if
                                  self.mapper.mapid(atom_id, mtype='protein', to='internal') in self.altconformations]
                 for atom_id in ids_to_remove:
                     del cur_hetatoms[atom_id]
             hetatoms.update(cur_hetatoms)
         logger.debug(f'hetero atoms determined (n={len(hetatoms)})')
 
-        lig = pybel.ob.OBMol()  # new ligand mol
+        # create a new ligand molecule representing any k-mer linked structures
+        lig = pybel.ob.OBMol()
         neighbours = dict()
         for obatom in hetatoms.values():  # iterate over atom objects
             idx = obatom.GetIdx()

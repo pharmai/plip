@@ -171,6 +171,10 @@ Due to the non-deterministic nature on how hydrogen atoms can be added to the in
 - protonate the input structure once with PLIP or your tool of preference
 - run PLIP with `--nohydro`
 
+> How does PLIP handle NMR structures?
+>
+By default PLIP uses the first model it sees in a PDB file. You can change this behavior with the flag `--model`.
+
 ## Contact / Maintainer
 As of April 2020 PLIP is now officially maintained by [PharmAI GmbH](https://pharm.ai). Do you have feature requests, found a bug or want to use  PLIP in your project? Commercial support is available upon request.
 

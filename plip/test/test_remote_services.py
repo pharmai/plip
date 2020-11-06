@@ -12,6 +12,7 @@ from plip.exchange.webservices import check_pdb_status
 class TestPDB(unittest.TestCase):
     """Test PDB Web Service methods"""
 
+    @unittest.skip("needs re-implementation to new RCSB API standards")
     def test_pdb_entry_status(self):
         # 1a0v is an obsolete entry and is replaced by 1y46
         status, current_pdbid = check_pdb_status('1a0v')

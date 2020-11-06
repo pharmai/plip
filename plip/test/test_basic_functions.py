@@ -4,15 +4,16 @@ Protein-Ligand Interaction Profiler - Analyze and visualize protein-ligand inter
 test_basic_functions.py - Unit Tests for basic functionality.
 """
 
+import random
 # Python Standard Library
 import unittest
-import numpy
-import random
 
-# Own modules
-from plip.structure.preparation import PDBComplex
+import numpy
+
 from plip.basic.supplemental import euclidean3d, vector, vecangle, projection
 from plip.basic.supplemental import normalize_vector, cluster_doubles, centroid
+# Own modules
+from plip.structure.preparation import PDBComplex
 
 
 class TestLigandSupport(unittest.TestCase):
@@ -28,6 +29,13 @@ class TestLigandSupport(unittest.TestCase):
             if len(ligset) == 4:
                 # DNA only contains four bases
                 self.assertEqual(ligset, {'DG', 'DC', 'DA', 'DT'})
+
+    def test_composite_ligand_alternate_locations(self):
+        pdb_complex = PDBComplex()
+        pdb_complex.load_pdb('./pdb/4gql.pdb')
+        for ligand in pdb_complex.ligands:
+            pdb_complex.characterize_complex(ligand)
+        self.assertEqual(len(pdb_complex.ligands[0].can_to_pdb), 53)
 
 
 class TestMapping(unittest.TestCase):
@@ -73,7 +81,7 @@ class GeometryTest(unittest.TestCase):
 
     @staticmethod
     def vector_magnitude(v):
-        return numpy.sqrt(sum(x**2 for x in v))
+        return numpy.sqrt(sum(x ** 2 for x in v))
 
     # noinspection PyUnusedLocal
     def setUp(self):

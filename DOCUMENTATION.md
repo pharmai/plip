@@ -142,6 +142,7 @@ PLIP offers further command line options which enables you to switch advanced se
 - Turn off automatic fixing of errors in PDB files (`--nofix`)
 - Keep modified residues as ligands (`--keepmod`)
 - Do not protonate structures with non-deterministic OpenBabel routines (`--nohydro`)
+- Select a specific model from an ensemble structure (`--model`)
 
 ## Web Service
 A web service for analysis of protein-ligand complexes using PLIP is available at
