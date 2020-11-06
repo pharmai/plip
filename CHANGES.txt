@@ -1,9 +1,8 @@
 Changelog
 ---------
-# 2.2.0
-* bug fixes in code and deployment
-* multi-architecture builds on https://hub.docker.com/r/pharmai/plip
-* Docker build for Ubuntu 20.04 LTS
+# 2.1.5
+* option added to handle specific model in NMR structures
+* fixes a bug in alt-location handling
 
 # 2.1.0
 * maintainer changed to PharmAI GmbH
@@ -16,6 +15,9 @@ Changelog
 * adds option to disable non-deterministic protonation of structures (`--nohydro`)
 * protonated structures are now stored to guarantee consistent interaction detection
 * new options to change verbosity levels
+* bug fixes in code and deployment
+* multi-architecture builds on https://hub.docker.com/r/pharmai/plip
+* Docker build for Ubuntu 20.04 LTS
 
 # 1.4.5
 * Updates contact info
