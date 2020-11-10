@@ -40,6 +40,11 @@ class CommandLineTest(unittest.TestCase):
         exitcode = subprocess.call(f'{sys.executable} ../plipcmd.py -i 4v59 -o {self.tmp_dir.name}', shell=True)
         self.assertEqual(exitcode, 1)
 
+    def test_pdb_format_available(self):
+        """A valid PDB ID is provided, but there is no entry in PDB format from wwPDB"""
+        exitcode = subprocess.call(f'{sys.executable} ../plipcmd.py -i 1acj -o {self.tmp_dir.name}', shell=True)
+        self.assertEqual(exitcode, 0)
+
     def test_valid_pdb(self):
         """A PDB ID with no valid PDB record is provided."""
         exitcode = subprocess.call(f'{sys.executable} ../plipcmd.py -x -f ./pdb/1eve.pdb -o {self.tmp_dir.name}',
