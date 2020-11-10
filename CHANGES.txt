@@ -1,5 +1,8 @@
 Changelog
 ---------
+# 2.1.6
+* fetch URL for PDB files updated to avoid issues with RCSB API changes
+
 # 2.1.5
 * option added to handle specific model in NMR structures
 * fixes a bug in alt-location handling
