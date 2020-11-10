@@ -27,7 +27,7 @@ def check_pdb_status(pdbid):
 def fetch_pdb(pdbid):
     """Get the newest entry from the RCSB server for the given PDB ID. Exits with '1' if PDB ID is invalid."""
     pdbid = pdbid.lower()
-    logger.info(f'checking status of PDB-ID {pdbid}')
+    # logger.info(f'checking status of PDB-ID {pdbid}')
     # @todo re-implement state check with ew RCSB API, see https://www.rcsb.org/news?year=2020&article=5eb18ccfd62245129947212a&feature=true
     # state, current_entry = check_pdb_status(pdbid)  # Get state and current PDB ID
     #
@@ -41,7 +41,7 @@ def fetch_pdb(pdbid):
     logger.info('downloading file from PDB')
     # get URL for current entry
     # @todo needs update to react properly on response codes of RCSB servers
-    pdburl = f'http://www.rcsb.org/pdb/files/{pdbid}.pdb'
+    pdburl = f'https://files.rcsb.org/download/{pdbid}.pdb'
     try:
         pdbfile = urlopen(pdburl).read().decode()
         # If no PDB file is available, a text is now shown with "We're sorry, but ..."
