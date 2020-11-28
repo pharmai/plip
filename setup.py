@@ -20,7 +20,6 @@ setup(name='plip',
       packages=find_packages(),
       scripts=['plip/plipcmd.py'],
       install_requires=[
-          'openbabel',
           'numpy',
           'lxml'
       ],
