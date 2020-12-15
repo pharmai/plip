@@ -1,7 +1,6 @@
 import gzip
 import itertools
 import os
-import platform
 import re
 import subprocess
 import sys
@@ -16,14 +15,6 @@ from openbabel.pybel import Atom
 from plip.basic import config, logger
 
 logger = logger.get_logger()
-
-# Windows and MacOS
-if os.name != 'nt' and platform.system() != 'Darwin':  # Resource module not available for Windows
-    import resource
-
-# Settings
-np.seterr(all='ignore')  # No runtime warnings
-
 
 def tmpfile(prefix, direc):
     """Returns the path to a newly created temporary file."""
@@ -378,10 +369,6 @@ def int32_to_negative(int32):
 def read_pdb(pdbfname, as_string=False):
     """Reads a given PDB file and returns a Pybel Molecule."""
     pybel.ob.obErrorLog.StopLogging()  # Suppress all OpenBabel warnings
-    if os.name != 'nt':  # Resource module not available for Windows
-        maxsize = resource.getrlimit(resource.RLIMIT_STACK)[-1]
-        resource.setrlimit(resource.RLIMIT_STACK, (min(2 ** 28, maxsize), maxsize))
-    sys.setrecursionlimit(10 ** 5)  # increase Python recursion limit
     return readmol(pdbfname, as_string=as_string)
 
 

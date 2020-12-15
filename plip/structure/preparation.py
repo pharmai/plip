@@ -63,6 +63,8 @@ class PDBParser:
                     corrected_line, newnum = self.fix_pdbline(line, lastnum)
                     if corrected_line is not None:
                         if corrected_line.startswith('MODEL'):
+                            # reset atom number when new model is encountered
+                            lastnum = 0
                             try:  # Get number of MODEL (1,2,3)
                                 model_num = int(corrected_line[10:14])
                                 # initialize storage for new model
@@ -72,7 +74,8 @@ class PDBParser:
                                     other_models = True
                             except ValueError:
                                 logger.debug(f'ignoring invalid MODEL entry: {corrected_line}')
-                        lastnum = newnum
+                        else:
+                            lastnum = newnum
                         model_dict[current_model].append(corrected_line)
                 # select model
                 try:

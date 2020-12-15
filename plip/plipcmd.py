@@ -225,9 +225,8 @@ def main():
     parser.add_argument("--nohydro", dest="nohydro", default=False,
                         help="Do not add polar hydrogens in case your structure already contains hydrogens.",
                         action="store_true")
-    parser.add_argument("--model", dest="model", default=1,
-                        help="Model number to be used for multi-model structures.",
-                        action="store_true")
+    parser.add_argument("--model", dest="model", default=1, type=int,
+                        help="Model number to be used for multi-model structures.")
     # Optional threshold arguments, not shown in help
     thr = namedtuple('threshold', 'name type')
     thresholds = [thr(name='aromatic_planarity', type='angle'),

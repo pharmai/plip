@@ -8,7 +8,7 @@ logger = logger.get_logger()
 
 
 def visualize_in_pymol(plcomplex):
-    """Visualizes the protein-ligand pliprofiler at one site in PyMOL."""
+    """Visualizes the given Protein-Ligand complex at one site in PyMOL."""
 
     vis = PyMOLVisualizer(plcomplex)
 
@@ -39,7 +39,8 @@ def visualize_in_pymol(plcomplex):
 
     cmd.load(plcomplex.sourcefile)
     current_name = cmd.get_object_list(selection='(all)')[0]
-    logger.debug(f'setting current_name to {current_name} and pdbid to {pdbid}')
+
+    logger.debug(f'setting current_name to {current_name} and PDB-ID to {pdbid}')
     cmd.set_name(current_name, pdbid)
     cmd.hide('everything', 'all')
     if config.PEPTIDES:
