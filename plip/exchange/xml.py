@@ -1,7 +1,5 @@
 from lxml import etree
 
-from urllib.request import urlopen
-
 
 class XMLStorage:
     """Generic class for storing XML data from PLIP XML files."""
@@ -109,6 +107,8 @@ class SaltBridge(Interaction):
         self.lig_group = self.getdata(sbridge_part, 'lig_group', force_string=True)
         self.lig_idx_list = [int(tagpart.text) for tagpart in
                              sbridge_part.xpath('lig_idx_list/idx')]
+        self.prot_idx_list = [int(tagpart.text) for tagpart in
+                              sbridge_part.xpath('prot_idx_list/idx')]
 
 
 class PiStacking(Interaction):
@@ -123,6 +123,8 @@ class PiStacking(Interaction):
         self.type = self.getdata(pistack_part, 'type')
         self.lig_idx_list = [int(tagpart.text) for tagpart in
                              pistack_part.xpath('lig_idx_list/idx')]
+        self.prot_idx_list = [int(tagpart.text) for tagpart in
+                              pistack_part.xpath('prot_idx_list/idx')]
 
 
 class PiCation(Interaction):
@@ -233,7 +235,7 @@ class BSite(XMLStorage):
         self.halogens = [HalogenBond(x) for x in interactions.xpath('halogen_bonds/halogen_bond')]
         self.metal_complexes = [MetalComplex(x) for x in interactions.xpath('metal_complexes/metal_complex')]
         self.num_contacts = len(self.hydrophobics) + len(self.hbonds) + len(self.wbridges) + len(self.sbridges) + \
-            len(self.pi_stacks) + len(self.pi_cations) + len(self.halogens) + len(self.metal_complexes)
+                            len(self.pi_stacks) + len(self.pi_cations) + len(self.halogens) + len(self.metal_complexes)
         self.has_interactions = self.num_contacts > 0
 
         self.get_atom_mapping()
@@ -260,7 +262,8 @@ class BSite(XMLStorage):
                   'pications': len(self.pi_cations), 'halogens': len(self.halogens), 'metal': len(self.metal_complexes),
                   'hbond_back': hbondsback, 'hbond_nonback': (len(self.hbonds) - hbondsback)}
         counts['total'] = counts['hydrophobics'] + counts['hbonds'] + counts['wbridges'] + \
-            counts['sbridges'] + counts['pistacks'] + counts['pications'] + counts['halogens'] + counts['metal']
+                          counts['sbridges'] + counts['pistacks'] + counts['pications'] + counts['halogens'] + counts[
+                              'metal']
         return counts
 
 

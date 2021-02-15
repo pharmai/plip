@@ -1,5 +1,11 @@
 Changelog
 ---------
+# 2.1.8
+* report of individual binding site atoms
+
+# 2.1.7
+* bug fixes
+
 # 2.1.6
 * fetch URL for PDB files updated to avoid issues with RCSB API changes
 
