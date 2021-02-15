@@ -191,23 +191,28 @@ class BindingSiteReport:
         ################
 
         self.saltbridge_features = (
-            'RESNR', 'RESTYPE', 'RESCHAIN', 'RESNR_LIG', 'RESTYPE_LIG', 'RESCHAIN_LIG', 'DIST', 'PROTISPOS',
+            'RESNR', 'RESTYPE', 'RESCHAIN', 'PROT_IDX_LIST', 'RESNR_LIG', 'RESTYPE_LIG', 'RESCHAIN_LIG', 'DIST',
+            'PROTISPOS',
             'LIG_GROUP',
             'LIG_IDX_LIST',
             'LIGCOO', 'PROTCOO')
         self.saltbridge_info = []
         for sb in self.complex.saltbridge_lneg + self.complex.saltbridge_pneg:
             if sb.protispos:
-                group, ids = sb.negative.fgroup, [str(x) for x in sb.negative.atoms_orig_idx]
-                self.saltbridge_info.append((sb.resnr, sb.restype, sb.reschain, sb.resnr_l, sb.restype_l, sb.reschain_l,
+                group, ligand_atom_ids = sb.negative.fgroup, [str(x) for x in sb.negative.atoms_orig_idx]
+                protein_atom_ids = [str(x) for x in sb.positive.atoms_orig_idx]
+                self.saltbridge_info.append((sb.resnr, sb.restype, sb.reschain, ",".join(protein_atom_ids), sb.resnr_l,
+                                             sb.restype_l, sb.reschain_l,
                                              '%.2f' % sb.distance, sb.protispos,
-                                             group.capitalize(), ",".join(ids),
+                                             group.capitalize(), ",".join(ligand_atom_ids),
                                              tuple(sb.negative.center), tuple(sb.positive.center)))
             else:
-                group, ids = sb.positive.fgroup, [str(x) for x in sb.positive.atoms_orig_idx]
-                self.saltbridge_info.append((sb.resnr, sb.restype, sb.reschain, sb.resnr_l, sb.restype_l, sb.reschain_l,
+                group, ligand_atom_ids = sb.positive.fgroup, [str(x) for x in sb.positive.atoms_orig_idx]
+                protein_atom_ids = [str(x) for x in sb.negative.atoms_orig_idx]
+                self.saltbridge_info.append((sb.resnr, sb.restype, sb.reschain, ",".join(protein_atom_ids), sb.resnr_l,
+                                             sb.restype_l, sb.reschain_l,
                                              '%.2f' % sb.distance, sb.protispos,
-                                             group.capitalize(), ",".join(ids),
+                                             group.capitalize(), ",".join(ligand_atom_ids),
                                              tuple(sb.positive.center), tuple(sb.negative.center)))
 
         ###############
@@ -215,15 +220,18 @@ class BindingSiteReport:
         ###############
 
         self.pistacking_features = (
-            'RESNR', 'RESTYPE', 'RESCHAIN', 'RESNR_LIG', 'RESTYPE_LIG', 'RESCHAIN_LIG', 'CENTDIST', 'ANGLE', 'OFFSET',
+            'RESNR', 'RESTYPE', 'RESCHAIN', 'RESNR_LIG', 'RESTYPE_LIG', 'RESCHAIN_LIG', 'PROT_IDX_LIST', 'CENTDIST',
+            'ANGLE', 'OFFSET',
             'TYPE',
             'LIG_IDX_LIST', 'LIGCOO', 'PROTCOO')
         self.pistacking_info = []
         for stack in self.complex.pistacking:
-            ids = [str(x) for x in stack.ligandring.atoms_orig_idx]
+            ligand_atom_ids = [str(x) for x in stack.ligandring.atoms_orig_idx]
+            protein_atom_ids = [str(x) for x in stack.proteinring.atoms_orig_idx]
             self.pistacking_info.append((stack.resnr, stack.restype, stack.reschain, stack.resnr_l, stack.restype_l,
-                                         stack.reschain_l, '%.2f' % stack.distance,
-                                         '%.2f' % stack.angle, '%.2f' % stack.offset, stack.type, ",".join(ids),
+                                         stack.reschain_l, ",".join(protein_atom_ids), '%.2f' % stack.distance,
+                                         '%.2f' % stack.angle, '%.2f' % stack.offset, stack.type,
+                                         ",".join(ligand_atom_ids),
                                          tuple(stack.ligandring.center), tuple(stack.proteinring.center)))
 
         ##########################
@@ -231,24 +239,28 @@ class BindingSiteReport:
         ##########################
 
         self.pication_features = (
-            'RESNR', 'RESTYPE', 'RESCHAIN', 'RESNR_LIG', 'RESTYPE_LIG', 'RESCHAIN_LIG', 'DIST', 'OFFSET', 'PROTCHARGED',
-            'LIG_GROUP',
-            'LIG_IDX_LIST', 'LIGCOO', 'PROTCOO')
+            'RESNR', 'RESTYPE', 'RESCHAIN', 'PROT_IDX_LIST', 'RESNR_LIG', 'RESTYPE_LIG', 'RESCHAIN_LIG', 'DIST',
+            'OFFSET',
+            'PROTCHARGED', 'LIG_GROUP', 'LIG_IDX_LIST', 'LIGCOO', 'PROTCOO')
         self.pication_info = []
         for picat in self.complex.pication_laro + self.complex.pication_paro:
             if picat.protcharged:
-                ids = [str(x) for x in picat.ring.atoms_orig_idx]
+                ligand_atom_ids = [str(x) for x in picat.ring.atoms_orig_idx]
+                protein_atom_ids = [str(x) for x in picat.charge.atoms_orig_idx]
                 group = 'Aromatic'
-                self.pication_info.append((picat.resnr, picat.restype, picat.reschain, picat.resnr_l, picat.restype_l,
+                self.pication_info.append((picat.resnr, picat.restype, picat.reschain, ",".join(protein_atom_ids),
+                                           picat.resnr_l, picat.restype_l,
                                            picat.reschain_l, '%.2f' % picat.distance,
-                                           '%.2f' % picat.offset, picat.protcharged, group, ",".join(ids),
+                                           '%.2f' % picat.offset, picat.protcharged, group, ",".join(ligand_atom_ids),
                                            tuple(picat.ring.center), tuple(picat.charge.center)))
             else:
-                ids = [str(x) for x in picat.charge.atoms_orig_idx]
+                ligand_atom_ids = [str(x) for x in picat.charge.atoms_orig_idx]
+                protein_atom_ids = [str(x) for x in picat.ring.atoms_orig_idx]
                 group = picat.charge.fgroup
-                self.pication_info.append((picat.resnr, picat.restype, picat.reschain, picat.resnr_l, picat.restype_l,
+                self.pication_info.append((picat.resnr, picat.restype, picat.reschain, ",".join(protein_atom_ids),
+                                           picat.resnr_l, picat.restype_l,
                                            picat.reschain_l, '%.2f' % picat.distance,
-                                           '%.2f' % picat.offset, picat.protcharged, group, ",".join(ids),
+                                           '%.2f' % picat.offset, picat.protcharged, group, ",".join(ligand_atom_ids),
                                            tuple(picat.charge.center), tuple(picat.ring.center)))
 
         #################
@@ -451,9 +463,15 @@ class BindingSiteReport:
                     new_contact = et.SubElement(interaction, element_name[:-2], id=str(j + 1))
                 for i, feature in enumerate(single_contact):
                     # Just assign the value unless it's an atom list, use subelements in this case
-                    if features[i] == 'LIG_IDX_LIST':
+                    if features[i] == 'LIG_IDX_LIST' or features[i] == 'PROT_IDX_LIST':
                         feat = et.SubElement(new_contact, features[i].lower())
-                        for k, atm_idx in enumerate(feature.split(',')):
+                        split = list()
+                        # check whether multiple atoms are contained in the atom group
+                        if isinstance(feature, str):
+                            split = feature.split(',')
+                        else:
+                            split = [feature]
+                        for k, atm_idx in enumerate(split):
                             idx = et.SubElement(feat, 'idx', id=str(k + 1))
                             idx.text = str(atm_idx)
                     elif features[i].endswith('COO'):
