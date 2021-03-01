@@ -1407,7 +1407,9 @@ class PDBComplex:
 
         if config.DNARECEPTOR:
             self.resis = [obres for obres in pybel.ob.OBResidueIter(
-                self.protcomplex.OBMol) if obres.GetName() in config.DNA + config.RNA]
+                self.protcomplex.OBMol) if obres.GetName() in config.DNA + config.RNA
+                ] + [obres for obres in pybel.ob.OBResidueIter(
+                    self.protcomplex.OBMol) if obres.GetResidueProperty(0)]
         else:
             self.resis = [obres for obres in pybel.ob.OBResidueIter(
                 self.protcomplex.OBMol) if obres.GetResidueProperty(0)]

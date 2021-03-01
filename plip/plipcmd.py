@@ -210,7 +210,7 @@ def main():
                         help="Turns off calculation of mapping between canonical and PDB atom order for ligands.",
                         action="store_true")
     parser.add_argument("--dnareceptor", dest="dnareceptor", default=False,
-                        help="Uses the DNA instead of the protein as a receptor for interactions.",
+                        help="Treat nucleic acids as part of the receptor structure (together with any present protein) instead of as a ligand.",
                         action="store_true")
     parser.add_argument("--name", dest="outputfilename", default="report",
                         help="Set a filename for the report TXT and XML files. Will only work when processing single structures.")

@@ -72,7 +72,7 @@ class StructureReport:
         if len(self.excluded) != 0:
             textlines.append('Excluded molecules as ligands: %s\n' % ','.join([lig for lig in self.excluded]))
         if config.DNARECEPTOR:
-            textlines.append('DNA/RNA in structure was chosen as the receptor part.\n')
+            textlines.append('DNA/RNA in structure was chosen to be part of the receptor.\n')
         return textlines
 
     def get_bindingsite_data(self):
