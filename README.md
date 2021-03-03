@@ -18,8 +18,6 @@ Analyze noncovalent protein-ligand interactions in 3D structures with ease.
 | "I love the Linux command line and want to build a workflow around PLIP!" | :x:                | :heavy_check_mark: | :heavy_check_mark: | :yellow_circle:    |
 | "I'm a Python programmer and want to use PLIP in my project!"             | :x:                | :yellow_circle:    | :yellow_circle:    | :heavy_check_mark: |
 
-:exclamation: **Note:** The web server is currently running an outdated version of PLIP, which will be replaced soon. For production use and data analysis we highly recommend to use the current command line release. :exclamation:
-
 ---
 
 ## Quickstart
