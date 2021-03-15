@@ -115,11 +115,11 @@ $ plip -i 5b2m --intra A -yv
 Please note that detection within a chain takes much longer than detection of protein-ligand interactions, especially for large structures.
 
 ### Interactions of Molecules with DNA/RNA
-PLIP can characterize interactions between ligands and DNA/RNA. A special mode allows to switch from protein to DNA/RNA as the receptor molecule in the structure. To change the receptor mode, start PLIP with the option `--dnareceptor`.
+PLIP can characterize interactions between ligands and DNA/RNA. A special mode allows to switch from treating DNA/RNA molecules as ligands to treating them as part of the receptor in the structure. If a protein is present, too, interactions of the ligand with both, protein and nucleic acids, will be shown. To use this mode, start PLIP with the option `--dnareceptor`.
 
 ## Changing detection thresholds
 The PLIP algorithm uses a rule-based detection to report non-covalent interaction between proteins and their partners. The current settings are based on literature values and have been refined based on extensive testing with independent cases from mainly crystallography journals, covering a broad range of structure resolutions. For most users, it is not recommended to change the standard settings. However, there may be cases where changing detection thresholds is advisable (e.g. sets with multiple very low resolution structures).
- 
+
 PLIP allows you to change the setting permanently or for one run.
 
 ### Permanent change
@@ -147,7 +147,7 @@ PLIP offers further command line options which enables you to switch advanced se
 ## Web Service
 A web service for analysis of protein-ligand complexes using PLIP is available at
 [plip.biotec.tu-dresden.de](http://plip.biotec.tu-dresden.de/)
- 
+
 The web site offers advanced functions to search for specific entries from PDB and lists the interaction results in the browser. Additionally, the service used the BioLiP database to annotate biologically relevant ligands. The option to change threshold, ligand filtering, and batch processing is only available in the command line tool and with the Python modules.
 
 ## Algorithm

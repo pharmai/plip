@@ -1,5 +1,8 @@
 Changelog
 ---------
+# 2.1.9
+* fixes issues with DNA receptor handling
+
 # 2.1.8
 * report of individual binding site atoms
 
