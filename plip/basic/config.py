@@ -1,4 +1,4 @@
-__version__ = '2.1.8'
+__version__ = '2.1.9'
 __maintainer__ = 'PharmAI GmbH (2020-2021) - www.pharm.ai - hello@pharm.ai'
 
 import logging
