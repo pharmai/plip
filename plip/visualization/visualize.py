@@ -38,6 +38,7 @@ def visualize_in_pymol(plcomplex):
     vis.set_initial_representations()
 
     cmd.load(plcomplex.sourcefile)
+    cmd.frame(config.MODEL)
     current_name = cmd.get_object_list(selection='(all)')[0]
 
     logger.debug(f'setting current_name to {current_name} and PDB-ID to {pdbid}')

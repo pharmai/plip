@@ -5,6 +5,8 @@ from time import sleep
 
 from pymol import cmd
 
+from plip.basic import config
+
 
 class PyMOLVisualizer:
 
@@ -340,10 +342,11 @@ class PyMOLVisualizer:
         cmd.viewport(width, height)
         cmd.zoom('visible', 1.5)  # Adapt the zoom to the viewport
         cmd.set('ray_trace_frames', 1)  # Frames are raytraced before saving an image.
-        cmd.mpng(filepath, 1, 1)  # Use batch png mode with 1 frame only
+        cmd.mpng(filepath, config.MODEL, config.MODEL)  # Use batch png mode with 1 frame only
         cmd.mplay()  # cmd.mpng needs the animation to 'run'
         cmd.refresh()
-        originalfile = "".join([filepath, '0001.png'])
+        originalfile = "".join(
+            [filepath, (4 - len(str(config.MODEL))) * '0' + str(config.MODEL) + '.png'])
         newfile = "".join([filepath, '.png'])
 
         #################################################
