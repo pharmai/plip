@@ -86,6 +86,7 @@ class PDBParser:
                 except KeyError:
                     corrected_pdb = ''.join(model_dict[1])
                     corrected_lines = model_dict[1]
+                    config.MODEL = 1
                     logger.warning('invalid model number specified, using first model instead')
             else:
                 corrected_pdb = self.pdbpath
