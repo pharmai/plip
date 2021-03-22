@@ -40,6 +40,8 @@ class StructureReport:
             mode.text = 'default'
         pdbid = et.SubElement(report, 'pdbid')
         pdbid.text = self.mol.pymol_name.upper()
+        model = et.SubElement(report, 'model')
+        model.text = str(config.MODEL)
         filetype = et.SubElement(report, 'filetype')
         filetype.text = self.mol.filetype.upper()
         pdbfile = et.SubElement(report, 'pdbfile')
@@ -72,7 +74,8 @@ class StructureReport:
         if len(self.excluded) != 0:
             textlines.append('Excluded molecules as ligands: %s\n' % ','.join([lig for lig in self.excluded]))
         if config.DNARECEPTOR:
-            textlines.append('DNA/RNA in structure was chosen to be part of the receptor.\n')
+            textlines.append('DNA/RNA in structure was chosen to be part of the receptor.')
+        textlines.append(f'Analysis was done on model {config.MODEL}.\n')
         return textlines
 
     def get_bindingsite_data(self):
