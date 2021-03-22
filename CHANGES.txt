@@ -1,5 +1,11 @@
 Changelog
 ---------
+# 2.2.0
+* new minor release
+* increased detail level of report (individual atoms on protein side)
+* improved handling of multi-model structures
+* minor bug fixes and code optimizations
+
 # 2.1.9
 * fixes issues with DNA receptor handling
 
