@@ -11,7 +11,7 @@ Analyze noncovalent protein-ligand interactions in 3D structures with ease.
 <img src="pliplogo.png"  alt="PLIP Logo" height="100">
 
 
-| Use Case                                                                  | [Web Server](https://projects.biotec.tu-dresden.de/plip-web/plip)         | Docker             | Singularity        | Python Module       |
+| Use Case                                                                  | [Web Server](https://plip-tool.biotec.tu-dresden.de)         | Docker             | Singularity        | Python Module       |
 |---------------------------------------------------------------------------|--------------------|--------------------|--------------------|--------------------|
 | "I want to analyze my protein-ligand complex!"                            | :heavy_check_mark: | :heavy_check_mark: | :yellow_circle:    | :x:                |
 | "I want to analyze *a billion* protein-ligand complexes!"                 | :x:                | :yellow_circle:    | :heavy_check_mark: | :yellow_circle:    |
@@ -22,6 +22,7 @@ Analyze noncovalent protein-ligand interactions in 3D structures with ease.
 
 ## Quickstart
 
+### Docker
 If you have Docker installed, you can run a PLIP analysis for the structure `1vsn` with the following shell command:
 
 On Linux / MacOS:
@@ -41,6 +42,7 @@ $ docker run --rm \
     -u $(id -u ${USER}):$(id -g ${USER}) \
     pharmai/plip:latest -i 1s3v -yv
 ```
+### Singularity
 
 The equivalent command for our pre-built [Singularity](https://singularity.lbl.gov/) image for Linux (available under [Releases](https://github.com/pharmai/plip/releases)) is as follows:
 
@@ -50,31 +52,41 @@ $ ./plip.simg -i 1vsn -yv
 
 Singularity allows to use PLIP with ease in HPC environments. Note that you need to have Singularity installed on your base system.
 
+---
+
 ## Usage
 
 This README provides instructions for setup and using basic functions of PLIP.
 For more details, see the [Documentation](DOCUMENTATION.md).
 
-### 1. (optional) Clone the repository
+### 1. Install PLIP
 
-Open a new system terminal and clone this repository using
+#### Containerized Image (recommended)
+:exclamation: We ship PLIP as pre-built containers for multiple architectures (amd64/ARM), available on the [Docker Hub](https://hub.docker.com/r/pharmai/plip) or as pre-built Singularity image under [Releases](https://github.com/pharmai/plip/releases). See the quickstart section above for usage instructions.
+
+#### Dependencies
+If you cannot use the containerized bundle or want to use PLIP sources, make sure you have the following requirements installed:
+- Python >= 3.6.9
+- [OpenBabel](#Installing-OpenBabel) >= 3.0.0 with [Python bindings](https://open-babel.readthedocs.io/en/latest/UseTheLibrary/PythonInstall.html)
+- PyMOL >= 2.3.0 with Python bindings (optional, for visualization only)
+- ImageMagick >= 6.9 (optional)
+
+**Python:** If you are on a system where Python 3 is executed using `python3` instead of just `python`, replace the `python` and `pip` commands in the following steps with `python3` and `pip3` accordingly.
+
+**OpenBabel:** Many users have trouble setting up OpenBabel with Python bindings correctly. We therefore provide some [installation help for OpenBabel](#Installing-OpenBabel) below.
+
+#### From Source
+
+Open a terminal and clone this repository using
 ```bash
 $ git clone https://github.com/pharmai/plip.git
 ```
 
-### 2. Install PLIP
+Either set your `PYTHONPATH` environment variable to the root directory of your PLIP repository or run the following command in it
 
-#### Containerized Image (recommended)
-:exclamation: We ship PLIP as a pre-built containers for multiple architectures (amd64/ARM), available on the [Docker Hub](https://hub.docker.com/r/pharmai/plip) or as pre-built Singularity image under [Releases](https://github.com/pharmai/plip/releases).
-
-#### From Source
-If you cannot use the containerized bundle or want to use PLIP sources, make sure you have the following requirements installed:
-- Python >= 3.6.9
-- OpenBabel >= 3.0.0
-- PyMOL >= 2.3.0 with Python bindings (optional, for visualization only)
-- ImageMagick >= 6.9 (optional)
-
-Set your `PYTHONPATH` environment variable to the root directory of this repository.
+```bash
+$ python setup.py install
+```
 
 #### Via PyPi
 We deploy the PLIP package to [PyPi](https://pypi.org/project/plip/). You can install PLIP as Python module with:
@@ -83,9 +95,9 @@ We deploy the PLIP package to [PyPi](https://pypi.org/project/plip/). You can in
 $ pip install plip
 ```
 
-**Note:** Be aware that you still have to install all other dependencies and link them correctly.
+**Note:** Be aware that you still have to install the above mentioned dependencies and link them correctly.
 
-### 3. Run PLIP
+### 2. Run PLIP
 
 #### Command Line Tool
 
@@ -94,8 +106,10 @@ Run the `plipcmd.py` script inside the PLIP folder to detect, report, and visual
 **Note:** If you have installed PLIP with `python setup.py install` or PyPi, you will not have to set an alias for the `plip` command.
 
 ```bash
-$ alias plip='python ~/pliptool/plip/plipcmd.py'
+# Set an alias to make your life easier and create and enter /tmp/1vsn
+$ alias plip='python ~/plip/plip/plipcmd.py'
 $ mkdir /tmp/1vsn && cd /tmp/1vsn
+# Run PLIP for 1vsn and open the resulting visualization in PyMOL
 $ plip -i 1vsn -yv
 $ pymol 1VSN_NFT_A_283.pse
 ```
@@ -124,7 +138,7 @@ my_interactions = my_mol.interaction_sets[my_bsid] # Contains all interaction da
 print([pistack.resnr for pistack in my_interactions.pistacking]) # Prints [84, 129]
 ```
 
-### 4. Investigate the Results
+### 3. Investigate the Results
 PLIP offers various output formats, ranging from renderes images and PyMOL session files to human-readable text files and XML files. By default, all files are deposited in the working directory unless and output path is provided. For a full documentation of running options and output formats, please refer to the [Documentation](DOCUMENTATION.md).
 
 ## Versions and Branches
@@ -137,9 +151,10 @@ For production environments, you should use the latest tagged commit from the `m
 - Alexandre Mestiashvili | [github.com/mestia](https://github.com/mestia)
 - Christoph Leberecht  | [github.com/cleberecht](https://github.com/cleberecht)
 - Florian Kaiser  | [github.com/fkaiserbio](https://github.com/fkaiserbio)
+- Katja Linnemann | [github.com/kalinni](https://github.com/kalinni)
 
 ## PLIP Web Server
-Visit our PLIP Web Server on [plip.biotec.tu-dresden.de/plip-web](https://plip.biotec.tu-dresden.de/plip-web).
+Visit our PLIP Web Server on [plip-tool.biotec.tu-dresden.de](https://plip-tool.biotec.tu-dresden.de).
 
 ## License Information
 PLIP is published under the GNU GPLv2. For more information, please read the `LICENSE.txt` file.
@@ -155,8 +170,8 @@ If you are using PLIP in your work, please cite
 > ValueError: [...] is not a recognised Open Babel descriptor type
 >
 Make sure OpenBabel is correctly installed. This error can occur if the installed Python bindings don't match the OpenBabel version on your machine.
-We don't offer technical support for installation of third-party packages.
-For an instruction how to install Open Babel, please refer to their [website](https://openbabel.org/docs/dev/Installation/install.html).
+We don't offer technical support for installation of third-party packages but added some [installation help for OpenBabel](#Installing-OpenBabel) below.
+Alternatively you can refer to their [website](https://openbabel.org/docs/dev/Installation/install.html).
 
 > I'm unsure on how to run PLIP and don't have much Linux experience.
 >
@@ -173,9 +188,56 @@ Due to the non-deterministic nature on how hydrogen atoms can be added to the in
 >
 By default PLIP uses the first model it sees in a PDB file. You can change this behavior with the flag `--model`.
 
+## Installing OpenBabel
+As many users encounter problems with installing the required OpenBabel tools, we want to provide some help here. However, we cannot offer technical support. Comprehensive information about the installation of OpenBabel for Windows, Linux, and macOS can be found in the [OpenBabel wiki](http://openbabel.org/wiki/Category:Installation) and the [OpenBabel Docs](https://open-babel.readthedocs.io/en/latest/Installation/install.html).
+Information about the installation of [OpenBabel Python bindings](https://open-babel.readthedocs.io/en/latest/UseTheLibrary/PythonInstall.html) can also be found there.
+
+### Using Conda, HomeBrew or the binary Windows Installer
+
+Install OpenBabel using the [binary from GitHub](https://github.com/openbabel/openbabel/releases/latest) or with
+```bash
+# For Conda users
+$ conda install openbabel -c conda-forge
+# On macOS
+$ brew install open-babel
+```
+Install the Python bindings with
+```bash
+$ pip install openbabel
+```
+**Note:** If you have trouble, make sure the OpenBabel version matches the one for the python bindings!
+
+### Using your Package Manager (Example for Ubuntu 20.04)
+
+```bash
+$ apt-get update && apt-get install -y \
+    libopenbabel-dev \
+    libopenbabel6 \
+    python3-openbabel \
+    openbabel
+```
+### From Source (Example for Ubuntu 18.04)
+Clone the OpenBabel repository into the /src directory
+```bash
+$ git clone -b openbabel-3-0-0 \
+https://github.com/openbabel/openbabel.git
+```
+
+Within /src/openbabel create end enter a directory /build and configure the build using
+```bash
+$ cmake .. \
+-DPYTHON_EXECUTABLE=/usr/bin/python3.6 \
+-DPYTHON_BINDINGS=ON \
+-DCMAKE_INSTALL_PREFIX=/usr/local \
+-DRUN_SWIG=ON
+```
+From within the same directory (/src/openbabel/build) compile and install using
+```bash
+$ make -j$(nproc --all) install
+```
 ## Contact / Maintainer
 As of April 2020 PLIP is now officially maintained by [PharmAI GmbH](https://pharm.ai). Do you have feature requests, found a bug or want to use  PLIP in your project? Commercial support is available upon request.
 
  ![](https://www.pharm.ai/wp-content/uploads/2020/04/PharmAI_logo_color_no_slogan_500px.png)
- 
+
  Please get in touch: `hello@pharm.ai`

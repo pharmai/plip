@@ -99,11 +99,12 @@ $ plip -i 1vsn 1osn 2reg -vx
 PLIP will create subdirectories for each given structure in the output folder. If in PDB ID mode (`-i`), the folder structure will be nested and based on the two middle characters of the PDB ID. The structure `1vsn` in batch processing will have its output files in `<outputfolder>/vs/1vsn`.
 
 ### Detection of Protein-Peptide Interactions
-For the detection of ligands, PLIP relies on the separation of `ATOM` and `HETATM` entries in the PDB file. The latter are searched for suitable ligands when running in normal mode. Peptide ligands, however, are usually deposited as `ATOM` entries in a separate chain. PLIP can not detect these entities automatically. To switch into protein-peptide interaction mode, start PLIP with the option `--peptide`, followed by the peptide chain of interest, e.g.:
+For the detection of ligands, PLIP relies on the separation of `ATOM` and `HETATM` entries in the PDB file. The latter are searched for suitable ligands when running in normal mode. Peptide ligands, however, are usually deposited as `ATOM` entries in a separate chain. PLIP can not detect these entities automatically. To switch into protein-peptide interaction mode, start PLIP with the option `--peptides`, followed by the peptide chain of interest, e.g.:
 
 ```bash
-$ plip -i 5hi4 --peptide I -vx
+$ plip -i 5hi4 --peptides I -vx
 ```
+This option can also be used to analyze interaction between different protein chains or nucleic acid strands and is therefore also available using the synonym `--inter`.
 
 ### Detection of Intra-Chain Interactions
 Intra-protein interactions are important for the stabilization of a structure and can give valuable insights for protein engineering and drug discovery. PLIP supports detection of interactions within one chain. o switch into intra-chain interaction mode, start PLIP with the option `--intra`, followed by the protein chain of interest, e.g.:
@@ -277,6 +278,7 @@ After assigning all target groups to one metal ions, the resulting set of angles
 | citation_information | How to cite PLIP |
 | mode | Documents if PLIP was started in default or any special mode (e.g. intra-protein interactions) |
 | pdbid | PDB identifier of the input file |
+| model | Number of the model in the PDB file on which analysis was done |
 | pdbfile | Name of the input PDB file |
 | pdbfixes | Were any fixes applied automatically to the input file? |
 | filename | Filename of the processed PDB file |
