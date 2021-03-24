@@ -11,7 +11,7 @@ Analyze noncovalent protein-ligand interactions in 3D structures with ease.
 <img src="pliplogo.png"  alt="PLIP Logo" height="100">
 
 
-| Use Case                                                                  | [Web Server](https://projects.biotec.tu-dresden.de/plip-web/plip)         | Docker             | Singularity        | Python Module       |
+| Use Case                                                                  | [Web Server](https://plip-tool.biotec.tu-dresden.de)         | Docker             | Singularity        | Python Module       |
 |---------------------------------------------------------------------------|--------------------|--------------------|--------------------|--------------------|
 | "I want to analyze my protein-ligand complex!"                            | :heavy_check_mark: | :heavy_check_mark: | :yellow_circle:    | :x:                |
 | "I want to analyze *a billion* protein-ligand complexes!"                 | :x:                | :yellow_circle:    | :heavy_check_mark: | :yellow_circle:    |
@@ -154,7 +154,7 @@ For production environments, you should use the latest tagged commit from the `m
 - Katja Linnemann | [github.com/kalinni](https://github.com/kalinni)
 
 ## PLIP Web Server
-Visit our PLIP Web Server on [plip.biotec.tu-dresden.de/plip-web](https://plip.biotec.tu-dresden.de/plip-web).
+Visit our PLIP Web Server on [plip-tool.biotec.tu-dresden.de](https://plip-tool.biotec.tu-dresden.de).
 
 ## License Information
 PLIP is published under the GNU GPLv2. For more information, please read the `LICENSE.txt` file.
