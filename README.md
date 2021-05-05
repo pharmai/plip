@@ -31,7 +31,7 @@ $ docker run --rm \
     -v ${PWD}:/results \
     -w /results \
     -u $(id -u ${USER}):$(id -g ${USER}) \
-    pharmai/plip:latest -i 1s3v -yv
+    pharmai/plip:latest -i 1vsn -yv
 ```
 
 On Windows:
@@ -40,7 +40,7 @@ $ docker run --rm \
     -v ${PWD}:/results \
     -w /results \
     -u $(id -u ${USER}):$(id -g ${USER}) \
-    pharmai/plip:latest -i 1s3v -yv
+    pharmai/plip:latest -i 1vsn -yv
 ```
 ### Singularity
 
