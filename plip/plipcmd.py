@@ -124,7 +124,7 @@ def run_analysis(inputstructs, inputpdbids):
     # Print title and version
     logger.info(f'Protein-Ligand Interaction Profiler (PLIP) {__version__}')
     logger.info(f'brought to you by: {config.__maintainer__}')
-    logger.info(f'please cite: https://www.doi.org/10.1093/nar/gkv315')
+    logger.info(f'please cite: https://doi.org/10.1093/nar/gkab294')
     output_prefix = config.OUTPUTFILENAME
 
     if inputstructs is not None:  # Process PDB file(s)
