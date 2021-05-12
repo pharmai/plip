@@ -1,5 +1,8 @@
 Changelog
 ---------
+# 2.2.1
+* updates citation information to latest paper: https://doi.org/10.1093/nar/gkab294
+
 # 2.2.0
 * new minor release
 * increased detail level of report (individual atoms on protein side)
