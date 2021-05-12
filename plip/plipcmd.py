@@ -25,11 +25,10 @@ from plip.exchange.webservices import fetch_pdb
 from plip.structure.preparation import create_folder_if_not_exists, extract_pdbid
 from plip.structure.preparation import tilde_expansion, PDBComplex
 
-description = f"The Protein-Ligand Interaction Profiler (PLIP) {__version__}" \
+description = f"The Protein-Ligand Interaction Profiler (PLIP) Version {__version__} " \
               "is a command-line based tool to analyze interactions in a protein-ligand complex. " \
               "If you are using PLIP in your work, please cite: " \
-              "Salentin,S. et al. PLIP: fully automated protein-ligand interaction profiler. " \
-              "Nucl. Acids Res. (1 July 2015) 43 (W1): W443-W447. doi:10.1093/nar/gkv315" \
+              f"{config.__citation_information__} " \
               f"Supported and maintained by: {config.__maintainer__}"
 
 
