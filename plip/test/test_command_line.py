@@ -57,3 +57,8 @@ class CommandLineTest(unittest.TestCase):
         exitcode = subprocess.call(f'{sys.executable} ../plipcmd.py -t -f ./pdb/1eve.pdb -O', shell=True)
         self.assertEqual(exitcode, 0)
 
+    def test_help(self):
+        """A PDB ID with no valid PDB record is provided."""
+        exitcode = subprocess.call(f'{sys.executable} ../plipcmd.py -h', shell=True)
+        self.assertEqual(exitcode, 0)
+

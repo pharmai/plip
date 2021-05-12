@@ -28,8 +28,7 @@ class StructureReport:
         date_of_creation = et.SubElement(report, 'date_of_creation')
         date_of_creation.text = time.strftime("%Y/%m/%d")
         citation_information = et.SubElement(report, 'citation_information')
-        citation_information.text = "Salentin,S. et al. PLIP: fully automated protein-ligand interaction profiler. " \
-                                    "Nucl. Acids Res. (1 July 2015) 43 (W1): W443-W447. doi: 10.1093/nar/gkv315"
+        citation_information.text = config.__citation_information__
 
         maintainer_information = et.SubElement(report, 'maintainer_information')
         maintainer_information.text = config.__maintainer__
@@ -69,8 +68,7 @@ class StructureReport:
         textlines.append("=" * len(textlines[0]))
         textlines.append('Created on %s using PLIP v%s\n' % (time.strftime("%Y/%m/%d"), __version__))
         textlines.append('If you are using PLIP in your work, please cite:')
-        textlines.append('Salentin,S. et al. PLIP: fully automated protein-ligand interaction profiler.')
-        textlines.append('Nucl. Acids Res. (1 July 2015) 43 (W1): W443-W447. doi: 10.1093/nar/gkv315\n')
+        textlines.append(config.__citation_information__)
         if len(self.excluded) != 0:
             textlines.append('Excluded molecules as ligands: %s\n' % ','.join([lig for lig in self.excluded]))
         if config.DNARECEPTOR:
