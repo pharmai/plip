@@ -1,4 +1,4 @@
-__version__ = '2.2.1'
+__version__ = '2.2.2'
 __maintainer__ = 'PharmAI GmbH (2020-2021) - www.pharm.ai - hello@pharm.ai'
 __citation_information__ = "Adasme,M. et al. PLIP 2021: expanding the scope of the protein-ligand interaction profiler to DNA and RNA. " \
                            "Nucl. Acids Res. (05 May 2021), gkab294. doi: 10.1093/nar/gkab294"
