@@ -162,7 +162,7 @@ Using PLIP in your commercial or non-commercial project is generally possible wh
 
 ## Citation Information
 If you are using PLIP in your work, please cite
-> Adasme,M. et al. PLIP 2021: expanding the scope of the protein–ligand interaction profiler to DNA and RNA.
+> Adasme,M. et al. PLIP 2021: expanding the scope of the protein-ligand interaction profiler to DNA and RNA.
 > Nucl. Acids Res. (05 May 2021), gkab294. doi: 10.1093/nar/gkab294
  
 or
