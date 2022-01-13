@@ -51,14 +51,16 @@ class PDBParser:
         alt = []
         previous_ter = False
 
-        model_dict = {1: list()}
+        model_dict = {0: list()}
 
         # Standard without fixing
         if not config.NOFIX:
             if not config.PLUGIN_MODE:
                 lastnum = 0  # Atom numbering (has to be consecutive)
                 other_models = False
-                current_model = 1
+                # Model 0 stores header and similar additional data
+                # or the full file if no MODEL entries exist in the file
+                current_model = 0
                 for line in fil:
                     corrected_line, newnum = self.fix_pdbline(line, lastnum)
                     if corrected_line is not None:
@@ -81,8 +83,11 @@ class PDBParser:
                 try:
                     if other_models:
                         logger.info(f'selecting model {config.MODEL} for analysis')
-                    corrected_pdb = ''.join(model_dict[config.MODEL])
-                    corrected_lines = model_dict[config.MODEL]
+                    corrected_pdb = ''.join(model_dict[0])
+                    corrected_lines = model_dict[0]
+                    if current_model > 0:
+                        corrected_pdb += ''.join(model_dict[config.MODEL])
+                        corrected_lines += model_dict[config.MODEL]
                 except KeyError:
                     corrected_pdb = ''.join(model_dict[1])
                     corrected_lines = model_dict[1]
