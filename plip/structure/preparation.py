@@ -1370,7 +1370,7 @@ class PDBComplex:
 
         if not as_string:
             self.sourcefiles['filename'] = os.path.basename(self.sourcefiles['pdbcomplex'])
-        self.protcomplex, self.filetype = read_pdb(self.corrected_pdb, as_string=True)
+        self.protcomplex, self.filetype = read_pdb(self.corrected_pdb, as_string= (self.corrected_pdb != pdbpath)) # self.corrected_pdb may fallback to pdbpath
 
         # Update the model in the Mapper class instance
         self.Mapper.original_structure = self.protcomplex.OBMol
