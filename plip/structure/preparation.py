@@ -929,6 +929,7 @@ class BindingSite(Mol):
 
     def find_charged(self, mol):
         """Looks for positive charges in arginine, histidine or lysine, for negative in aspartic and glutamic acid."""
+        """If nucleic acids are part of the receptor, looks for negative charges in phosphate backbone"""
         data = namedtuple('pcharge', 'atoms atoms_orig_idx type center restype resnr reschain')
         a_set = []
         # Iterate through all residue, exclude those in chains defined as peptides
@@ -964,6 +965,17 @@ class BindingSite(Mol):
                                       type='negative',
                                       center=centroid([ac.coords for ac in a_contributing]),
                                       restype=res.GetName(),
+                                      resnr=res.GetNum(),
+                                      reschain=res.GetChain()))
+            if res.GetName() in config.DNA + config.RNA and config.DNARECEPTOR: # nucleic acids have negative charge in sugar phosphate
+                for a in pybel.ob.OBResidueAtomIter(res):
+                    if a.GetType().startswith('P') and res.GetAtomProperty(a, 9) \
+                            and not self.Mapper.mapid(a.GetIdx(), mtype='protein') in self.altconf:
+                        a_contributing.append(pybel.Atom(a))
+                        a_contributing_orig_idx.append(self.Mapper.mapid(a.GetIdx(), mtype='protein'))
+                if not len(a_contributing) == 0:
+                    a_set.append(data(atoms=a_contributing,atoms_orig_idx=a_contributing_orig_idx, type='negative', 
+                                      center=centroid([ac.coords for ac in a_contributing]), restype=res.GetName(),
                                       resnr=res.GetNum(),
                                       reschain=res.GetChain()))
         return a_set
