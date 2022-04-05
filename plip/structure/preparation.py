@@ -967,7 +967,7 @@ class BindingSite(Mol):
                                       restype=res.GetName(),
                                       resnr=res.GetNum(),
                                       reschain=res.GetChain()))
-            if res.GetName() in ('U', 'A', 'C', 'G', 'DA', 'DT', 'DC', 'DG') and config.DNARECEPTOR: #nucleic acids
+            if res.GetName() in config.DNA + config.RNA and config.DNARECEPTOR: # nucleic acids have negative charge in sugar phosphate
                 for a in pybel.ob.OBResidueAtomIter(res):
                     if a.GetType().startswith('P') and res.GetAtomProperty(a, 9) \
                             and not self.Mapper.mapid(a.GetIdx(), mtype='protein') in self.altconf:
