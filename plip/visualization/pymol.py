@@ -363,21 +363,29 @@ class PyMOLVisualizer:
         os.rename(originalfile, newfile)  # Remove frame number in filename
 
         #  Check if imagemagick is available and crop + resize the images
-        if subprocess.call("type convert", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0:
+        if subprocess.call("magick -version", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0:
             attempts, ecode = 0, 1
             # Check if file is truncated and wait if that's the case
             while ecode != 0 and attempts <= 10:
-                ecode = subprocess.call(['convert', newfile, '/dev/null'], stdout=open('/dev/null', 'w'),
+                ecode = subprocess.call(['magick', newfile, os.devnull], stdout=open(os.devnull, 'w'),
                                         stderr=subprocess.STDOUT)
                 sleep(0.1)
                 attempts += 1
-            trim = 'convert -trim ' + newfile + ' -bordercolor White -border 20x20 ' + newfile + ';'  # Trim the image
+            trim = f'magick convert -trim {newfile} -bordercolor White -border 20x20 {newfile}'  # Trim the image
             os.system(trim)
-            getwidth = 'w=`convert ' + newfile + ' -ping -format "%w" info:`;'  # Get the width of the new image
-            getheight = 'h=`convert ' + newfile + ' -ping -format "%h" info:`;'  # Get the hight of the new image
-            newres = 'if [ "$w" -gt "$h" ]; then newr="${w%.*}x$w"; else newr="${h%.*}x$h"; fi;'  # Set quadratic ratio
-            quadratic = 'convert ' + newfile + ' -gravity center -extent "$newr" ' + newfile  # Fill with whitespace
-            os.system(getwidth + getheight + newres + quadratic)
+            # Get the width of the new image
+            getwidth = f'magick {newfile} -ping -format "%w" info:'
+            w = int(subprocess.run(getwidth, capture_output=True, text=True).stdout)
+            # Get the hight of the new image
+            getheight = f'magick {newfile} -ping -format "%h" info:'
+            h = int(subprocess.run(getheight, capture_output=True, text=True).stdout)
+            # Set quadratic ratio
+            if w > h:
+                newr= f'{w}x{w}'
+            else:
+                newr= f'{h}x{h}'
+            quadratic = f'magick {newfile} -gravity center -extent {newr} {newfile}'  # Fill with whitespace
+            os.system(quadratic)
         else:
             sys.stderr.write('Imagemagick not available. Images will not be resized or cropped.')
 
