@@ -371,7 +371,7 @@ class PyMOLVisualizer:
                                         stderr=subprocess.STDOUT)
                 sleep(0.1)
                 attempts += 1
-            trim = f'magick convert -trim {newfile} -bordercolor White -border 20x20 {newfile}'  # Trim the image
+            trim = f'magick {newfile} -trim -bordercolor White -border 20x20 {newfile}'  # Trim the image
             os.system(trim)
             # Get the width of the new image
             getwidth = f'magick {newfile} -ping -format "%w" info:'
