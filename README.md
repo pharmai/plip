@@ -69,7 +69,7 @@ If you cannot use the containerized bundle or want to use PLIP sources, make sur
 - Python >= 3.6.9
 - [OpenBabel](#Installing-OpenBabel) >= 3.0.0 with [Python bindings](https://open-babel.readthedocs.io/en/latest/UseTheLibrary/PythonInstall.html)
 - PyMOL >= 2.3.0 with Python bindings (optional, for visualization only)
-- ImageMagick >= 6.9 (optional)
+- ImageMagick >= 7.0 (optional)
 
 **Python:** If you are on a system where Python 3 is executed using `python3` instead of just `python`, replace the `python` and `pip` commands in the following steps with `python3` and `pip3` accordingly.
 
@@ -164,7 +164,7 @@ Using PLIP in your commercial or non-commercial project is generally possible wh
 If you are using PLIP in your work, please cite
 > Adasme,M. et al. PLIP 2021: expanding the scope of the protein-ligand interaction profiler to DNA and RNA.
 > Nucl. Acids Res. (05 May 2021), gkab294. doi: 10.1093/nar/gkab294
- 
+
 or
 
 > Salentin,S. et al. PLIP: fully automated protein-ligand interaction profiler.

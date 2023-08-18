@@ -298,7 +298,6 @@ def sort_members_by_importance(members):
     main = [x for x in members if x[0] not in config.METAL_IONS]
     ion = [x for x in members if x[0] in config.METAL_IONS]
     sorted_main = sorted(main, key=lambda x: (x[1], x[2]))
-    sorted_main = sorted(main, key=lambda x: (x[1], x[2]))
     sorted_ion = sorted(ion, key=lambda x: (x[1], x[2]))
     return sorted_main + sorted_ion
 
