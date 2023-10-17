@@ -25,6 +25,7 @@ NOFIX = False  # Turn off fixing of errors in PDB files
 NOFIXFILE = False  # Turn off writing to files for fixed PDB structures
 PEPTIDES = []  # Definition which chains should be considered as peptide ligands
 INTRA = None
+RESIDUES = {}
 KEEPMOD = False
 DNARECEPTOR = False
 OUTPUTFILENAME = "report"  # Naming for the TXT and XML report files

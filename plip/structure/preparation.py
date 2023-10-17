@@ -243,7 +243,7 @@ class LigandFinder:
         given chain without water
         """
         all_from_chain = [o for o in pybel.ob.OBResidueIter(
-            self.proteincomplex.OBMol) if o.GetChain() == chain]  # All residues from chain
+            self.proteincomplex.OBMol) if o.GetChain() == chain and (chain not in config.RESIDUES.keys() or o.GetNum() in config.RESIDUES[chain])]  # All residues from chain
         if len(all_from_chain) == 0:
             return None
         else:
@@ -932,8 +932,11 @@ class BindingSite(Mol):
         """If nucleic acids are part of the receptor, looks for negative charges in phosphate backbone"""
         data = namedtuple('pcharge', 'atoms atoms_orig_idx type center restype resnr reschain')
         a_set = []
-        # Iterate through all residue, exclude those in chains defined as peptides
-        for res in [r for r in pybel.ob.OBResidueIter(mol.OBMol) if not r.GetChain() in config.PEPTIDES]:
+        # Iterate through all residue, exclude those in (part of) chains defined as peptides
+        for res in [r for r in pybel.ob.OBResidueIter(mol.OBMol)]:
+            if res.GetChain() in config.PEPTIDES:
+                if not res.GetChain() in config.RESIDUES.keys() or res.GetNum() in config.RESIDUES[res.GetChain()]:
+                    continue
             if config.INTRA is not None:
                 if res.GetChain() != config.INTRA:
                     continue
@@ -1475,7 +1478,7 @@ class PDBComplex:
                     if idx in self.Mapper.proteinmap and self.Mapper.mapid(idx, mtype='protein') not in self.altconf]
         if ligand.type == 'PEPTIDE':
             # If peptide, don't consider the peptide chain as part of the protein binding site
-            bs_atoms = [a for a in bs_atoms if a.OBAtom.GetResidue().GetChain() != lig_obj.chain]
+            bs_atoms = [a for a in bs_atoms if a.OBAtom.GetResidue().GetChain() != lig_obj.chain or (lig_obj.chain in config.RESIDUES.keys() and not a.OBAtom.GetResidue().GetNum() in config.RESIDUES[lig_obj.chain])]
         if ligand.type == 'INTRA':
             # Interactions within the chain
             bs_atoms = [a for a in bs_atoms if a.OBAtom.GetResidue().GetChain() == lig_obj.chain]
@@ -1508,13 +1511,16 @@ class PDBComplex:
     @staticmethod
     def res_belongs_to_bs(res, cutoff, ligcentroid):
         """Check for each residue if its centroid is within a certain distance to the ligand centroid.
-        Additionally checks if a residue belongs to a chain restricted by the user (e.g. by defining a peptide chain)"""
+        Additionally checks if a residue belongs to a segment restricted by the user (e.g. by defining a peptide chain)"""
         rescentroid = centroid([(atm.x(), atm.y(), atm.z()) for atm in pybel.ob.OBResidueAtomIter(res)])
         # Check geometry
         near_enough = True if euclidean3d(rescentroid, ligcentroid) < cutoff else False
         # Check chain membership
-        restricted_chain = True if res.GetChain() in config.PEPTIDES else False
-        return (near_enough and not restricted_chain)
+        restricted_segment = False
+        if res.GetChain() in config.PEPTIDES:
+            if not res.GetChain() in config.RESIDUES.keys() or res.GetNum() in config.RESIDUES[res.GetChain()]:
+                restricted_segment = True
+        return (near_enough and not restricted_segment)
 
     def get_atom(self, idx):
         return self.atoms[idx]

@@ -38,6 +38,16 @@ def threshold_limiter(aparser, arg):
         aparser.error("All thresholds have to be values larger than zero.")
     return arg
 
+def residue_list(input_string):
+    """Parse mix of residue numbers and ranges passed with the --residues flag into one list"""
+    result = []
+    for part in input_string.split(','):
+        if '-' in part:
+            start, end = map(int, part.split('-'))
+            result.extend(range(start, end + 1))
+        else:
+            result.append(int(part))
+    return result
 
 def process_pdb(pdbfile, outpath, as_string=False, outputprefix='report'):
     """Analysis of a single PDB file. Can generate textual reports XML, PyMOL session files and images as output."""
@@ -218,6 +228,9 @@ def main():
                             help="Allows to define one or multiple chains as peptide ligands or to detect inter-chain contacts",
                             nargs="+")
     ligandtype.add_argument("--intra", dest="intra", help="Allows to define one chain to analyze intra-chain contacts.")
+    parser.add_argument("--residues", dest="residues", default=[], nargs="+",
+                        help="""Allows to specify which residues of the chain(s) should be considered as peptide ligands.
+                        Give single residues (separated with comma) or ranges (with dash) or both, for several chains separate selections with one space""")
     parser.add_argument("--keepmod", dest="keepmod", default=False,
                         help="Keep modified residues as ligands",
                         action="store_true")
@@ -242,6 +255,11 @@ def main():
         parser.add_argument('--%s' % t.name, dest=t.name, type=lambda val: threshold_limiter(parser, val),
                             help=argparse.SUPPRESS)
     arguments = parser.parse_args()
+    # make sure, residues is only used together with --inter (could be expanded to --intra in the future)
+    if arguments.residues and not (arguments.peptides or arguments.intra):
+        parser.error("The --residues option requires specification of a chain with --inter or --peptide")
+    if arguments.residues and len(arguments.residues)!=len(arguments.peptides):
+        parser.error("Please provide residue numbers or ranges for each chain specified. Separate selections with a single space.")
     # configure log levels
     config.VERBOSE = True if arguments.verbose else False
     config.QUIET = True if arguments.quiet else False
@@ -268,6 +286,7 @@ def main():
     config.BREAKCOMPOSITE = arguments.breakcomposite
     config.ALTLOC = arguments.altlocation
     config.PEPTIDES = arguments.peptides
+    config.RESIDUES = dict(zip(arguments.peptides, map(residue_list, arguments.residues)))
     config.INTRA = arguments.intra
     config.NOFIX = arguments.nofix
     config.NOFIXFILE = arguments.nofixfile
