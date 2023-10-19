@@ -1032,7 +1032,8 @@ class Ligand(Mol):
         self.type = ligand.type
         self.complex = cclass
         self.molecule = ligand.mol  # Pybel Molecule
-        self.smiles = self.molecule.write(format='can')  # SMILES String
+        # get canonical SMILES String, but not for peptide ligand (tend to be too long -> openBabel crashes)
+        self.smiles = "" if (config.INTRA or config.PEPTIDES) else self.molecule.write(format='can')
         self.inchikey = self.molecule.write(format='inchikey')
         self.can_to_pdb = ligand.can_to_pdb
         if not len(self.smiles) == 0:
