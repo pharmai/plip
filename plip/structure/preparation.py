@@ -328,26 +328,20 @@ class LigandFinder:
 
         # create a new ligand molecule representing any k-mer linked structures
         lig = pybel.ob.OBMol()
-        neighbours = dict()
-        for obatom in hetatoms.values():  # iterate over atom objects
-            idx = obatom.GetIdx()
-            lig.AddAtom(obatom)
-            # ids of all neighbours of obatom
-            neighbours[idx] = set([neighbour_atom.GetIdx() for neighbour_atom
-                                   in pybel.ob.OBAtomAtomIter(obatom)]) & set(hetatoms.keys())
-        logger.debug(f'atom neighbours mapped')
+        # create bit vector with 1 for all ligand atoms and 0 for all others
+        atomsBitVec = pybel.ob.OBBitVec(self.proteincomplex.OBMol.NumAtoms())
+        for atomidx in hetatoms.keys():
+            atomsBitVec.SetBitOn(atomidx)
+        # safe substructure defined by those atoms to previously empty lig
+        self.proteincomplex.OBMol.CopySubstructure(lig, atomsBitVec, None, 0)
 
         ##############################################################
         # map the old atom idx of OBMol to the new idx of the ligand #
         ##############################################################
 
-        newidx = dict(zip(hetatoms.keys(), [obatom.GetIdx() for obatom in pybel.ob.OBMolAtomIter(lig)]))
+        newidx = dict(zip(sorted(hetatoms.keys()), [obatom.GetIdx() for obatom in pybel.ob.OBMolAtomIter(lig)]))
         mapold = dict(zip(newidx.values(), newidx))
-        # copy the bonds
-        for obatom in hetatoms:
-            for neighbour_atom in neighbours[obatom]:
-                bond = hetatoms[obatom].GetBond(hetatoms[neighbour_atom])
-                lig.AddBond(newidx[obatom], newidx[neighbour_atom], bond.GetBondOrder())
+
         lig = pybel.Molecule(lig)
 
         # For kmers, the representative ids are chosen (first residue of kmer)
