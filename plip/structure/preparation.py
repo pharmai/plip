@@ -529,13 +529,11 @@ class Mol:
         donor_pairs = []
         data = namedtuple('hbonddonor', 'd d_orig_atom d_orig_idx h type')
         for donor in [a for a in all_atoms if a.OBAtom.IsHbondDonor() and a.idx not in self.altconf]:
-            in_ring = False
-            if not in_ring:
-                for adj_atom in [a for a in pybel.ob.OBAtomAtomIter(donor.OBAtom) if a.IsHbondDonorH()]:
-                    d_orig_idx = self.Mapper.mapid(donor.idx, mtype=self.mtype, bsid=self.bsid)
-                    d_orig_atom = self.Mapper.id_to_atom(d_orig_idx)
-                    donor_pairs.append(data(d=donor, d_orig_atom=d_orig_atom, d_orig_idx=d_orig_idx,
-                                            h=pybel.Atom(adj_atom), type='regular'))
+            for adj_atom in [a for a in pybel.ob.OBAtomAtomIter(donor.OBAtom) if a.IsHbondDonorH()]:
+                d_orig_idx = self.Mapper.mapid(donor.idx, mtype=self.mtype, bsid=self.bsid)
+                d_orig_atom = self.Mapper.id_to_atom(d_orig_idx)
+                donor_pairs.append(data(d=donor, d_orig_atom=d_orig_atom, d_orig_idx=d_orig_idx,
+                                        h=pybel.Atom(adj_atom), type='regular'))
         for carbon in hydroph_atoms:
             for adj_atom in [a for a in pybel.ob.OBAtomAtomIter(carbon.atom.OBAtom) if a.GetAtomicNum() == 1]:
                 d_orig_idx = self.Mapper.mapid(carbon.atom.idx, mtype=self.mtype, bsid=self.bsid)
