@@ -515,11 +515,12 @@ class Mol:
         """Find all possible hydrogen bond acceptors"""
         data = namedtuple('hbondacceptor', 'a a_orig_atom a_orig_idx type')
         a_set = []
-        for atom in filter(lambda at: at.OBAtom.IsHbondAcceptor(), all_atoms):
+        for atom in all_atoms:
             if atom.atomicnum not in [9, 17, 35, 53] and atom.idx not in self.altconf:  # Exclude halogen atoms
                 a_orig_idx = self.Mapper.mapid(atom.idx, mtype=self.mtype, bsid=self.bsid)
                 a_orig_atom = self.Mapper.id_to_atom(a_orig_idx)
-                a_set.append(data(a=atom, a_orig_atom=a_orig_atom, a_orig_idx=a_orig_idx, type='regular'))
+                if a_orig_atom.OBAtom.IsHbondAcceptor():
+                    a_set.append(data(a=atom, a_orig_atom=a_orig_atom, a_orig_idx=a_orig_idx, type='regular'))
         a_set = sorted(a_set, key=lambda x: x.a_orig_idx)
         return a_set
 
