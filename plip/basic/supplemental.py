@@ -358,7 +358,7 @@ def int32_to_negative(int32):
     if int32 == 4294967295:  # Special case in some structures (note, this is just a workaround)
         return -1
     for i in range(-1000, -1):
-        dct[np.uint32(i)] = i
+        dct[int(np.array(i).astype(np.uint32))] = i
     if int32 in dct:
         return dct[int32]
     else:
