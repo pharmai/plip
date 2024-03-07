@@ -625,10 +625,11 @@ class PLInteraction:
 
         self.pistacking = pistacking(self.bindingsite.rings, self.ligand.rings)
 
-        self.all_pi_cation_laro = pication(self.ligand.rings, self.bindingsite.get_pos_charged(), True)
-        self.pication_paro = pication(self.bindingsite.rings, self.ligand.get_pos_charged(), False)
+        self.all_pication_laro = pication(self.ligand.rings, self.bindingsite.get_pos_charged(), True)
+        self.all_pication_paro = pication(self.bindingsite.rings, self.ligand.get_pos_charged(), False)
 
-        self.pication_laro = self.refine_pi_cation_laro(self.all_pi_cation_laro, self.pistacking)
+        self.pication_laro = self.refine_pication(self.all_pication_laro, self.pistacking)
+        self.pication_paro = self.refine_pication(self.all_pication_paro, self.pistacking)
 
         self.all_hydrophobic_contacts = hydrophobic_interactions(self.bindingsite.get_hydrophobic_atoms(),
                                                                  self.ligand.get_hydrophobic_atoms())
@@ -843,7 +844,7 @@ class PLInteraction:
         return [hb[1] for hb in second_set.values()]
 
     @staticmethod
-    def refine_pi_cation_laro(all_picat, stacks):
+    def refine_pication(all_picat, stacks):
         """Just important for constellations with histidine involved. If the histidine ring is positioned in stacking
         position to an aromatic ring in the ligand, there is in most cases stacking and pi-cation interaction reported
         as histidine also carries a positive charge in the ring. For such cases, only report stacking.
@@ -851,9 +852,15 @@ class PLInteraction:
         i_set = []
         for picat in all_picat:
             exclude = False
-            for stack in stacks:
-                if whichrestype(stack.proteinring.atoms[0]) == 'HIS' and picat.ring.obj == stack.ligandring.obj:
-                    exclude = True
+            if picat.restype == 'HIS':
+                for stack in stacks:
+                    if whichresnumber(stack.proteinring.atoms[0]) == picat.resnr and picat.ring.obj == stack.ligandring.obj:
+                        exclude = True
+            # HIS could also be on ligand side for protein-protein interactions
+            if picat.restype_l == 'HIS':
+                for stack in stacks:
+                    if whichresnumber(stack.ligandring.atoms[0]) == picat.resnr_l and picat.ring.obj == stack.proteinring.obj:
+                        exclude = True
             if not exclude:
                 i_set.append(picat)
         return i_set
