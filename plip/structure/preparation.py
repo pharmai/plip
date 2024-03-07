@@ -743,47 +743,59 @@ class PLInteraction:
                     sel2[(h.ligatom.idx, h.resnr)] = h
         hydroph = [h for h in sel2.values()]
         hydroph_final = []
-        bsclust = {}
         #  3. If a protein atom interacts with several neighboring ligand atoms, just keep the one with the closest dist
-        for h in hydroph:
-            if h.bsatom.idx not in bsclust:
-                bsclust[h.bsatom.idx] = [h, ]
-            else:
-                bsclust[h.bsatom.idx].append(h)
+        if config.PEPTIDES or config.INTRA:
+            # the ligand also consists of amino acid residues, repeat step 2 just the other way around
+            sel3 = {}
+            for h in hydroph:
+                if not (h.bsatom.idx, h.resnr_l) in sel3:
+                    sel3[(h.bsatom.idx, h.resnr_l)] = h
+                else:
+                    if sel3[(h.bsatom.idx, h.resnr_l)].distance > h.distance:
+                        sel3[(h.bsatom.idx, h.resnr_l)] = h
+            hydroph_final = [h for h in sel3.values()]
+        else:
+            # for other ligands find hydrophobic patches for which only the shortest interactions is reported
+            bsclust = {}
+            for h in hydroph:
+                if h.bsatom.idx not in bsclust:
+                    bsclust[h.bsatom.idx] = [h, ]
+                else:
+                    bsclust[h.bsatom.idx].append(h)
 
-        idx_to_h = {}
-        for bs in [a for a in bsclust if len(bsclust[a]) == 1]:
-            hydroph_final.append(bsclust[bs][0])
+            idx_to_h = {}
+            for bs in [a for a in bsclust if len(bsclust[a]) == 1]:
+                hydroph_final.append(bsclust[bs][0])
 
-        # A list of tuples with the idx of an atom and one of its neighbours is created
-        for bs in [a for a in bsclust if not len(bsclust[a]) == 1]:
-            tuples = []
-            all_idx = [i.ligatom.idx for i in bsclust[bs]]
-            for b in bsclust[bs]:
-                idx = b.ligatom.idx
-                neigh = [na for na in pybel.ob.OBAtomAtomIter(b.ligatom.OBAtom)]
-                for n in neigh:
-                    n_idx = n.GetIdx()
-                    if n_idx in all_idx:
-                        if n_idx < idx:
-                            tuples.append((n_idx, idx))
-                        else:
-                            tuples.append((idx, n_idx))
-                        idx_to_h[idx] = b
+            # A list of tuples with the idx of an atom and one of its neighbours is created
+            for bs in [a for a in bsclust if not len(bsclust[a]) == 1]:
+                tuples = []
+                all_idx = [i.ligatom.idx for i in bsclust[bs]]
+                for b in bsclust[bs]:
+                    idx = b.ligatom.idx
+                    neigh = [na for na in pybel.ob.OBAtomAtomIter(b.ligatom.OBAtom)]
+                    for n in neigh:
+                        n_idx = n.GetIdx()
+                        if n_idx in all_idx:
+                            if n_idx < idx:
+                                tuples.append((n_idx, idx))
+                            else:
+                                tuples.append((idx, n_idx))
+                            idx_to_h[idx] = b
 
-            tuples = list(set(tuples))
-            tuples = sorted(tuples, key=itemgetter(1))
-            clusters = cluster_doubles(tuples)  # Cluster connected atoms (i.e. find hydrophobic patches)
+                tuples = list(set(tuples))
+                tuples = sorted(tuples, key=itemgetter(1))
+                clusters = cluster_doubles(tuples)  # Cluster connected atoms (i.e. find hydrophobic patches)
 
-            for cluster in clusters:
-                min_dist = float('inf')
-                min_h = None
-                for atm_idx in cluster:
-                    h = idx_to_h[atm_idx]
-                    if h.distance < min_dist:
-                        min_dist = h.distance
-                        min_h = h
-                hydroph_final.append(min_h)
+                for cluster in clusters:
+                    min_dist = float('inf')
+                    min_h = None
+                    for atm_idx in cluster:
+                        h = idx_to_h[atm_idx]
+                        if h.distance < min_dist:
+                            min_dist = h.distance
+                            min_h = h
+                    hydroph_final.append(min_h)
         before, reduced = len(all_h), len(hydroph_final)
         if not before == 0 and not before == reduced:
             logger.info(f'reduced number of hydrophobic contacts from {before} to {reduced}')
