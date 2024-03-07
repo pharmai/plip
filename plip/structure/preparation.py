@@ -878,7 +878,7 @@ class PLInteraction:
             if (wbridge.water.idx, wbridge.a.idx) not in wb_dict:
                 wb_dict[(wbridge.water.idx, wbridge.a.idx)] = wbridge
             else:
-                if abs(omega - wb_dict[(wbridge.water.idx, wbridge.a.idx)].w_angle) < abs(omega - wbridge.w_angle):
+                if abs(omega - wb_dict[(wbridge.water.idx, wbridge.a.idx)].w_angle) > abs(omega - wbridge.w_angle):
                     wb_dict[(wbridge.water.idx, wbridge.a.idx)] = wbridge
         for wb_tuple in wb_dict:
             water, acceptor = wb_tuple
@@ -888,7 +888,7 @@ class PLInteraction:
                 wb_dict2[water].append((abs(omega - wb_dict[wb_tuple].w_angle), wb_dict[wb_tuple]))
                 wb_dict2[water] = sorted(wb_dict2[water], key=lambda x: x[0])
             else:
-                if wb_dict2[water][1][0] < abs(omega - wb_dict[wb_tuple].w_angle):
+                if wb_dict2[water][1][0] > abs(omega - wb_dict[wb_tuple].w_angle):
                     wb_dict2[water] = [wb_dict2[water][0], (wb_dict[wb_tuple].w_angle, wb_dict[wb_tuple])]
 
         filtered_wb = []
