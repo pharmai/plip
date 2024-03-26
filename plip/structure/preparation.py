@@ -868,18 +868,24 @@ class PLInteraction:
     def refine_water_bridges(wbridges, hbonds_ldon, hbonds_pdon):
         """A donor atom already forming a hydrogen bond is not allowed to form a water bridge. Each water molecule
         can only be donor for two water bridges, selecting the constellation with the omega angle closest to 110 deg."""
-        donor_atoms_hbonds = [hb.d.idx for hb in hbonds_ldon + hbonds_pdon]
+        donor_atoms_hbonds = [hb.d_orig_idx for hb in hbonds_ldon + hbonds_pdon]
         wb_dict = {}
         wb_dict2 = {}
         omega = 110.0
 
         # Just one hydrogen bond per donor atom
-        for wbridge in [wb for wb in wbridges if wb.d.idx not in donor_atoms_hbonds]:
-            if (wbridge.water.idx, wbridge.a.idx) not in wb_dict:
-                wb_dict[(wbridge.water.idx, wbridge.a.idx)] = wbridge
+        # (TODO: looks wrong, what about donor atoms with multiple H? Does PLIP cover that somehow?
+        # and only one donor per water-acceptor combination
+        # (each water-acceptor combo only kept once after this loop,
+        # the one with angle at water closest to omega)
+        for wbridge in [wb for wb in wbridges if wb.d_orig_idx not in donor_atoms_hbonds]:
+            if (wbridge.water_orig_idx, wbridge.a_orig_idx) not in wb_dict:
+                wb_dict[(wbridge.water_orig_idx, wbridge.a_orig_idx)] = wbridge
             else:
-                if abs(omega - wb_dict[(wbridge.water.idx, wbridge.a.idx)].w_angle) > abs(omega - wbridge.w_angle):
-                    wb_dict[(wbridge.water.idx, wbridge.a.idx)] = wbridge
+                if abs(omega - wb_dict[(wbridge.water_orig_idx, wbridge.a_orig_idx)].w_angle) > abs(omega - wbridge.w_angle):
+                    wb_dict[(wbridge.water_orig_idx, wbridge.a_orig_idx)] = wbridge
+        # Just two hydrogen bonds per water molecule
+        # only the two water-acceptor combos with angle closest to omega are kept
         for wb_tuple in wb_dict:
             water, acceptor = wb_tuple
             if water not in wb_dict2:
