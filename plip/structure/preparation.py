@@ -509,11 +509,12 @@ class Mol:
         """Find all possible hydrogen bond acceptors"""
         data = namedtuple('hbondacceptor', 'a a_orig_atom a_orig_idx type')
         a_set = []
-        for atom in filter(lambda at: at.OBAtom.IsHbondAcceptor(), all_atoms):
+        for atom in all_atoms:
             if atom.atomicnum not in [9, 17, 35, 53] and atom.idx not in self.altconf:  # Exclude halogen atoms
                 a_orig_idx = self.Mapper.mapid(atom.idx, mtype=self.mtype, bsid=self.bsid)
                 a_orig_atom = self.Mapper.id_to_atom(a_orig_idx)
-                a_set.append(data(a=atom, a_orig_atom=a_orig_atom, a_orig_idx=a_orig_idx, type='regular'))
+                if a_orig_atom.OBAtom.IsHbondAcceptor():
+                    a_set.append(data(a=atom, a_orig_atom=a_orig_atom, a_orig_idx=a_orig_idx, type='regular'))
         a_set = sorted(a_set, key=lambda x: x.a_orig_idx)
         return a_set
 
@@ -522,13 +523,11 @@ class Mol:
         donor_pairs = []
         data = namedtuple('hbonddonor', 'd d_orig_atom d_orig_idx h type')
         for donor in [a for a in all_atoms if a.OBAtom.IsHbondDonor() and a.idx not in self.altconf]:
-            in_ring = False
-            if not in_ring:
-                for adj_atom in [a for a in pybel.ob.OBAtomAtomIter(donor.OBAtom) if a.IsHbondDonorH()]:
-                    d_orig_idx = self.Mapper.mapid(donor.idx, mtype=self.mtype, bsid=self.bsid)
-                    d_orig_atom = self.Mapper.id_to_atom(d_orig_idx)
-                    donor_pairs.append(data(d=donor, d_orig_atom=d_orig_atom, d_orig_idx=d_orig_idx,
-                                            h=pybel.Atom(adj_atom), type='regular'))
+            for adj_atom in [a for a in pybel.ob.OBAtomAtomIter(donor.OBAtom) if a.IsHbondDonorH()]:
+                d_orig_idx = self.Mapper.mapid(donor.idx, mtype=self.mtype, bsid=self.bsid)
+                d_orig_atom = self.Mapper.id_to_atom(d_orig_idx)
+                donor_pairs.append(data(d=donor, d_orig_atom=d_orig_atom, d_orig_idx=d_orig_idx,
+                                        h=pybel.Atom(adj_atom), type='regular'))
         for carbon in hydroph_atoms:
             for adj_atom in [a for a in pybel.ob.OBAtomAtomIter(carbon.atom.OBAtom) if a.GetAtomicNum() == 1]:
                 d_orig_idx = self.Mapper.mapid(carbon.atom.idx, mtype=self.mtype, bsid=self.bsid)
