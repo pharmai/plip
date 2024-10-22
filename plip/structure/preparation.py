@@ -12,7 +12,7 @@ from plip.basic import config, logger
 from plip.basic.supplemental import centroid, tilde_expansion, tmpfile, classify_by_name
 from plip.basic.supplemental import cluster_doubles, is_lig, normalize_vector, vector, ring_is_planar
 from plip.basic.supplemental import extract_pdbid, read_pdb, create_folder_if_not_exists, canonicalize
-from plip.basic.supplemental import read, nucleotide_linkage, sort_members_by_importance
+from plip.basic.supplemental import read, nucleotide_linkage, sort_members_by_importance, residue_belongs_to_ligand
 from plip.basic.supplemental import whichchain, whichrestype, whichresnumber, euclidean3d, int32_to_negative
 from plip.structure.detection import halogen, pication, water_bridges, metal_complexation
 from plip.structure.detection import hydrophobic_interactions, pistacking, hbonds, saltbridge
@@ -934,9 +934,8 @@ class BindingSite(Mol):
         a_set = []
         # Iterate through all residue, exclude those in (part of) chains defined as peptides
         for res in [r for r in pybel.ob.OBResidueIter(mol.OBMol)]:
-            if res.GetChain() in config.PEPTIDES:
-                if not res.GetChain() in config.RESIDUES.keys() or res.GetNum() in config.RESIDUES[res.GetChain()]:
-                    continue
+            if residue_belongs_to_ligand(res, config):
+                continue
             if config.INTRA is not None:
                 if res.GetChain() != config.INTRA:
                     continue
@@ -1448,6 +1447,15 @@ class PDBComplex:
         for ligand in self.ligands:
             self.characterize_complex(ligand)
 
+    @staticmethod
+    def atom_belongs_to_ligand(atom, lig_obj):
+        """test whether atom is part of a peptide or residue ligand."""
+        if atom.OBAtom.GetResidue().GetChain() == lig_obj.chain:
+            return True
+        if lig_obj.chain not in config.RESIDUES.keys() and atom.OBAtom.GetResidue().GetNum() in config.RESIDUES[lig_obj.chain]:
+            return True
+        return False
+
     def characterize_complex(self, ligand):
         """Handles all basic functions for characterizing the interactions for one ligand"""
 
@@ -1478,7 +1486,7 @@ class PDBComplex:
                     if idx in self.Mapper.proteinmap and self.Mapper.mapid(idx, mtype='protein') not in self.altconf]
         if ligand.type == 'PEPTIDE':
             # If peptide, don't consider the peptide chain as part of the protein binding site
-            bs_atoms = [a for a in bs_atoms if a.OBAtom.GetResidue().GetChain() != lig_obj.chain or (lig_obj.chain in config.RESIDUES.keys() and not a.OBAtom.GetResidue().GetNum() in config.RESIDUES[lig_obj.chain])]
+            bs_atoms = [a for a in bs_atoms if not self.atom_belongs_to_ligand(a, lig_obj)]
         if ligand.type == 'INTRA':
             # Interactions within the chain
             bs_atoms = [a for a in bs_atoms if a.OBAtom.GetResidue().GetChain() == lig_obj.chain]
@@ -1511,16 +1519,11 @@ class PDBComplex:
     @staticmethod
     def res_belongs_to_bs(res, cutoff, ligcentroid):
         """Check for each residue if its centroid is within a certain distance to the ligand centroid.
-        Additionally checks if a residue belongs to a segment restricted by the user (e.g. by defining a peptide chain)"""
-        rescentroid = centroid([(atm.x(), atm.y(), atm.z()) for atm in pybel.ob.OBResidueAtomIter(res)])
+        Additionally, checks if a residue belongs to a ligand."""
+        res_centroid = centroid([(atm.x(), atm.y(), atm.z()) for atm in pybel.ob.OBResidueAtomIter(res)])
         # Check geometry
-        near_enough = True if euclidean3d(rescentroid, ligcentroid) < cutoff else False
-        # Check chain membership
-        restricted_segment = False
-        if res.GetChain() in config.PEPTIDES:
-            if not res.GetChain() in config.RESIDUES.keys() or res.GetNum() in config.RESIDUES[res.GetChain()]:
-                restricted_segment = True
-        return (near_enough and not restricted_segment)
+        near_enough = True if euclidean3d(res_centroid, ligcentroid) < cutoff else False
+        return near_enough and not residue_belongs_to_ligand(res, config)
 
     def get_atom(self, idx):
         return self.atoms[idx]
