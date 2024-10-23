@@ -21,12 +21,15 @@ logger = logger.get_logger()
 
 
 class PDBParser:
-    def __init__(self, pdbpath, as_string):
-        self.as_string = as_string
-        self.pdbpath = pdbpath
-        self.num_fixed_lines = 0
+    def __init__(self, pdbpath: str, as_string: bool = False):
+        self.as_string: bool = as_string  # @expl: becomes only True if pdb file is read from stdin
+        self.pdbpath: str = pdbpath  # @expl: full filename of downloaded (from pdb id) or provided pdb file. If pdb file was read from stdin, contains the content of the file.
+        self.num_fixed_lines: int = 0
         self.covlinkage = namedtuple("covlinkage", "id1 chain1 pos1 conf1 id2 chain2 pos2 conf2")
+        # @expl: information from the LINK lines in the PDB file, conf1/2 refers to the altLoc indicator
         self.proteinmap, self.modres, self.covalent, self.altconformations, self.corrected_pdb = self.parse_pdb()
+        # @expl: proteinmap:
+        # @expl: covalent: list of all covlinkage namedtuples
 
     def parse_pdb(self):
         """Extracts additional information from PDB files.
@@ -113,8 +116,8 @@ class PDBParser:
                     j += 1
                 else:
                     i += 1
-                    j += 2
-                d[i] = j
+                    j += 2  # @question: Why += 2?
+                d[i] = j  # @question: Why not the other way around d[j] = i?
                 previous_ter = False
             # Numbering Changes at TER records
             if line.startswith("TER"):
@@ -432,7 +435,7 @@ class LigandFinder:
         """Using the covalent linkage information, find out which fragments/subunits form a ligand."""
 
         # Remove all those not considered by ligands and pairings including alternate conformations
-        ligdoubles = [[(link.id1, link.chain1, link.pos1),
+        ligdoubles = [[(link.id1, link.chain1, link.pos1),  # @question: What are ligdoubles? Why the word "doubles"?
                        (link.id2, link.chain2, link.pos2)] for link in
                       [c for c in self.covalent if c.id1 in self.lignames_kept and c.id2 in self.lignames_kept
                        and c.conf1 in ['A', ''] and c.conf2 in ['A', '']
@@ -458,7 +461,7 @@ class LigandFinder:
             return res_kmers
 
 
-class Mapper:
+class Mapper:  # @question: Why do you need this mapper?
     """Provides functions for mapping atom IDs in the correct way"""
 
     def __init__(self):
@@ -468,7 +471,7 @@ class Mapper:
 
     def mapid(self, idx, mtype, bsid=None, to='original'):  # Mapping to original IDs is standard for ligands
         if mtype == 'reversed':  # Needed to map internal ID back to original protein ID
-            return self.reversed_proteinmap[idx]
+            return self.reversed_proteinmap[idx]  # @todo: self.reversed_proteinmap must be defined inside class
         if mtype == 'protein':
             return self.proteinmap[idx]
         elif mtype == 'ligand':

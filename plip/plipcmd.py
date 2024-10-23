@@ -137,16 +137,16 @@ def run_analysis(inputstructs, inputpdbids):
     output_prefix = config.OUTPUTFILENAME
 
     if inputstructs is not None:  # Process PDB file(s)
-        num_structures = len(inputstructs)
+        num_structures = len(inputstructs)  # @question: how can it become more than one file? The tilde_expansion function does not consider this case.
         inputstructs = remove_duplicates(inputstructs)
         read_from_stdin = False
         for inputstruct in inputstructs:
-            if inputstruct == '-':
+            if inputstruct == '-':  # @expl: when user gives '-' as input, pdb file is read from stdin
                 inputstruct = sys.stdin.read()
                 read_from_stdin = True
                 if config.RAWSTRING:
                     if sys.version_info < (3,):
-                        inputstruct = bytes(inputstruct).decode('unicode_escape')
+                        inputstruct = bytes(inputstruct).decode('unicode_escape')  # @expl: in Python2, the bytes object is just a string.
                     else:
                         inputstruct = bytes(inputstruct, 'utf8').decode('unicode_escape')
             else:
