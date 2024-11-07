@@ -10,6 +10,7 @@ import logging
 import multiprocessing
 import os
 import sys
+import ast
 from argparse import ArgumentParser
 from collections import namedtuple
 
@@ -49,8 +50,9 @@ def residue_list(input_string):
             result.append(int(part))
     return result
 
-def process_pdb(pdbfile, outpath, as_string=False, outputprefix='report'):
-    """Analysis of a single PDB file. Can generate textual reports XML, PyMOL session files and images as output."""
+def process_pdb(pdbfile, outpath, as_string=False, outputprefix='report', chains=None):
+    """Analysis of a single PDB file with optional chain filtering."""
+    print(chains)
     if not as_string:
         pdb_file_name = pdbfile.split('/')[-1]
         startmessage = f'starting analysis of {pdb_file_name}'
@@ -59,8 +61,7 @@ def process_pdb(pdbfile, outpath, as_string=False, outputprefix='report'):
     logger.info(startmessage)
     mol = PDBComplex()
     mol.output_path = outpath
-    mol.load_pdb(pdbfile, as_string=as_string)
-    # @todo Offers possibility for filter function from command line (by ligand chain, position, hetid)
+    mol.load_pdb(pdbfile, as_string=as_string, chains=chains)  # Pass chains here
     for ligand in mol.ligands:
         mol.characterize_complex(ligand)
 
@@ -126,7 +127,7 @@ def remove_duplicates(slist):
     return unique
 
 
-def run_analysis(inputstructs, inputpdbids):
+def run_analysis(inputstructs, inputpdbids, chains=None):
     """Main function. Calls functions for processing, report generation and visualization."""
     pdbid, pdbpath = None, None
     # @todo For multiprocessing, implement better stacktracing for errors
@@ -157,7 +158,7 @@ def run_analysis(inputstructs, inputpdbids):
                     basename = inputstruct.split('.')[-2].split('/')[-1]
                     config.OUTPATH = '/'.join([config.BASEPATH, basename])
                     output_prefix = 'report'
-            process_pdb(inputstruct, config.OUTPATH, as_string=read_from_stdin, outputprefix=output_prefix)
+            process_pdb(inputstruct, config.OUTPATH, as_string=read_from_stdin, outputprefix=output_prefix, chains=chains)
     else:  # Try to fetch the current PDB structure(s) directly from the RCBS server
         num_pdbids = len(inputpdbids)
         inputpdbids = remove_duplicates(inputpdbids)
@@ -166,7 +167,7 @@ def run_analysis(inputstructs, inputpdbids):
             if num_pdbids > 1:
                 config.OUTPATH = '/'.join([config.BASEPATH, pdbid[1:3].upper(), pdbid.upper()])
                 output_prefix = 'report'
-            process_pdb(pdbpath, config.OUTPATH, outputprefix=output_prefix)
+            process_pdb(pdbpath, config.OUTPATH, outputprefix=output_prefix, chains=chains)
 
     if (pdbid is not None or inputstructs is not None) and config.BASEPATH is not None:
         if config.BASEPATH in ['.', './']:
@@ -254,6 +255,13 @@ def main():
     for t in thresholds:
         parser.add_argument('--%s' % t.name, dest=t.name, type=lambda val: threshold_limiter(parser, val),
                             help=argparse.SUPPRESS)
+
+    # Add argument to define receptor and ligand chains
+    parser.add_argument("--chains", dest="chains", type=str,
+                        help="Specify chains as receptor/ligand groups, e.g., '[['A'], ['B']]'. "
+                             "Use format [['A'], ['B', 'C']] to define A as receptor, and B, C as ligands.")
+
+
     arguments = parser.parse_args()
     # make sure, residues is only used together with --inter (could be expanded to --intra in the future)
     if arguments.residues and not (arguments.peptides or arguments.intra):
@@ -296,6 +304,17 @@ def main():
     config.OUTPUTFILENAME = arguments.outputfilename
     config.NOHYDRO = arguments.nohydro
     config.MODEL = arguments.model
+
+
+    try:
+        config.CHAINS = ast.literal_eval(arguments.chains) if arguments.chains else None
+        if config.CHAINS and not all(isinstance(c, list) for c in config.CHAINS):
+            raise ValueError("Chains should be specified as a list of lists, e.g., '[['A'], ['B', 'C']]'.")
+    except (ValueError, SyntaxError):
+        parser.error("The --chains option must be in the format '[['A'], ['B', 'C']]'.")
+
+    chains = arguments.chains
+
     # Make sure we have pymol with --pics and --pymol
     if config.PICS or config.PYMOL:
         try:
@@ -325,7 +344,7 @@ def main():
     if not config.WATER_BRIDGE_OMEGA_MIN < config.WATER_BRIDGE_OMEGA_MAX:
         parser.error("The water bridge omega minimum angle has to be smaller than the water bridge omega maximum angle")
     expanded_path = tilde_expansion(arguments.input) if arguments.input is not None else None
-    run_analysis(expanded_path, arguments.pdbid)  # Start main script
+    run_analysis(expanded_path, arguments.pdbid, chains=chains)  # Start main script
 
 
 if __name__ == '__main__':

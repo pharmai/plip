@@ -21,9 +21,10 @@ logger = logger.get_logger()
 
 
 class PDBParser:
-    def __init__(self, pdbpath: str, as_string: bool = False):
+    def __init__(self, pdbpath: str, as_string: bool = False,  chains: list = None):
         self.as_string: bool = as_string  # @expl: becomes only True if pdb file is read from stdin
         self.pdbpath: str = pdbpath  # @expl: full filename of downloaded (from pdb id) or provided pdb file. If pdb file was read from stdin, contains the content of the file.
+        self.chains = chains  # New chains argument to filter specified chains
         self.num_fixed_lines: int = 0
         self.covlinkage = namedtuple("covlinkage", "id1 chain1 pos1 conf1 id2 chain2 pos2 conf2")
         # @expl: information from the LINK lines in the PDB file, conf1/2 refers to the altLoc indicator
@@ -40,20 +41,20 @@ class PDBParser:
         III. Furthermore, covalent linkages between ligands and protein residues/other ligands are identified
         IV. Alternative conformations
         """
+        # Read lines from the PDB content
         if self.as_string:
-            fil = self.pdbpath.rstrip('\n').split('\n')  # Removing trailing newline character
+            fil = self.pdbpath.rstrip('\n').split('\n')  # Split content if reading from string
         else:
-            f = read(self.pdbpath)
-            fil = f.readlines()
-            f.close()
-        corrected_lines = []
+            with open(self.pdbpath, 'r') as f:
+                fil = f.readlines()
+
+        filtered_lines = []
         i, j = 0, 0  # idx and PDB numbering
         d = {}
         modres = set()
         covalent = []
         alt = []
         previous_ter = False
-
         model_dict = {0: list()}
 
         # Standard without fixing
@@ -61,31 +62,31 @@ class PDBParser:
             if not config.PLUGIN_MODE:
                 lastnum = 0  # Atom numbering (has to be consecutive)
                 other_models = False
-                # Model 0 stores header and similar additional data
-                # or the full file if no MODEL entries exist in the file
                 current_model = 0
                 for line in fil:
+                    # Check if the line belongs to relevant chains
+                    if not self.is_relevant_chain(line):
+                        continue  # Skip lines not matching specified chains
+
                     corrected_line, newnum = self.fix_pdbline(line, lastnum)
                     if corrected_line is not None:
                         if corrected_line.startswith('MODEL'):
-                            # reset atom number when new model is encountered
                             lastnum = 0
-                            try:  # Get number of MODEL (1,2,3)
+                            try:
                                 model_num = int(corrected_line[10:14])
-                                # initialize storage for new model
                                 model_dict[model_num] = list()
                                 current_model = model_num
-                                if model_num > 1:  # MODEL 2,3,4 etc.
+                                if model_num > 1:
                                     other_models = True
                             except ValueError:
-                                logger.debug(f'ignoring invalid MODEL entry: {corrected_line}')
+                                logger.debug(f'Ignoring invalid MODEL entry: {corrected_line}')
                         else:
                             lastnum = newnum
                         model_dict[current_model].append(corrected_line)
-                # select model
+
                 try:
                     if other_models:
-                        logger.info(f'selecting model {config.MODEL} for analysis')
+                        logger.info(f'Selecting model {config.MODEL} for analysis')
                     corrected_pdb = ''.join(model_dict[0])
                     corrected_lines = model_dict[0]
                     if current_model > 0:
@@ -95,7 +96,7 @@ class PDBParser:
                     corrected_pdb = ''.join(model_dict[1])
                     corrected_lines = model_dict[1]
                     config.MODEL = 1
-                    logger.warning('invalid model number specified, using first model instead')
+                    logger.warning('Invalid model number specified, using first model instead')
             else:
                 corrected_pdb = self.pdbpath
                 corrected_lines = fil
@@ -116,19 +117,33 @@ class PDBParser:
                     j += 1
                 else:
                     i += 1
-                    j += 2  # @question: Why += 2?
-                d[i] = j  # @question: Why not the other way around d[j] = i?
+                    j += 2  # Adjust numbering after TER records
+                d[i] = j
                 previous_ter = False
-            # Numbering Changes at TER records
+
             if line.startswith("TER"):
                 previous_ter = True
-            # Get modified residues
+
             if line.startswith("MODRES"):
                 modres.add(line[12:15].strip())
-            # Get covalent linkages between ligands
+
             if line.startswith("LINK"):
                 covalent.append(self.get_linkage(line))
+
         return d, modres, covalent, alt, corrected_pdb
+
+    def is_relevant_chain(self, line):
+        """Helper to check if a line belongs to one of the specified chains."""
+        if not self.chains:
+            return True  # No filtering needed if chains are not specified
+
+        # Check if the line represents an ATOM or HETATM record and matches specified chains
+        if line.startswith(("ATOM", "HETATM")):
+            all_chains = self.chains[0] + self.chains[1]
+            chain_id = line[21]  # Column 22 holds the chain ID in PDB format
+            return any(chain_id in group for group in all_chains)  # Check if chain_id is in receptor/ligand groups
+
+        return True  # Include non-atom records by default
 
     def fix_pdbline(self, pdbline, lastnum):
         """Fix a PDB line if information is missing."""
@@ -240,6 +255,12 @@ class LigandFinder:
         self.ligands = self.getligs()
         self.excluded = sorted(list(self.lignames_all.difference(set(self.lignames_kept))))
 
+    def filter_chains(self, receptor_chains, ligand_chains):
+        """Filter proteincomplex chains to include only specified receptors and ligands."""
+        self.receptor_residues = [res for res in self.proteincomplex.OBMol if res.GetChain() in receptor_chains]
+        self.ligand_residues = [res for res in self.proteincomplex.OBMol if res.GetChain() in ligand_chains]
+        logger.debug(f"Filtered to receptor chains: {receptor_chains}, ligand chains: {ligand_chains}")
+
     def getpeptides(self, chain):
         """If peptide ligand chains are defined via the command line options,
         try to extract the underlying ligand formed by all residues in the
@@ -259,7 +280,7 @@ class LigandFinder:
         Returns all non-empty ligands.
         """
 
-        if config.PEPTIDES == [] and config.INTRA is None:
+        if config.PEPTIDES == [] and config.INTRA is None and config.CHAINS is None:
             # Extract small molecule ligands (default)
             ligands = []
 
@@ -1348,7 +1369,7 @@ class PDBComplex:
         return "Protein structure %s with ligands:\n" % (self.pymol_name) + "\n".join(
             [lig for lig in formatted_lig_names])
 
-    def load_pdb(self, pdbpath, as_string=False):
+    def load_pdb(self, pdbpath, as_string=False, chains=None):
         """Loads a pdb file with protein AND ligand(s), separates and prepares them.
         If specified 'as_string', the input is a PDB string instead of a path."""
         if as_string:
@@ -1359,7 +1380,7 @@ class PDBComplex:
             self.sourcefiles['pdbcomplex.original'] = pdbpath
             self.sourcefiles['pdbcomplex'] = pdbpath
         self.information['pdbfixes'] = False
-        pdbparser = PDBParser(pdbpath, as_string=as_string)  # Parse PDB file to find errors and get additional data
+        pdbparser = PDBParser(pdbpath, as_string=as_string, chains=chains)  # Parse PDB file to find errors and get additional data
         # #@todo Refactor and rename here
         self.Mapper.proteinmap = pdbparser.proteinmap
         self.Mapper.reversed_proteinmap = {v: k for k, v in self.Mapper.proteinmap.items()}
@@ -1367,6 +1388,24 @@ class PDBComplex:
         self.covalent = pdbparser.covalent
         self.altconf = pdbparser.altconformations
         self.corrected_pdb = pdbparser.corrected_pdb
+
+
+
+        if chains:
+            receptors, ligands = chains[0], chains[1]
+            self.receptor_chains = receptors
+            self.ligand_chains = ligands
+            logger.info(f"Chains set as receptor: {receptors} and ligand: {ligands}")
+        else:
+            self.receptor_chains = None
+            self.ligand_chains = None
+        # Call LigandFinder with chain filtering if set
+        ligandfinder = LigandFinder(self.protcomplex, self.altconf, self.modres, self.covalent, self.Mapper)
+        if self.receptor_chains or self.ligand_chains:
+            ligandfinder.filter_chains(self.receptor_chains, self.ligand_chains)
+
+        self.ligands = ligandfinder.ligands
+        self.excluded = ligandfinder.excluded
 
         if not config.PLUGIN_MODE:
             if pdbparser.num_fixed_lines > 0:
