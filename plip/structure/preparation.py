@@ -12,7 +12,7 @@ from plip.basic import config, logger
 from plip.basic.supplemental import centroid, tilde_expansion, tmpfile, classify_by_name
 from plip.basic.supplemental import cluster_doubles, is_lig, normalize_vector, vector, ring_is_planar
 from plip.basic.supplemental import extract_pdbid, read_pdb, create_folder_if_not_exists, canonicalize
-from plip.basic.supplemental import read, nucleotide_linkage, sort_members_by_importance, residue_belongs_to_ligand
+from plip.basic.supplemental import read, nucleotide_linkage, sort_members_by_importance
 from plip.basic.supplemental import whichchain, whichrestype, whichresnumber, euclidean3d, int32_to_negative
 from plip.structure.detection import halogen, pication, water_bridges, metal_complexation
 from plip.structure.detection import hydrophobic_interactions, pistacking, hbonds, saltbridge
@@ -21,16 +21,12 @@ logger = logger.get_logger()
 
 
 class PDBParser:
-    def __init__(self, pdbpath: str, as_string: bool = False,  chains: list = None):
-        self.as_string: bool = as_string  # @expl: becomes only True if pdb file is read from stdin
-        self.pdbpath: str = pdbpath  # @expl: full filename of downloaded (from pdb id) or provided pdb file. If pdb file was read from stdin, contains the content of the file.
-        self.chains = chains  # New chains argument to filter specified chains
-        self.num_fixed_lines: int = 0
+    def __init__(self, pdbpath, as_string):
+        self.as_string = as_string
+        self.pdbpath = pdbpath
+        self.num_fixed_lines = 0
         self.covlinkage = namedtuple("covlinkage", "id1 chain1 pos1 conf1 id2 chain2 pos2 conf2")
-        # @expl: information from the LINK lines in the PDB file, conf1/2 refers to the altLoc indicator
         self.proteinmap, self.modres, self.covalent, self.altconformations, self.corrected_pdb = self.parse_pdb()
-        # @expl: proteinmap:
-        # @expl: covalent: list of all covlinkage namedtuples
 
     def parse_pdb(self):
         """Extracts additional information from PDB files.
@@ -41,20 +37,20 @@ class PDBParser:
         III. Furthermore, covalent linkages between ligands and protein residues/other ligands are identified
         IV. Alternative conformations
         """
-        # Read lines from the PDB content
         if self.as_string:
-            fil = self.pdbpath.rstrip('\n').split('\n')  # Split content if reading from string
+            fil = self.pdbpath.rstrip('\n').split('\n')  # Removing trailing newline character
         else:
-            with open(self.pdbpath, 'r') as f:
-                fil = f.readlines()
-
-        filtered_lines = []
+            f = read(self.pdbpath)
+            fil = f.readlines()
+            f.close()
+        corrected_lines = []
         i, j = 0, 0  # idx and PDB numbering
         d = {}
         modres = set()
         covalent = []
         alt = []
         previous_ter = False
+
         model_dict = {0: list()}
 
         # Standard without fixing
@@ -62,31 +58,31 @@ class PDBParser:
             if not config.PLUGIN_MODE:
                 lastnum = 0  # Atom numbering (has to be consecutive)
                 other_models = False
+                # Model 0 stores header and similar additional data
+                # or the full file if no MODEL entries exist in the file
                 current_model = 0
                 for line in fil:
-                    # Check if the line belongs to relevant chains
-                    if not self.is_relevant_chain(line):
-                        continue  # Skip lines not matching specified chains
-
                     corrected_line, newnum = self.fix_pdbline(line, lastnum)
                     if corrected_line is not None:
                         if corrected_line.startswith('MODEL'):
+                            # reset atom number when new model is encountered
                             lastnum = 0
-                            try:
+                            try:  # Get number of MODEL (1,2,3)
                                 model_num = int(corrected_line[10:14])
+                                # initialize storage for new model
                                 model_dict[model_num] = list()
                                 current_model = model_num
-                                if model_num > 1:
+                                if model_num > 1:  # MODEL 2,3,4 etc.
                                     other_models = True
                             except ValueError:
-                                logger.debug(f'Ignoring invalid MODEL entry: {corrected_line}')
+                                logger.debug(f'ignoring invalid MODEL entry: {corrected_line}')
                         else:
                             lastnum = newnum
                         model_dict[current_model].append(corrected_line)
-
+                # select model
                 try:
                     if other_models:
-                        logger.info(f'Selecting model {config.MODEL} for analysis')
+                        logger.info(f'selecting model {config.MODEL} for analysis')
                     corrected_pdb = ''.join(model_dict[0])
                     corrected_lines = model_dict[0]
                     if current_model > 0:
@@ -96,7 +92,7 @@ class PDBParser:
                     corrected_pdb = ''.join(model_dict[1])
                     corrected_lines = model_dict[1]
                     config.MODEL = 1
-                    logger.warning('Invalid model number specified, using first model instead')
+                    logger.warning('invalid model number specified, using first model instead')
             else:
                 corrected_pdb = self.pdbpath
                 corrected_lines = fil
@@ -117,33 +113,19 @@ class PDBParser:
                     j += 1
                 else:
                     i += 1
-                    j += 2  # Adjust numbering after TER records
+                    j += 2
                 d[i] = j
                 previous_ter = False
-
+            # Numbering Changes at TER records
             if line.startswith("TER"):
                 previous_ter = True
-
+            # Get modified residues
             if line.startswith("MODRES"):
                 modres.add(line[12:15].strip())
-
+            # Get covalent linkages between ligands
             if line.startswith("LINK"):
                 covalent.append(self.get_linkage(line))
-
         return d, modres, covalent, alt, corrected_pdb
-
-    def is_relevant_chain(self, line):
-        """Helper to check if a line belongs to one of the specified chains."""
-        if not self.chains:
-            return True  # No filtering needed if chains are not specified
-
-        # Check if the line represents an ATOM or HETATM record and matches specified chains
-        if line.startswith(("ATOM", "HETATM")):
-            all_chains = self.chains[0] + self.chains[1]
-            chain_id = line[21]  # Column 22 holds the chain ID in PDB format
-            return any(chain_id in group for group in all_chains)  # Check if chain_id is in receptor/ligand groups
-
-        return True  # Include non-atom records by default
 
     def fix_pdbline(self, pdbline, lastnum):
         """Fix a PDB line if information is missing."""
@@ -255,19 +237,13 @@ class LigandFinder:
         self.ligands = self.getligs()
         self.excluded = sorted(list(self.lignames_all.difference(set(self.lignames_kept))))
 
-    def filter_chains(self, receptor_chains, ligand_chains):
-        """Filter proteincomplex chains to include only specified receptors and ligands."""
-        self.receptor_residues = [res for res in self.proteincomplex.OBMol if res.GetChain() in receptor_chains]
-        self.ligand_residues = [res for res in self.proteincomplex.OBMol if res.GetChain() in ligand_chains]
-        logger.debug(f"Filtered to receptor chains: {receptor_chains}, ligand chains: {ligand_chains}")
-
     def getpeptides(self, chain):
         """If peptide ligand chains are defined via the command line options,
         try to extract the underlying ligand formed by all residues in the
         given chain without water
         """
         all_from_chain = [o for o in pybel.ob.OBResidueIter(
-            self.proteincomplex.OBMol) if o.GetChain() == chain and (chain not in config.RESIDUES.keys() or o.GetNum() in config.RESIDUES[chain])]  # All residues from chain
+            self.proteincomplex.OBMol) if o.GetChain() == chain]  # All residues from chain
         if len(all_from_chain) == 0:
             return None
         else:
@@ -308,8 +284,16 @@ class LigandFinder:
         else:
             # Extract peptides from given chains
             self.water = [o for o in pybel.ob.OBResidueIter(self.proteincomplex.OBMol) if o.GetResidueProperty(9)]
-            if config.PEPTIDES:
+            if config.PEPTIDES and not config.CHAINS:
                 peptide_ligands = [self.getpeptides(chain) for chain in config.PEPTIDES]
+
+            #Todo: Validate change here... Do we want to combine multiple chains to a single ligand?
+            # if yes can be easily added to the getpeptides function by flatten the resulting list - Philipp
+            elif config.CHAINS:
+                # chains is defined as list of list e.g. [['A'], ['B', 'C']] in which second list contains the
+                # ligand chains and the first one should be the receptor
+                peptide_ligands = [self.getpeptides(chain) for chain in config.CHAINS[1]]
+
             elif config.INTRA is not None:
                 peptide_ligands = [self.getpeptides(config.INTRA), ]
 
@@ -328,7 +312,7 @@ class LigandFinder:
         names = [x[0] for x in members]
         longname = '-'.join([x[0] for x in members])
 
-        if config.PEPTIDES:
+        if config.PEPTIDES or config.CHAINS:
             ligtype = 'PEPTIDE'
         elif config.INTRA is not None:
             ligtype = 'INTRA'
@@ -456,7 +440,7 @@ class LigandFinder:
         """Using the covalent linkage information, find out which fragments/subunits form a ligand."""
 
         # Remove all those not considered by ligands and pairings including alternate conformations
-        ligdoubles = [[(link.id1, link.chain1, link.pos1),  # @question: What are ligdoubles? Why the word "doubles"?
+        ligdoubles = [[(link.id1, link.chain1, link.pos1),
                        (link.id2, link.chain2, link.pos2)] for link in
                       [c for c in self.covalent if c.id1 in self.lignames_kept and c.id2 in self.lignames_kept
                        and c.conf1 in ['A', ''] and c.conf2 in ['A', '']
@@ -482,7 +466,7 @@ class LigandFinder:
             return res_kmers
 
 
-class Mapper:  # @question: Why do you need this mapper?
+class Mapper:
     """Provides functions for mapping atom IDs in the correct way"""
 
     def __init__(self):
@@ -492,7 +476,7 @@ class Mapper:  # @question: Why do you need this mapper?
 
     def mapid(self, idx, mtype, bsid=None, to='original'):  # Mapping to original IDs is standard for ligands
         if mtype == 'reversed':  # Needed to map internal ID back to original protein ID
-            return self.reversed_proteinmap[idx]  # @todo: self.reversed_proteinmap must be defined inside class
+            return self.reversed_proteinmap[idx]
         if mtype == 'protein':
             return self.proteinmap[idx]
         elif mtype == 'ligand':
@@ -956,10 +940,8 @@ class BindingSite(Mol):
         """If nucleic acids are part of the receptor, looks for negative charges in phosphate backbone"""
         data = namedtuple('pcharge', 'atoms atoms_orig_idx type center restype resnr reschain')
         a_set = []
-        # Iterate through all residue, exclude those in (part of) chains defined as peptides
-        for res in [r for r in pybel.ob.OBResidueIter(mol.OBMol)]:
-            if residue_belongs_to_ligand(res, config):
-                continue
+        # Iterate through all residue, exclude those in chains defined as peptides
+        for res in [r for r in pybel.ob.OBResidueIter(mol.OBMol) if not r.GetChain() in config.PEPTIDES]:
             if config.INTRA is not None:
                 if res.GetChain() != config.INTRA:
                     continue
@@ -1000,7 +982,7 @@ class BindingSite(Mol):
                         a_contributing.append(pybel.Atom(a))
                         a_contributing_orig_idx.append(self.Mapper.mapid(a.GetIdx(), mtype='protein'))
                 if not len(a_contributing) == 0:
-                    a_set.append(data(atoms=a_contributing,atoms_orig_idx=a_contributing_orig_idx, type='negative', 
+                    a_set.append(data(atoms=a_contributing,atoms_orig_idx=a_contributing_orig_idx, type='negative',
                                       center=centroid([ac.coords for ac in a_contributing]), restype=res.GetName(),
                                       resnr=res.GetNum(),
                                       reschain=res.GetChain()))
@@ -1369,7 +1351,7 @@ class PDBComplex:
         return "Protein structure %s with ligands:\n" % (self.pymol_name) + "\n".join(
             [lig for lig in formatted_lig_names])
 
-    def load_pdb(self, pdbpath, as_string=False, chains=None):
+    def load_pdb(self, pdbpath, as_string=False):
         """Loads a pdb file with protein AND ligand(s), separates and prepares them.
         If specified 'as_string', the input is a PDB string instead of a path."""
         if as_string:
@@ -1380,7 +1362,7 @@ class PDBComplex:
             self.sourcefiles['pdbcomplex.original'] = pdbpath
             self.sourcefiles['pdbcomplex'] = pdbpath
         self.information['pdbfixes'] = False
-        pdbparser = PDBParser(pdbpath, as_string=as_string, chains=chains)  # Parse PDB file to find errors and get additional data
+        pdbparser = PDBParser(pdbpath, as_string=as_string)  # Parse PDB file to find errors and get additional data
         # #@todo Refactor and rename here
         self.Mapper.proteinmap = pdbparser.proteinmap
         self.Mapper.reversed_proteinmap = {v: k for k, v in self.Mapper.proteinmap.items()}
@@ -1388,24 +1370,6 @@ class PDBComplex:
         self.covalent = pdbparser.covalent
         self.altconf = pdbparser.altconformations
         self.corrected_pdb = pdbparser.corrected_pdb
-
-
-
-        if chains:
-            receptors, ligands = chains[0], chains[1]
-            self.receptor_chains = receptors
-            self.ligand_chains = ligands
-            logger.info(f"Chains set as receptor: {receptors} and ligand: {ligands}")
-        else:
-            self.receptor_chains = None
-            self.ligand_chains = None
-        # Call LigandFinder with chain filtering if set
-        ligandfinder = LigandFinder(self.protcomplex, self.altconf, self.modres, self.covalent, self.Mapper)
-        if self.receptor_chains or self.ligand_chains:
-            ligandfinder.filter_chains(self.receptor_chains, self.ligand_chains)
-
-        self.ligands = ligandfinder.ligands
-        self.excluded = ligandfinder.excluded
 
         if not config.PLUGIN_MODE:
             if pdbparser.num_fixed_lines > 0:
@@ -1489,15 +1453,6 @@ class PDBComplex:
         for ligand in self.ligands:
             self.characterize_complex(ligand)
 
-    @staticmethod
-    def atom_belongs_to_ligand(atom, lig_obj):
-        """test whether atom is part of a peptide or residue ligand."""
-        if atom.OBAtom.GetResidue().GetChain() == lig_obj.chain:
-            if lig_obj.chain not in config.RESIDUES.keys() or atom.OBAtom.GetResidue().GetNum() in config.RESIDUES[
-                lig_obj.chain]:
-                return True
-        return False
-
     def characterize_complex(self, ligand):
         """Handles all basic functions for characterizing the interactions for one ligand"""
 
@@ -1528,7 +1483,7 @@ class PDBComplex:
                     if idx in self.Mapper.proteinmap and self.Mapper.mapid(idx, mtype='protein') not in self.altconf]
         if ligand.type == 'PEPTIDE':
             # If peptide, don't consider the peptide chain as part of the protein binding site
-            bs_atoms = [a for a in bs_atoms if not self.atom_belongs_to_ligand(a, lig_obj)]
+            bs_atoms = [a for a in bs_atoms if a.OBAtom.GetResidue().GetChain() != lig_obj.chain]
         if ligand.type == 'INTRA':
             # Interactions within the chain
             bs_atoms = [a for a in bs_atoms if a.OBAtom.GetResidue().GetChain() == lig_obj.chain]
@@ -1561,11 +1516,20 @@ class PDBComplex:
     @staticmethod
     def res_belongs_to_bs(res, cutoff, ligcentroid):
         """Check for each residue if its centroid is within a certain distance to the ligand centroid.
-        Additionally, checks if a residue belongs to a ligand."""
-        res_centroid = centroid([(atm.x(), atm.y(), atm.z()) for atm in pybel.ob.OBResidueAtomIter(res)])
+        Additionally checks if a residue belongs to a chain restricted by the user (e.g. by defining a peptide chain)"""
+        rescentroid = centroid([(atm.x(), atm.y(), atm.z()) for atm in pybel.ob.OBResidueAtomIter(res)])
         # Check geometry
-        near_enough = True if euclidean3d(res_centroid, ligcentroid) < cutoff else False
-        return near_enough and not residue_belongs_to_ligand(res, config)
+        near_enough = True if euclidean3d(rescentroid, ligcentroid) < cutoff else False
+        # Check chain membership
+        if config.PEPTIDES:
+            restricted_chain = True if res.GetChain() in config.PEPTIDES else False
+        #Todo: Test if properly working
+        # Add restriction via chains flag
+        if config.CHAINS:
+            #print(config.CHAINS[0], res.GetChain(), res.GetChain() in config.CHAINS[0])
+            restricted_chain = True if res.GetChain() not in config.CHAINS[0] else False
+
+        return (near_enough and not restricted_chain)
 
     def get_atom(self, idx):
         return self.atoms[idx]

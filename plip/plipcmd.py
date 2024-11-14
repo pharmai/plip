@@ -50,9 +50,8 @@ def residue_list(input_string):
             result.append(int(part))
     return result
 
-def process_pdb(pdbfile, outpath, as_string=False, outputprefix='report', chains=None):
+def process_pdb(pdbfile, outpath, as_string=False, outputprefix='report'):
     """Analysis of a single PDB file with optional chain filtering."""
-    print(chains)
     if not as_string:
         pdb_file_name = pdbfile.split('/')[-1]
         startmessage = f'starting analysis of {pdb_file_name}'
@@ -61,7 +60,7 @@ def process_pdb(pdbfile, outpath, as_string=False, outputprefix='report', chains
     logger.info(startmessage)
     mol = PDBComplex()
     mol.output_path = outpath
-    mol.load_pdb(pdbfile, as_string=as_string, chains=chains)  # Pass chains here
+    mol.load_pdb(pdbfile, as_string=as_string)
     for ligand in mol.ligands:
         mol.characterize_complex(ligand)
 
@@ -158,7 +157,7 @@ def run_analysis(inputstructs, inputpdbids, chains=None):
                     basename = inputstruct.split('.')[-2].split('/')[-1]
                     config.OUTPATH = '/'.join([config.BASEPATH, basename])
                     output_prefix = 'report'
-            process_pdb(inputstruct, config.OUTPATH, as_string=read_from_stdin, outputprefix=output_prefix, chains=chains)
+            process_pdb(inputstruct, config.OUTPATH, as_string=read_from_stdin, outputprefix=output_prefix)
     else:  # Try to fetch the current PDB structure(s) directly from the RCBS server
         num_pdbids = len(inputpdbids)
         inputpdbids = remove_duplicates(inputpdbids)
@@ -167,7 +166,7 @@ def run_analysis(inputstructs, inputpdbids, chains=None):
             if num_pdbids > 1:
                 config.OUTPATH = '/'.join([config.BASEPATH, pdbid[1:3].upper(), pdbid.upper()])
                 output_prefix = 'report'
-            process_pdb(pdbpath, config.OUTPATH, outputprefix=output_prefix, chains=chains)
+            process_pdb(pdbpath, config.OUTPATH, outputprefix=output_prefix)
 
     if (pdbid is not None or inputstructs is not None) and config.BASEPATH is not None:
         if config.BASEPATH in ['.', './']:
@@ -313,7 +312,6 @@ def main():
     except (ValueError, SyntaxError):
         parser.error("The --chains option must be in the format '[['A'], ['B', 'C']]'.")
 
-    chains = arguments.chains
 
     # Make sure we have pymol with --pics and --pymol
     if config.PICS or config.PYMOL:
@@ -344,7 +342,7 @@ def main():
     if not config.WATER_BRIDGE_OMEGA_MIN < config.WATER_BRIDGE_OMEGA_MAX:
         parser.error("The water bridge omega minimum angle has to be smaller than the water bridge omega maximum angle")
     expanded_path = tilde_expansion(arguments.input) if arguments.input is not None else None
-    run_analysis(expanded_path, arguments.pdbid, chains=chains)  # Start main script
+    run_analysis(expanded_path, arguments.pdbid)  # Start main script
 
 
 if __name__ == '__main__':

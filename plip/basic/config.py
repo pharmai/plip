@@ -32,6 +32,8 @@ OUTPUTFILENAME = "report"  # Naming for the TXT and XML report files
 NOPDBCANMAP = False  # Skip calculation of mapping canonical atom order: PDB atom order
 NOHYDRO = False  # Do not add hydrogen bonds (in case already present in the structure)
 MODEL = 1  # The model to be selected for multi-model structures (default = 1).
+CHAINS = None # Define chains for protein-protein interaction detection
+
 
 # Configuration file for Protein-Ligand Interaction Profiler (PLIP)
 # Set thresholds for detection of interactions
