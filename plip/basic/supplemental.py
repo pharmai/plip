@@ -55,6 +55,14 @@ def whichchain(atom):
     return atom.GetResidue().GetChain() if atom.GetResidue() is not None else None
 
 
+def residue_belongs_to_ligand(res, config):
+    """tests whether the residue is part of a peptide or residue ligand."""
+    if res.GetChain() in config.PEPTIDES:
+        if res.GetChain() not in config.RESIDUES.keys() or res.GetNum() in config.RESIDUES[res.GetChain()]:
+            return True
+    return False
+
+
 #########################
 # Mathematical operations
 #########################

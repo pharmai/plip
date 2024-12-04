@@ -256,7 +256,7 @@ class LigandFinder:
         Returns all non-empty ligands.
         """
 
-        if config.PEPTIDES == [] and config.INTRA is None:
+        if config.PEPTIDES == [] and config.INTRA is None and config.CHAINS is None:
             # Extract small molecule ligands (default)
             ligands = []
 
@@ -284,8 +284,16 @@ class LigandFinder:
         else:
             # Extract peptides from given chains
             self.water = [o for o in pybel.ob.OBResidueIter(self.proteincomplex.OBMol) if o.GetResidueProperty(9)]
-            if config.PEPTIDES:
+            if config.PEPTIDES and not config.CHAINS:
                 peptide_ligands = [self.getpeptides(chain) for chain in config.PEPTIDES]
+
+            #Todo: Validate change here... Do we want to combine multiple chains to a single ligand?
+            # if yes can be easily added to the getpeptides function by flatten the resulting list - Philipp
+            elif config.CHAINS:
+                # chains is defined as list of list e.g. [['A'], ['B', 'C']] in which second list contains the
+                # ligand chains and the first one should be the receptor
+                peptide_ligands = [self.getpeptides(chain) for chain in config.CHAINS[1]]
+
             elif config.INTRA is not None:
                 peptide_ligands = [self.getpeptides(config.INTRA), ]
 
@@ -304,7 +312,7 @@ class LigandFinder:
         names = [x[0] for x in members]
         longname = '-'.join([x[0] for x in members])
 
-        if config.PEPTIDES:
+        if config.PEPTIDES or config.CHAINS:
             ligtype = 'PEPTIDE'
         elif config.INTRA is not None:
             ligtype = 'INTRA'
@@ -992,7 +1000,7 @@ class BindingSite(Mol):
                         a_contributing.append(pybel.Atom(a))
                         a_contributing_orig_idx.append(self.Mapper.mapid(a.GetIdx(), mtype='protein'))
                 if not len(a_contributing) == 0:
-                    a_set.append(data(atoms=a_contributing,atoms_orig_idx=a_contributing_orig_idx, type='negative', 
+                    a_set.append(data(atoms=a_contributing,atoms_orig_idx=a_contributing_orig_idx, type='negative',
                                       center=centroid([ac.coords for ac in a_contributing]), restype=res.GetName(),
                                       resnr=res.GetNum(),
                                       reschain=res.GetChain()))
@@ -1568,7 +1576,14 @@ class PDBComplex:
         # Check geometry
         near_enough = True if euclidean3d(rescentroid, ligcentroid) < cutoff else False
         # Check chain membership
-        restricted_chain = True if res.GetChain() in config.PEPTIDES else False
+        if config.PEPTIDES:
+            restricted_chain = True if res.GetChain() in config.PEPTIDES else False
+        #Todo: Test if properly working
+        # Add restriction via chains flag
+        if config.CHAINS:
+            #print(config.CHAINS[0], res.GetChain(), res.GetChain() in config.CHAINS[0])
+            restricted_chain = True if res.GetChain() not in config.CHAINS[0] else False
+
         return (near_enough and not restricted_chain)
 
     def get_atom(self, idx):
