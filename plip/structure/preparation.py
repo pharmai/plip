@@ -14,6 +14,7 @@ from plip.basic.supplemental import cluster_doubles, is_lig, normalize_vector, v
 from plip.basic.supplemental import extract_pdbid, read_pdb, create_folder_if_not_exists, canonicalize
 from plip.basic.supplemental import read, nucleotide_linkage, sort_members_by_importance
 from plip.basic.supplemental import whichchain, whichrestype, whichresnumber, euclidean3d, int32_to_negative
+from plip.basic.supplemental import residue_belongs_to_target
 from plip.structure.detection import halogen, pication, water_bridges, metal_complexation
 from plip.structure.detection import hydrophobic_interactions, pistacking, hbonds, saltbridge
 
@@ -959,11 +960,7 @@ class BindingSite(Mol):
         data = namedtuple('pcharge', 'atoms atoms_orig_idx type center restype resnr reschain')
         a_set = []
         # Iterate through all residue, exclude those in chains defined as peptides
-        chain_config = config.CHAINS if config.CHAINS else [[], []]
-        for res in [r for r in pybel.ob.OBResidueIter(mol.OBMol) if not r.GetChain() in config.PEPTIDES and not r.GetChain() in chain_config[1]]:
-            if config.CHAINS:
-                if res.GetChain() not in config.CHAINS[0]:
-                    continue
+        for res in [r for r in pybel.ob.OBResidueIter(mol.OBMol) if residue_belongs_to_target(r, config)]:
             if config.INTRA is not None:
                 if res.GetChain() != config.INTRA:
                     continue
@@ -1579,16 +1576,9 @@ class PDBComplex:
         rescentroid = centroid([(atm.x(), atm.y(), atm.z()) for atm in pybel.ob.OBResidueAtomIter(res)])
         # Check geometry
         near_enough = True if euclidean3d(rescentroid, ligcentroid) < cutoff else False
-        # Check chain membership
-        if config.PEPTIDES and not config.CHAINS:
-            restricted_chain = True if res.GetChain() in config.PEPTIDES else False
         #Todo: Test if properly working
         # Add restriction via chains flag
-        if config.CHAINS:
-            #print(config.CHAINS[0], res.GetChain(), res.GetChain() in config.CHAINS[0])
-            restricted_chain = True if res.GetChain() not in config.CHAINS[0] else False
-
-        return (near_enough and not restricted_chain)
+        return near_enough and residue_belongs_to_target(res, config)
 
     def get_atom(self, idx):
         return self.atoms[idx]
