@@ -1576,7 +1576,7 @@ class PDBComplex:
         # Check geometry
         near_enough = True if euclidean3d(rescentroid, ligcentroid) < cutoff else False
         # Check chain membership
-        if config.PEPTIDES:
+        if config.PEPTIDES and not config.CHAINS:
             restricted_chain = True if res.GetChain() in config.PEPTIDES else False
         #Todo: Test if properly working
         # Add restriction via chains flag
