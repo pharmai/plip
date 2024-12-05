@@ -959,7 +959,11 @@ class BindingSite(Mol):
         data = namedtuple('pcharge', 'atoms atoms_orig_idx type center restype resnr reschain')
         a_set = []
         # Iterate through all residue, exclude those in chains defined as peptides
-        for res in [r for r in pybel.ob.OBResidueIter(mol.OBMol) if not r.GetChain() in config.PEPTIDES]:
+        chain_config = config.CHAINS if config.CHAINS else [[], []]
+        for res in [r for r in pybel.ob.OBResidueIter(mol.OBMol) if not r.GetChain() in config.PEPTIDES and not r.GetChain() in chain_config[1]]:
+            if config.CHAINS:
+                if res.GetChain() not in config.CHAINS[0]:
+                    continue
             if config.INTRA is not None:
                 if res.GetChain() != config.INTRA:
                     continue
@@ -1200,7 +1204,7 @@ class Ligand(Mol):
         """
         data = namedtuple('lcharge', 'atoms orig_atoms atoms_orig_idx type center fgroup')
         a_set = []
-        if not (config.INTRA or config.PEPTIDES):
+        if not (config.INTRA or config.PEPTIDES or config.CHAINS):
             for a in all_atoms:
                 a_orig_idx = self.Mapper.mapid(a.idx, mtype=self.mtype, bsid=self.bsid)
                 a_orig = self.Mapper.id_to_atom(a_orig_idx)
