@@ -271,7 +271,7 @@ def main():
     config.INTRA = arguments.intra
     config.NOFIX = arguments.nofix
     config.NOFIXFILE = arguments.nofixfile
-    config.NOPDBCANMAP = arguments.nopdbcanmap
+    config.NOPDBCANMAP = bool(arguments.nopdbcanmap or config.INTRA or config.PEPTIDES)
     config.KEEPMOD = arguments.keepmod
     config.DNARECEPTOR = arguments.dnareceptor
     config.OUTPUTFILENAME = arguments.outputfilename

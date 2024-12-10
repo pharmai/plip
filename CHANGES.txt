@@ -1,5 +1,11 @@
 Changelog
 ---------
+# 2.3.1
+* fixes in interaction detection with peptide ligands by @kalinni in #153
+* fix in hydrogen bond acceptor identification by @kalinni in #151
+* fixes in waterbridge detection and filtering by @kalinni in #152
+* fix NumPy DeprecationWarning when using numpy.uint32 with negative numbers by @QY0831 in #150
+
 # 2.3.0
 * fixes an issue that caused encoding errors to be thrown
 * salt bridge interaction improved
