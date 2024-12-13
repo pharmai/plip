@@ -55,13 +55,15 @@ def whichchain(atom):
     return atom.GetResidue().GetChain() if atom.GetResidue() is not None else None
 
 
-def residue_belongs_to_target(res, config):
-    """tests whether the residue is part of a peptide or residue ligand or is not defined as target."""
+def residue_belongs_to_receptor(res, config):
+    """tests whether the residue is defined as receptor and is not part of a peptide or residue ligand."""
     if config.CHAINS:
-        if config.CHAINS[0]:  # if target chains were given
-            return res.GetChain() in config.CHAINS[0]  # True if residue is part of target chains
-        if config.CHAINS[1]:  # if ligand but no target chains were given
+        if config.CHAINS[0] and config.CHAINS[1]:  # if receptor and ligand chains were given
+            return res.GetChain() in config.CHAINS[0] and res.GetChain() not in config.CHAINS[1]
+            # True if residue is part of receptor chains and not of ligand chains
+        if config.CHAINS[1]:  # if only ligand chains were given
             return res.GetChain() not in config.CHAINS[1]  # True if residue is not part of ligand chains
+        return False  # if only receptor chains were given or both is empty
     return res.GetChain() not in config.PEPTIDES  # True if residue is not part of peptide ligand.
 
 

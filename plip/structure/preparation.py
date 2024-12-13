@@ -14,7 +14,7 @@ from plip.basic.supplemental import cluster_doubles, is_lig, normalize_vector, v
 from plip.basic.supplemental import extract_pdbid, read_pdb, create_folder_if_not_exists, canonicalize
 from plip.basic.supplemental import read, nucleotide_linkage, sort_members_by_importance
 from plip.basic.supplemental import whichchain, whichrestype, whichresnumber, euclidean3d, int32_to_negative
-from plip.basic.supplemental import residue_belongs_to_target
+from plip.basic.supplemental import residue_belongs_to_receptor
 from plip.structure.detection import halogen, pication, water_bridges, metal_complexation
 from plip.structure.detection import hydrophobic_interactions, pistacking, hbonds, saltbridge
 
@@ -960,7 +960,7 @@ class BindingSite(Mol):
         data = namedtuple('pcharge', 'atoms atoms_orig_idx type center restype resnr reschain')
         a_set = []
         # Iterate through all residue, exclude those in chains defined as peptides
-        for res in [r for r in pybel.ob.OBResidueIter(mol.OBMol) if residue_belongs_to_target(r, config)]:
+        for res in [r for r in pybel.ob.OBResidueIter(mol.OBMol) if residue_belongs_to_receptor(r, config)]:
             if config.INTRA is not None:
                 if res.GetChain() != config.INTRA:
                     continue
@@ -1578,7 +1578,7 @@ class PDBComplex:
         near_enough = True if euclidean3d(rescentroid, ligcentroid) < cutoff else False
         #Todo: Test if properly working
         # Add restriction via chains flag
-        return near_enough and residue_belongs_to_target(res, config)
+        return near_enough and residue_belongs_to_receptor(res, config)
 
     def get_atom(self, idx):
         return self.atoms[idx]
