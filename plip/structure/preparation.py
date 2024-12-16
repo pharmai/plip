@@ -752,7 +752,7 @@ class PLInteraction:
         hydroph = [h for h in sel2.values()]
         hydroph_final = []
         #  3. If a protein atom interacts with several neighboring ligand atoms, just keep the one with the closest dist
-        if config.PEPTIDES or config.INTRA:
+        if config.PEPTIDES or config.INTRA or config.CHAINS:
             # the ligand also consists of amino acid residues, repeat step 2 just the other way around
             sel3 = {}
             for h in hydroph:
@@ -1060,7 +1060,7 @@ class Ligand(Mol):
         self.complex = cclass
         self.molecule = ligand.mol  # Pybel Molecule
         # get canonical SMILES String, but not for peptide ligand (tend to be too long -> openBabel crashes)
-        self.smiles = "" if (config.INTRA or config.PEPTIDES) else self.molecule.write(format='can')
+        self.smiles = "" if (config.INTRA or config.PEPTIDES or config.CHAINS) else self.molecule.write(format='can')
         self.inchikey = self.molecule.write(format='inchikey')
         self.can_to_pdb = ligand.can_to_pdb
         if not len(self.smiles) == 0:
