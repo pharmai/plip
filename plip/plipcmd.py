@@ -304,13 +304,19 @@ def main():
     config.NOHYDRO = arguments.nohydro
     config.MODEL = arguments.model
 
-
     try:
-        config.CHAINS = ast.literal_eval(arguments.chains) if arguments.chains else None
+        # add inner quotes for python backend
+        if not arguments.chains:
+            config.CHAINS = None
+        else:
+            import re
+            quoted_input = re.sub(r'(?<!["\'])\b([a-zA-Z0-9_]+)\b(?!["\'])', r'"\1"', arguments.chains)
+            config.CHAINS = ast.literal_eval(quoted_input)
+        print(config.CHAINS)
         if config.CHAINS and not all(isinstance(c, list) for c in config.CHAINS):
-            raise ValueError("Chains should be specified as a list of lists, e.g., '[['A'], ['B', 'C']]'.")
+            raise ValueError("Chains should be specified as a list of lists, e.g., '[[A], [B, C]]'.")
     except (ValueError, SyntaxError):
-        parser.error("The --chains option must be in the format '[['A'], ['B', 'C']]'.")
+        parser.error("The --chains option must be in the format '[[A], [B, C]]'.")
 
 
     # Make sure we have pymol with --pics and --pymol
