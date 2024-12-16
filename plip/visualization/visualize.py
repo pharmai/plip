@@ -19,7 +19,7 @@ def visualize_in_pymol(plcomplex):
     pdbid = plcomplex.pdbid
     lig_members = plcomplex.lig_members
     chain = plcomplex.chain
-    if config.PEPTIDES:
+    if config.PEPTIDES or config.CHAINS:
         vis.ligname = 'PeptideChain%s' % plcomplex.chain
     if config.INTRA is not None:
         vis.ligname = 'Intra%s' % plcomplex.chain
@@ -100,7 +100,7 @@ def visualize_in_pymol(plcomplex):
         cmd.hide('cartoon', '%sLines' % plcomplex.pdbid)
         cmd.show('lines', '%sLines' % plcomplex.pdbid)
 
-    if config.PEPTIDES:
+    if config.PEPTIDES or config.CHAINS:
         filename = "%s_PeptideChain%s" % (pdbid.upper(), plcomplex.chain)
         if config.PYMOL:
             vis.save_session(config.OUTPATH, override=filename)
