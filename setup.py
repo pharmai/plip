@@ -6,8 +6,9 @@ from distutils.command.build import build
 from plip.basic import config
 
 def install_pkg_via_pip(package):
-        import subprocess
-        subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--user', package])
+    import sys
+    import subprocess
+    subprocess.check_call([sys.executable, '-m', 'pip', 'install', package])
 
 def build_ob_py_bindings():
     """ Fix openbabel issue (https://github.com/openbabel/openbabel/issues/2408) manually
