@@ -48,3 +48,4 @@ target/
 # Other
 *~
 .nfs*
+tests/
