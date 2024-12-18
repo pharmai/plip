@@ -14,6 +14,7 @@ from plip.basic.supplemental import cluster_doubles, is_lig, normalize_vector, v
 from plip.basic.supplemental import extract_pdbid, read_pdb, create_folder_if_not_exists, canonicalize
 from plip.basic.supplemental import read, nucleotide_linkage, sort_members_by_importance
 from plip.basic.supplemental import whichchain, whichrestype, whichresnumber, euclidean3d, int32_to_negative
+from plip.basic.supplemental import residue_belongs_to_receptor
 from plip.structure.detection import halogen, pication, water_bridges, metal_complexation
 from plip.structure.detection import hydrophobic_interactions, pistacking, hbonds, saltbridge
 
@@ -256,7 +257,7 @@ class LigandFinder:
         Returns all non-empty ligands.
         """
 
-        if config.PEPTIDES == [] and config.INTRA is None:
+        if config.PEPTIDES == [] and config.INTRA is None and config.CHAINS is None:
             # Extract small molecule ligands (default)
             ligands = []
 
@@ -284,8 +285,16 @@ class LigandFinder:
         else:
             # Extract peptides from given chains
             self.water = [o for o in pybel.ob.OBResidueIter(self.proteincomplex.OBMol) if o.GetResidueProperty(9)]
-            if config.PEPTIDES:
+            if config.PEPTIDES and not config.CHAINS:
                 peptide_ligands = [self.getpeptides(chain) for chain in config.PEPTIDES]
+
+            #Todo: Validate change here... Do we want to combine multiple chains to a single ligand?
+            # if yes can be easily added to the getpeptides function by flatten the resulting list - Philipp
+            elif config.CHAINS:
+                # chains is defined as list of list e.g. [['A'], ['B', 'C']] in which second list contains the
+                # ligand chains and the first one should be the receptor
+                peptide_ligands = [self.getpeptides(chain) for chain in config.CHAINS[1]]
+
             elif config.INTRA is not None:
                 peptide_ligands = [self.getpeptides(config.INTRA), ]
 
@@ -304,7 +313,7 @@ class LigandFinder:
         names = [x[0] for x in members]
         longname = '-'.join([x[0] for x in members])
 
-        if config.PEPTIDES:
+        if config.PEPTIDES or config.CHAINS:
             ligtype = 'PEPTIDE'
         elif config.INTRA is not None:
             ligtype = 'INTRA'
@@ -743,7 +752,7 @@ class PLInteraction:
         hydroph = [h for h in sel2.values()]
         hydroph_final = []
         #  3. If a protein atom interacts with several neighboring ligand atoms, just keep the one with the closest dist
-        if config.PEPTIDES or config.INTRA:
+        if config.PEPTIDES or config.INTRA or config.CHAINS:
             # the ligand also consists of amino acid residues, repeat step 2 just the other way around
             sel3 = {}
             for h in hydroph:
@@ -951,7 +960,7 @@ class BindingSite(Mol):
         data = namedtuple('pcharge', 'atoms atoms_orig_idx type center restype resnr reschain')
         a_set = []
         # Iterate through all residue, exclude those in chains defined as peptides
-        for res in [r for r in pybel.ob.OBResidueIter(mol.OBMol) if not r.GetChain() in config.PEPTIDES]:
+        for res in [r for r in pybel.ob.OBResidueIter(mol.OBMol) if residue_belongs_to_receptor(r, config)]:
             if config.INTRA is not None:
                 if res.GetChain() != config.INTRA:
                     continue
@@ -992,7 +1001,7 @@ class BindingSite(Mol):
                         a_contributing.append(pybel.Atom(a))
                         a_contributing_orig_idx.append(self.Mapper.mapid(a.GetIdx(), mtype='protein'))
                 if not len(a_contributing) == 0:
-                    a_set.append(data(atoms=a_contributing,atoms_orig_idx=a_contributing_orig_idx, type='negative', 
+                    a_set.append(data(atoms=a_contributing,atoms_orig_idx=a_contributing_orig_idx, type='negative',
                                       center=centroid([ac.coords for ac in a_contributing]), restype=res.GetName(),
                                       resnr=res.GetNum(),
                                       reschain=res.GetChain()))
@@ -1051,7 +1060,7 @@ class Ligand(Mol):
         self.complex = cclass
         self.molecule = ligand.mol  # Pybel Molecule
         # get canonical SMILES String, but not for peptide ligand (tend to be too long -> openBabel crashes)
-        self.smiles = "" if (config.INTRA or config.PEPTIDES) else self.molecule.write(format='can')
+        self.smiles = "" if (config.INTRA or config.PEPTIDES or config.CHAINS) else self.molecule.write(format='can')
         self.inchikey = self.molecule.write(format='inchikey')
         self.can_to_pdb = ligand.can_to_pdb
         if not len(self.smiles) == 0:
@@ -1192,7 +1201,7 @@ class Ligand(Mol):
         """
         data = namedtuple('lcharge', 'atoms orig_atoms atoms_orig_idx type center fgroup')
         a_set = []
-        if not (config.INTRA or config.PEPTIDES):
+        if not (config.INTRA or config.PEPTIDES or config.CHAINS):
             for a in all_atoms:
                 a_orig_idx = self.Mapper.mapid(a.idx, mtype=self.mtype, bsid=self.bsid)
                 a_orig = self.Mapper.id_to_atom(a_orig_idx)
@@ -1567,9 +1576,9 @@ class PDBComplex:
         rescentroid = centroid([(atm.x(), atm.y(), atm.z()) for atm in pybel.ob.OBResidueAtomIter(res)])
         # Check geometry
         near_enough = True if euclidean3d(rescentroid, ligcentroid) < cutoff else False
-        # Check chain membership
-        restricted_chain = True if res.GetChain() in config.PEPTIDES else False
-        return (near_enough and not restricted_chain)
+        #Todo: Test if properly working
+        # Add restriction via chains flag
+        return near_enough and residue_belongs_to_receptor(res, config)
 
     def get_atom(self, idx):
         return self.atoms[idx]
