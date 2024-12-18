@@ -1,5 +1,10 @@
 Changelog
 ---------
+# 2.4.0
+* new "--chains" flag to enable detection of interactions between protein chains by @PhiCMS and @snbolz
+* update setup.py, attempt to fix and install broken python openbabel bindings 3.1.1.1
+* update Dockerfile
+
 # 2.3.1
 * fixes in interaction detection with peptide ligands by @kalinni in #153
 * fix in hydrogen bond acceptor identification by @kalinni in #151
