@@ -363,16 +363,14 @@ def canonicalize(lig, preserve_bond_order=False):
 
 
 def int32_to_negative(int32):
-    """Checks if a suspicious number (e.g. ligand position) is in fact a negative number represented as a
-    32 bit integer and returns the actual number.
+    """Checks if a suspicious number (e.g., ligand position) is in fact a negative number represented as a
+    32-bit integer and returns the actual number.
     """
-    dct = {}
     if int32 == 4294967295:  # Special case in some structures (note, this is just a workaround)
         return -1
-    for i in range(-1000, -1):
-        dct[int(np.array(i).astype(np.uint32))] = i
-    if int32 in dct:
-        return dct[int32]
+    uint32_value = np.uint32(int32)
+    if uint32_value >= 2147483648:
+        return int(uint32_value - 4294967296)
     else:
         return int32
 
