@@ -243,8 +243,14 @@ class LigandFinder:
         try to extract the underlying ligand formed by all residues in the
         given chain without water
         """
-        all_from_chain = [o for o in pybel.ob.OBResidueIter(
-            self.proteincomplex.OBMol) if o.GetChain() == chain and not self.is_het_residue(o)]  # All residues from chain
+        # All residues from chain
+        if config.KEEPMOD:
+            all_from_chain = [o for o in pybel.ob.OBResidueIter(
+                self.proteincomplex.OBMol) if o.GetChain() == chain and (not self.is_het_residue(o) or
+                                                                         o.GetName() in self.modresidues)]
+        else:
+            all_from_chain = [o for o in pybel.ob.OBResidueIter(
+                self.proteincomplex.OBMol) if o.GetChain() == chain and not self.is_het_residue(o)]
         if len(all_from_chain) == 0:
             return None
         else:
