@@ -1493,11 +1493,19 @@ class PDBComplex:
         if len(self.excluded) != 0:
             logger.info(f'excluded molecules as ligands: {self.excluded}')
 
-        if config.DNARECEPTOR:
+        if config.DNARECEPTOR and config.KEEPMOD:
             self.resis = [obres for obres in pybel.ob.OBResidueIter(
                 self.protcomplex.OBMol) if obres.GetName() in config.DNA + config.RNA
                 ] + [obres for obres in pybel.ob.OBResidueIter(
-                    self.protcomplex.OBMol) if obres.GetResidueProperty(0)]
+                    self.protcomplex.OBMol) if obres.GetResidueProperty(0) or obres.GetName() in self.modres]
+        elif config.DNARECEPTOR:
+            self.resis = [obres for obres in pybel.ob.OBResidueIter(
+                self.protcomplex.OBMol) if obres.GetName() in config.DNA + config.RNA
+                          ] + [obres for obres in pybel.ob.OBResidueIter(
+                self.protcomplex.OBMol) if obres.GetResidueProperty(0)]
+        elif config.KEEPMOD:
+            self.resis = [obres for obres in pybel.ob.OBResidueIter(
+                self.protcomplex.OBMol) if obres.GetResidueProperty(0) or obres.GetName() in self.modres]
         else:
             self.resis = [obres for obres in pybel.ob.OBResidueIter(
                 self.protcomplex.OBMol) if obres.GetResidueProperty(0)]
@@ -1538,7 +1546,12 @@ class PDBComplex:
 
         lig_obj = Ligand(self, ligand)
         cutoff = lig_obj.max_dist_to_center + config.BS_DIST
-        bs_res = self.extract_bs(cutoff, lig_obj.centroid, self.resis)
+
+        resis = self.resis
+        if config.KEEPMOD:
+            resis = self.exclude_ligand_modresidues(lig_obj.members, resis)
+
+        bs_res = self.extract_bs(cutoff, lig_obj.centroid, resis)
         # Get a list of all atoms belonging to the binding site, search by idx
         bs_atoms = [self.atoms[idx] for idx in [i for i in self.atoms.keys()
                                                 if self.atoms[i].OBAtom.GetResidue().GetIdx() in bs_res]
@@ -1570,6 +1583,15 @@ class PDBComplex:
         bs_obj = BindingSite(bs_atoms_refined, self.protcomplex, self, self.altconf, min_dist, self.Mapper)
         pli_obj = PLInteraction(lig_obj, bs_obj, self)
         self.interaction_sets[ligand.mol.title] = pli_obj
+
+    def exclude_ligand_modresidues(self, ligmembers, resis):
+        """If the ligand contains modified residues, exclude these from the receptor residues."""
+        lig_modres = [member for member in ligmembers if member[0] in self.modres]
+        if lig_modres:
+            return [obres for obres in resis if
+                    not (obres.GetName(), obres.GetChain(), int32_to_negative(obres.GetNum())) in lig_modres]
+        else:
+            return resis
 
     def extract_bs(self, cutoff, ligcentroid, resis):
         """Return list of ids from residues belonging to the binding site"""
