@@ -591,6 +591,94 @@ class Mol:
                                       type=ring_type))
         return rings
 
+    def append_func_group_to_data(self, a, a_set, data, a_orig_idx, charge_type, center, fgroup, res=None):
+        """Appends atoms that are part of a functional group as named tuple to the a_set"""
+        if not res:
+            if not isinstance(a, list):
+                a_orig = self.Mapper.id_to_atom(a_orig_idx)
+                a = [a, ]
+                a_orig = [a_orig, ]
+                a_orig_idx = [a_orig_idx, ]
+            else:
+                a_orig = [self.Mapper.id_to_atom(idx) for idx in a_orig_idx]
+            a_set.append(data(atoms=a, orig_atoms=a_orig, atoms_orig_idx=a_orig_idx, type=charge_type,
+                              center=center, fgroup=fgroup))
+            return a_set
+        else:
+            if not isinstance(a, list):
+                a = [a, ]
+                a_orig_idx = [a_orig_idx, ]
+            a_set.append(data(atoms=a, atoms_orig_idx=a_orig_idx, type=charge_type, center=center,
+                              restype=res.GetName(), resnr=res.GetNum(), reschain=res.GetChain()))
+            return a_set
+
+    def append_if_charged_func_group(self, a, a_set, data, res=None):
+        """Checks if atom is part of a charged functional group and appends it to a_set if True."""
+        a_orig_idx = self.Mapper.mapid(a.idx, mtype=self.mtype, bsid=self.bsid)
+        if self.is_functional_group(a, 'quartamine'):
+            a_set = self.append_func_group_to_data(a=a, a_set=a_set, data=data, a_orig_idx=a_orig_idx,
+                                                   charge_type='positive', center=list(a.coords), fgroup='quartamine',
+                                                   res=res)
+        elif self.is_functional_group(a, 'tertamine'):
+            a_set = self.append_func_group_to_data(a=a, a_set=a_set, data=data, a_orig_idx=a_orig_idx,
+                                                   charge_type='positive', center=list(a.coords), fgroup='tertamine',
+                                                   res=res)
+        if self.is_functional_group(a, 'sulfonium'):
+            a_set = self.append_func_group_to_data(a=a, a_set=a_set, data=data, a_orig_idx=a_orig_idx,
+                                                   charge_type='positive', center=list(a.coords), fgroup='sulfonium',
+                                                   res=res)
+        if self.is_functional_group(a, 'phosphate'):
+            a_contributing = [a, ]
+            a_contributing_orig_idx = [a_orig_idx, ]
+            [a_contributing.append(pybel.Atom(neighbor)) for neighbor in pybel.ob.OBAtomAtomIter(a.OBAtom)]
+            [a_contributing_orig_idx.append(self.Mapper.mapid(neighbor.idx, mtype=self.mtype, bsid=self.bsid))
+             for neighbor in a_contributing]
+            a_set = self.append_func_group_to_data(a=a_contributing, a_set=a_set, data=data,
+                                                   a_orig_idx=a_contributing_orig_idx,
+                                                   charge_type='negative', center=a.coords, fgroup='phosphate',
+                                                   res=res)
+        if self.is_functional_group(a, 'sulfonicacid'):
+            a_contributing = [a, ]
+            a_contributing_orig_idx = [a_orig_idx, ]
+            [a_contributing.append(pybel.Atom(neighbor)) for neighbor in pybel.ob.OBAtomAtomIter(a.OBAtom) if
+             neighbor.GetAtomicNum() == 8]
+            [a_contributing_orig_idx.append(self.Mapper.mapid(neighbor.idx, mtype=self.mtype, bsid=self.bsid))
+             for neighbor in a_contributing]
+            a_set = self.append_func_group_to_data(a=a_contributing, a_set=a_set, data=data,
+                                                   a_orig_idx=a_contributing_orig_idx,
+                                                   charge_type='negative', center=a.coords, fgroup='sulfonicacid',
+                                                   res=res)
+        elif self.is_functional_group(a, 'sulfate'):
+            a_contributing = [a, ]
+            a_contributing_orig_idx = [a_orig_idx, ]
+            [a_contributing_orig_idx.append(self.Mapper.mapid(neighbor.idx, mtype=self.mtype, bsid=self.bsid))
+             for neighbor in a_contributing]
+            [a_contributing.append(pybel.Atom(neighbor)) for neighbor in pybel.ob.OBAtomAtomIter(a.OBAtom)]
+            a_set = self.append_func_group_to_data(a=a_contributing, a_set=a_set, data=data,
+                                                   a_orig_idx=a_contributing_orig_idx,
+                                                   charge_type='negative', center=a.coords, fgroup='sulfate',
+                                                   res=res)
+        if self.is_functional_group(a, 'carboxylate'):
+            a_contributing = [pybel.Atom(neighbor) for neighbor in pybel.ob.OBAtomAtomIter(a.OBAtom)
+                              if neighbor.GetAtomicNum() == 8]
+            a_contributing_orig_idx = [self.Mapper.mapid(neighbor.idx, mtype=self.mtype, bsid=self.bsid)
+                                       for neighbor in a_contributing]
+            a_set = self.append_func_group_to_data(a=a_contributing, a_set=a_set, data=data,
+                                                   a_orig_idx=a_contributing_orig_idx,
+                                                   charge_type='negative',
+                                                   center=centroid([a.coords for a in a_contributing]),
+                                                   fgroup='carboxylate', res=res)
+        elif self.is_functional_group(a, 'guanidine'):
+            a_contributing = [pybel.Atom(neighbor) for neighbor in pybel.ob.OBAtomAtomIter(a.OBAtom)
+                              if neighbor.GetAtomicNum() == 7]
+            a_contributing_orig_idx = [self.Mapper.mapid(neighbor.idx, mtype=self.mtype, bsid=self.bsid)
+                                       for neighbor in a_contributing]
+            a_set = self.append_func_group_to_data(a=a_contributing, a_set=a_set, data=data,
+                                                   a_orig_idx=a_contributing_orig_idx,
+                                                   charge_type='positive', center=a.coords, fgroup='guanidine',
+                                                   res=res)
+        return a_set
+
     def get_hydrophobic_atoms(self):
         return self.hydroph_atoms
 
@@ -608,6 +696,49 @@ class Mol:
 
     def get_neg_charged(self):
         return [charge for charge in self.charged if charge.type == 'negative']
+
+    @staticmethod
+    def is_functional_group(atom, group):
+        """Given a pybel atom, look up if it belongs to a function group"""
+        n_atoms = [a_neighbor.GetAtomicNum() for a_neighbor in pybel.ob.OBAtomAtomIter(atom.OBAtom)]
+
+        if group in ['quartamine', 'tertamine'] and atom.atomicnum == 7:  # Nitrogen
+            # It's a nitrogen, so could be a protonated amine or quaternary ammonium
+            if '1' not in n_atoms and len(n_atoms) == 4:
+                return True if group == 'quartamine' else False  # It's a quat. ammonium (N with 4 residues != H)
+            elif atom.OBAtom.GetHyb() == 3 and len(n_atoms) >= 3:
+                return True if group == 'tertamine' else False  # It's sp3-hybridized, so could pick up an hydrogen
+            else:
+                return False
+
+        if group in ['sulfonium', 'sulfonicacid', 'sulfate'] and atom.atomicnum == 16:  # Sulfur
+            if '1' not in n_atoms and len(n_atoms) == 3:  # It's a sulfonium (S with 3 residues != H)
+                return True if group == 'sulfonium' else False
+            elif n_atoms.count(8) == 3:  # It's a sulfonate or sulfonic acid
+                return True if group == 'sulfonicacid' else False
+            elif n_atoms.count(8) == 4:  # It's a sulfate
+                return True if group == 'sulfate' else False
+
+        if group == 'phosphate' and atom.atomicnum == 15:  # Phosphor
+            if set(n_atoms) == {8}:  # It's a phosphate
+                return True
+
+        if group in ['carboxylate', 'guanidine'] and atom.atomicnum == 6:  # It's a carbon atom
+            if n_atoms.count(8) == 2 and n_atoms.count(6) == 1:  # It's a carboxylate group
+                return True if group == 'carboxylate' else False
+            elif n_atoms.count(7) == 3 and len(n_atoms) == 3:  # It's a guanidine group
+                nitro_partners = []
+                for nitro in pybel.ob.OBAtomAtomIter(atom.OBAtom):
+                    nitro_partners.append(len([b_neighbor for b_neighbor in pybel.ob.OBAtomAtomIter(nitro)]))
+                if min(nitro_partners) == 1:  # One nitrogen is only connected to the carbon, can pick up a H
+                    return True if group == 'guanidine' else False
+
+        if group == 'halocarbon' and atom.atomicnum in [9, 17, 35, 53]:  # Halogen atoms
+            n_atoms = [na for na in pybel.ob.OBAtomAtomIter(atom.OBAtom) if na.GetAtomicNum() == 6]
+            if len(n_atoms) == 1:  # Halocarbon
+                return True
+        else:
+            return False
 
 
 class PLInteraction:
@@ -986,7 +1117,7 @@ class BindingSite(Mol):
                                       restype=res.GetName(),
                                       resnr=res.GetNum(),
                                       reschain=res.GetChain()))
-            if res.GetName() in ('GLU', 'ASP'):  # Aspartic or Glutamic Acid
+            elif res.GetName() in ('GLU', 'ASP'):  # Aspartic or Glutamic Acid
                 for a in pybel.ob.OBResidueAtomIter(res):
                     if a.GetType().startswith('O') and res.GetAtomProperty(a, 8) \
                             and not self.Mapper.mapid(a.GetIdx(), mtype='protein') in self.altconf:
@@ -1007,10 +1138,15 @@ class BindingSite(Mol):
                         a_contributing.append(pybel.Atom(a))
                         a_contributing_orig_idx.append(self.Mapper.mapid(a.GetIdx(), mtype='protein'))
                 if not len(a_contributing) == 0:
-                    a_set.append(data(atoms=a_contributing,atoms_orig_idx=a_contributing_orig_idx, type='negative',
+                    a_set.append(data(atoms=a_contributing, atoms_orig_idx=a_contributing_orig_idx, type='negative',
                                       center=centroid([ac.coords for ac in a_contributing]), restype=res.GetName(),
                                       resnr=res.GetNum(),
                                       reschain=res.GetChain()))
+            if config.KEEPMOD and res.GetName() in self.complex.modres:
+                atom_indices = [a.GetIdx() for a in pybel.ob.OBResidueAtomIter(res)]
+                atoms = [atm for atm in self.all_atoms if atm.idx in atom_indices]
+                for a in atoms:
+                    a_set = self.append_if_charged_func_group(a=a, a_set=a_set, data=data, res=res)
         return a_set
 
     def find_metal_binding(self, mol):
@@ -1140,49 +1276,6 @@ class Ligand(Mol):
         """Converts internal atom ID into canonical atom ID. Agrees with Canonical SMILES in XML."""
         return self.atomorder[atomnum - 1]
 
-    @staticmethod
-    def is_functional_group(atom, group):
-        """Given a pybel atom, look up if it belongs to a function group"""
-        n_atoms = [a_neighbor.GetAtomicNum() for a_neighbor in pybel.ob.OBAtomAtomIter(atom.OBAtom)]
-
-        if group in ['quartamine', 'tertamine'] and atom.atomicnum == 7:  # Nitrogen
-            # It's a nitrogen, so could be a protonated amine or quaternary ammonium
-            if '1' not in n_atoms and len(n_atoms) == 4:
-                return True if group == 'quartamine' else False  # It's a quat. ammonium (N with 4 residues != H)
-            elif atom.OBAtom.GetHyb() == 3 and len(n_atoms) >= 3:
-                return True if group == 'tertamine' else False  # It's sp3-hybridized, so could pick up an hydrogen
-            else:
-                return False
-
-        if group in ['sulfonium', 'sulfonicacid', 'sulfate'] and atom.atomicnum == 16:  # Sulfur
-            if '1' not in n_atoms and len(n_atoms) == 3:  # It's a sulfonium (S with 3 residues != H)
-                return True if group == 'sulfonium' else False
-            elif n_atoms.count(8) == 3:  # It's a sulfonate or sulfonic acid
-                return True if group == 'sulfonicacid' else False
-            elif n_atoms.count(8) == 4:  # It's a sulfate
-                return True if group == 'sulfate' else False
-
-        if group == 'phosphate' and atom.atomicnum == 15:  # Phosphor
-            if set(n_atoms) == {8}:  # It's a phosphate
-                return True
-
-        if group in ['carboxylate', 'guanidine'] and atom.atomicnum == 6:  # It's a carbon atom
-            if n_atoms.count(8) == 2 and n_atoms.count(6) == 1:  # It's a carboxylate group
-                return True if group == 'carboxylate' else False
-            elif n_atoms.count(7) == 3 and len(n_atoms) == 3:  # It's a guanidine group
-                nitro_partners = []
-                for nitro in pybel.ob.OBAtomAtomIter(atom.OBAtom):
-                    nitro_partners.append(len([b_neighbor for b_neighbor in pybel.ob.OBAtomAtomIter(nitro)]))
-                if min(nitro_partners) == 1:  # One nitrogen is only connected to the carbon, can pick up a H
-                    return True if group == 'guanidine' else False
-
-        if group == 'halocarbon' and atom.atomicnum in [9, 17, 35, 53]:  # Halogen atoms
-            n_atoms = [na for na in pybel.ob.OBAtomAtomIter(atom.OBAtom) if na.GetAtomicNum() == 6]
-            if len(n_atoms) == 1:  # Halocarbon
-                return True
-        else:
-            return False
-
     def find_hal(self, atoms):
         """Look for halogen bond donors (X-C, with X=F, Cl, Br, I)"""
         data = namedtuple('hal_donor', 'x orig_x x_orig_idx c c_orig_idx')
@@ -1209,73 +1302,7 @@ class Ligand(Mol):
         a_set = []
         if not (config.INTRA or config.PEPTIDES or config.CHAINS):
             for a in all_atoms:
-                a_orig_idx = self.Mapper.mapid(a.idx, mtype=self.mtype, bsid=self.bsid)
-                a_orig = self.Mapper.id_to_atom(a_orig_idx)
-                if self.is_functional_group(a, 'quartamine'):
-                    a_set.append(data(atoms=[a, ], orig_atoms=[a_orig, ], atoms_orig_idx=[a_orig_idx, ], type='positive',
-                                      center=list(a.coords), fgroup='quartamine'))
-                elif self.is_functional_group(a, 'tertamine'):
-                    a_set.append(data(atoms=[a, ], orig_atoms=[a_orig, ], atoms_orig_idx=[a_orig_idx, ], type='positive',
-                                      center=list(a.coords),
-                                      fgroup='tertamine'))
-                if self.is_functional_group(a, 'sulfonium'):
-                    a_set.append(data(atoms=[a, ], orig_atoms=[a_orig, ], atoms_orig_idx=[a_orig_idx, ], type='positive',
-                                      center=list(a.coords),
-                                      fgroup='sulfonium'))
-                if self.is_functional_group(a, 'phosphate'):
-                    a_contributing = [a, ]
-                    a_contributing_orig_idx = [a_orig_idx, ]
-                    [a_contributing.append(pybel.Atom(neighbor)) for neighbor in pybel.ob.OBAtomAtomIter(a.OBAtom)]
-                    [a_contributing_orig_idx.append(self.Mapper.mapid(neighbor.idx, mtype=self.mtype, bsid=self.bsid))
-                     for neighbor in a_contributing]
-                    orig_contributing = [self.Mapper.id_to_atom(idx) for idx in a_contributing_orig_idx]
-                    a_set.append(
-                        data(atoms=a_contributing, orig_atoms=orig_contributing, atoms_orig_idx=a_contributing_orig_idx,
-                             type='negative',
-                             center=a.coords, fgroup='phosphate'))
-                if self.is_functional_group(a, 'sulfonicacid'):
-                    a_contributing = [a, ]
-                    a_contributing_orig_idx = [a_orig_idx, ]
-                    [a_contributing.append(pybel.Atom(neighbor)) for neighbor in pybel.ob.OBAtomAtomIter(a.OBAtom) if
-                     neighbor.GetAtomicNum() == 8]
-                    [a_contributing_orig_idx.append(self.Mapper.mapid(neighbor.idx, mtype=self.mtype, bsid=self.bsid))
-                     for neighbor in a_contributing]
-                    orig_contributing = [self.Mapper.id_to_atom(idx) for idx in a_contributing_orig_idx]
-                    a_set.append(
-                        data(atoms=a_contributing, orig_atoms=orig_contributing, atoms_orig_idx=a_contributing_orig_idx,
-                             type='negative',
-                             center=a.coords, fgroup='sulfonicacid'))
-                elif self.is_functional_group(a, 'sulfate'):
-                    a_contributing = [a, ]
-                    a_contributing_orig_idx = [a_orig_idx, ]
-                    [a_contributing_orig_idx.append(self.Mapper.mapid(neighbor.idx, mtype=self.mtype, bsid=self.bsid))
-                     for neighbor in a_contributing]
-                    [a_contributing.append(pybel.Atom(neighbor)) for neighbor in pybel.ob.OBAtomAtomIter(a.OBAtom)]
-                    orig_contributing = [self.Mapper.id_to_atom(idx) for idx in a_contributing_orig_idx]
-                    a_set.append(
-                        data(atoms=a_contributing, orig_atoms=orig_contributing, atoms_orig_idx=a_contributing_orig_idx,
-                             type='negative',
-                             center=a.coords, fgroup='sulfate'))
-                if self.is_functional_group(a, 'carboxylate'):
-                    a_contributing = [pybel.Atom(neighbor) for neighbor in pybel.ob.OBAtomAtomIter(a.OBAtom)
-                                      if neighbor.GetAtomicNum() == 8]
-                    a_contributing_orig_idx = [self.Mapper.mapid(neighbor.idx, mtype=self.mtype, bsid=self.bsid)
-                                               for neighbor in a_contributing]
-                    orig_contributing = [self.Mapper.id_to_atom(idx) for idx in a_contributing_orig_idx]
-                    a_set.append(
-                        data(atoms=a_contributing, orig_atoms=orig_contributing, atoms_orig_idx=a_contributing_orig_idx,
-                             type='negative',
-                             center=centroid([a.coords for a in a_contributing]), fgroup='carboxylate'))
-                elif self.is_functional_group(a, 'guanidine'):
-                    a_contributing = [pybel.Atom(neighbor) for neighbor in pybel.ob.OBAtomAtomIter(a.OBAtom)
-                                      if neighbor.GetAtomicNum() == 7]
-                    a_contributing_orig_idx = [self.Mapper.mapid(neighbor.idx, mtype=self.mtype, bsid=self.bsid)
-                                               for neighbor in a_contributing]
-                    orig_contributing = [self.Mapper.id_to_atom(idx) for idx in a_contributing_orig_idx]
-                    a_set.append(
-                        data(atoms=a_contributing, orig_atoms=orig_contributing, atoms_orig_idx=a_contributing_orig_idx,
-                             type='positive',
-                             center=a.coords, fgroup='guanidine'))
+                a_set = self.append_if_charged_func_group(a=a, a_set=a_set, data=data)
         else:
             """We have peptide/protein chain as ligand"""
             """Looks for positive charges in arginine, histidine or lysine, for negative in aspartic and glutamic acid."""
@@ -1298,7 +1325,7 @@ class Ligand(Mol):
                                           type='positive',
                                           center=centroid([ac.coords for ac in a_contributing]),
                                           fgroup=res.GetName()+str(res.GetNum())+res.GetChain()))
-                if res.GetName() in ('GLU', 'ASP'):  # Aspartic or Glutamic Acid
+                elif res.GetName() in ('GLU', 'ASP'):  # Aspartic or Glutamic Acid
                     for a in pybel.ob.OBResidueAtomIter(res):
                         if a.GetType().startswith('O') and res.GetAtomProperty(a, 8) \
                                 and not self.Mapper.mapid(a.GetIdx(), mtype=self.mtype, bsid=self.bsid) in self.altconf:
@@ -1311,6 +1338,11 @@ class Ligand(Mol):
                                           type='negative',
                                           center=centroid([ac.coords for ac in a_contributing]),
                                           fgroup=res.GetName()+str(res.GetNum())+res.GetChain()))
+                if config.KEEPMOD and res.GetName() in self.complex.modres:
+                    atom_indices = [a.GetIdx() for a in pybel.ob.OBResidueAtomIter(res)]
+                    atoms = [atm for atm in all_atoms if atm.idx in atom_indices]
+                    for a in atoms:
+                        a_set = self.append_if_charged_func_group(a=a, a_set=a_set, data=data)
         return a_set
 
     def find_metal_binding(self, lig_atoms, water_oxygens):
