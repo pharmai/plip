@@ -52,6 +52,10 @@ $ ./plip.simg -i 1vsn -yv
 
 Singularity allows to use PLIP with ease in HPC environments. Note that you need to have Singularity installed on your base system.
 
+### Google Colab 
+PLIP is available as a [Google Colab](https://colab.research.google.com/drive/1KV0Yx6vMFXvtyIRtmkPoMLN0Q6GKG1pm#scrollTo=JhEW4JLECCVi) to be used without the need to install it locally. It can be used without constraints in terms of 
+PDB file and protein sizes. 
+
 ---
 
 ## Usage
