@@ -11,12 +11,13 @@ Analyze noncovalent protein-ligand interactions in 3D structures with ease.
 <img src="pliplogo.png"  alt="PLIP Logo" height="100">
 
 
-| Use Case                                                                  | [Web Server](https://plip-tool.biotec.tu-dresden.de)         | Docker             | Singularity        | Python Module       |
-|---------------------------------------------------------------------------|--------------------|--------------------|--------------------|--------------------|
-| "I want to analyze my protein-ligand complex!"                            | :heavy_check_mark: | :heavy_check_mark: | :yellow_circle:    | :x:                |
-| "I want to analyze *a billion* protein-ligand complexes!"                 | :x:                | :yellow_circle:    | :heavy_check_mark: | :yellow_circle:    |
-| "I love the Linux command line and want to build a workflow around PLIP!" | :x:                | :heavy_check_mark: | :heavy_check_mark: | :yellow_circle:    |
-| "I'm a Python programmer and want to use PLIP in my project!"             | :x:                | :yellow_circle:    | :yellow_circle:    | :heavy_check_mark: |
+| Use Case                                                                  | [Web Server](https://plip-tool.biotec.tu-dresden.de)         | Docker              | Singularity        | Python Module       | [Colab](https://colab.research.google.com/drive/1KV0Yx6vMFXvtyIRtmkPoMLN0Q6GKG1pm?usp=sharing) |
+|---------------------------------------------------------------------------|--------------------|--------------------|--------------------|--------------------|--------------------|
+| "I want to analyze my protein-ligand complex!"                            | :heavy_check_mark: | :heavy_check_mark: | :yellow_circle:    | :x:                | :heavy_check_mark: |
+| "I want to analyze *a billion* protein-ligand complexes!"                 | :x:                | :yellow_circle:    | :heavy_check_mark: | :yellow_circle:    | :x:                |
+| "I love the Linux command line and want to build a workflow around PLIP!" | :x:                | :heavy_check_mark: | :heavy_check_mark: | :yellow_circle:    |:x:                |
+| "I'm a Python programmer and want to use PLIP in my project!"             | :x:                | :yellow_circle:    | :yellow_circle:    | :heavy_check_mark: | :yellow_circle:    |
+| "I want to analyze large complexes!"             | :x:                | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
 
 ---
 
@@ -51,6 +52,10 @@ $ ./plip.simg -i 1vsn -yv
 ```
 
 Singularity allows to use PLIP with ease in HPC environments. Note that you need to have Singularity installed on your base system.
+
+### Google Colab 
+PLIP is available as a [Google Colab](https://colab.research.google.com/drive/1KV0Yx6vMFXvtyIRtmkPoMLN0Q6GKG1pm?usp=sharing) to be used without the need to install it locally. It can be used without constraints in terms of 
+PDB file and protein sizes. 
 
 ---
 
