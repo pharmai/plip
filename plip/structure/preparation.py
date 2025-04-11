@@ -146,7 +146,10 @@ class PDBParser:
             return None, lastnum
         # TER Entries also have continuing numbering, consider them as well
         if pdbline.startswith('TER'):
-            new_num = lastnum + 1
+            if not pdbline[6:11]:  # pdb files saved from PyMol skip the number in TER entries
+                new_num = lastnum
+            else:
+                new_num = lastnum + 1
         if pdbline.startswith('ATOM'):
             new_num = lastnum + 1
             current_num = int(pdbline[6:11])
