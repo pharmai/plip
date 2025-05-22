@@ -1,4 +1,0 @@
-lxml~=4.2.1
-numpy~=1.13.3
-pymol~=2.3.0
-openbabel~=3.0.0
