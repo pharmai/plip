@@ -280,7 +280,7 @@ class BindingSiteReport:
                                       '%.2f' % halogen.distance, '%.2f' % halogen.don_angle, '%.2f' % halogen.acc_angle,
                                       halogen.don_orig_idx, halogen.donortype,
                                       halogen.acc_orig_idx, halogen.acctype,
-                                      halogen.acc.o.coords, halogen.don.x.coords))
+                                      halogen.don.x.coords, halogen.acc.o.coords))
 
         ###################
         # METAL COMPLEXES #
