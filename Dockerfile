@@ -7,7 +7,6 @@ LABEL maintainer="PharmAI GmbH <contact@pharm.ai>" \
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
     pymol \
-    python3-distutils \
     python3-lxml \
     python3-openbabel \
     python3-pymol; \
