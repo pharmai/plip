@@ -1,5 +1,8 @@
 Changelog
 ---------
+# 3.0.1
+* remove setup.{py,cfg}, update pyproject.toml, use openbabel 3.2.0
+
 # 3.0.0
 * added new `--regions` flag to enable detection of interactions between protein regions (by @snbolz)
 * reworked XML and TXT report file naming; changes default behavior
