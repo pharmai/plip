@@ -17,7 +17,7 @@ class MetalCoordinationTest(unittest.TestCase):
     # Literature-validated cases from publication #
     ###############################################
 
-    def test_1rmd(self):
+    def test_1rmd(self) -> None:
         """Zinc binding sites in RAG1 dimerization domain (1rmd)
         Reference: Harding. The architecture of metal coordination groups in proteins. (2004), Fig. 1a
         """
@@ -37,7 +37,7 @@ class MetalCoordinationTest(unittest.TestCase):
         self.assertEqual(s.metal_complexes[0].coordination_num, 4)
         self.assertEqual(s.metal_complexes[0].geometry, 'tetrahedral')
 
-    def test_1rla(self):
+    def test_1rla(self) -> None:
         """Rat liver arginase, a binuclear manganese metalloenzyme (1rmd)
         Reference: Harding. The architecture of metal coordination groups in proteins. (2004), Fig. 1b
         """
@@ -58,7 +58,7 @@ class MetalCoordinationTest(unittest.TestCase):
         self.assertEqual(s.metal_complexes[0].coordination_num, 5)
         self.assertEqual(s.metal_complexes[0].geometry, 'square.pyramidal')
 
-    def test_1het(self):
+    def test_1het(self) -> None:
         """Liver alcohol deshydrogenase (1het)
         Reference: Harding. The architecture of metal coordination groups in proteins. (2004), Fig. 2
         """
@@ -77,7 +77,7 @@ class MetalCoordinationTest(unittest.TestCase):
         self.assertEqual(s.metal_complexes[0].coordination_num, 4)
         self.assertEqual(s.metal_complexes[0].geometry, 'tetrahedral')
 
-    def test_1vfy(self):
+    def test_1vfy(self) -> None:
         """Phosphatidylinositol-3-phosphate binding FYVE domain of VPS27P protein (1vfy)
         Reference: Harding. The architecture of metal coordination groups in proteins. (2004), Fig. 5
         """
@@ -96,7 +96,7 @@ class MetalCoordinationTest(unittest.TestCase):
         self.assertEqual(s.metal_complexes[0].coordination_num, 4)
         self.assertEqual(s.metal_complexes[0].geometry, 'tetrahedral')
 
-    def test_2pvb(self):
+    def test_2pvb(self) -> None:
         """Pike parvalbumin binding calcium (2pvb)
         Reference: Harding. The architecture of metal coordination groups in proteins. (2004), Fig. 6
         """
@@ -112,7 +112,7 @@ class MetalCoordinationTest(unittest.TestCase):
         self.assertEqual(s.metal_complexes[0].coordination_num, 5)
         self.assertEqual(s.metal_complexes[0].geometry, 'square.pyramidal')
 
-    def test_2q8q(self):
+    def test_2q8q(self) -> None:
         """Crystal Structure of S. aureus IsdE complexed with heme (2q8q)
         Reference: Grigg et al. Heme coordination by Staphylococcus aureus IsdE. (2007)
         """

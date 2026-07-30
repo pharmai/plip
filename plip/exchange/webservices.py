@@ -9,7 +9,7 @@ from plip.basic import logger
 logger = logger.get_logger()
 
 
-def check_pdb_status(pdbid):
+def check_pdb_status(pdbid: str) -> list[str | None]:
     """Returns the status and up-to-date entry in the PDB for a given PDB ID"""
     url = 'http://www.rcsb.org/pdb/rest/idStatus?structureId=%s' % pdbid
     xmlf = urlopen(url)
@@ -24,7 +24,7 @@ def check_pdb_status(pdbid):
     return [status, current_pdbid.lower()]
 
 
-def fetch_pdb(pdbid):
+def fetch_pdb(pdbid: str) -> list[str]:
     """Get the newest entry from the RCSB server for the given PDB ID. Exits with '1' if PDB ID is invalid."""
     pdbid = pdbid.lower()
     # logger.info(f'checking status of PDB-ID {pdbid}')

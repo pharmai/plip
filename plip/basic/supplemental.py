@@ -6,28 +6,37 @@ import subprocess
 import sys
 import tempfile
 import zipfile
-from collections import namedtuple
+from collections.abc import Iterable, Iterator, Sequence
+from typing import IO, TypeAlias
 
 import numpy as np
 from openbabel import pybel
+from openbabel.openbabel import OBAtom, OBResidue, OBRing
 from openbabel.pybel import Atom
 
 from plip.basic import config, logger
+from plip.structure.records import CovalentLink
 
 logger = logger.get_logger()
 
-def tmpfile(prefix, direc):
+Coordinate: TypeAlias = Sequence[float]
+Region: TypeAlias = dict[str, list[int]]
+RegionPair: TypeAlias = tuple[Region, Region | None]
+LigandMember: TypeAlias = tuple[str, str, int]
+
+
+def tmpfile(prefix: str, direc: str) -> str:
     """Returns the path to a newly created temporary file."""
     return tempfile.mktemp(prefix=prefix, suffix='.pdb', dir=direc)
 
 
-def is_lig(hetid):
+def is_lig(hetid: str) -> bool:
     """Checks if a PDB compound can be excluded as a small molecule ligand"""
     h = hetid.upper()
     return not (h == 'HOH' or h in config.UNSUPPORTED)
 
 
-def extract_pdbid(string):
+def extract_pdbid(string: str) -> str:
     """Use regular expressions to get a PDB ID from a string"""
     p = re.compile("[0-9][0-9a-z]{3}")
     m = p.search(string.lower())
@@ -37,25 +46,25 @@ def extract_pdbid(string):
         return "UnknownProtein"
 
 
-def whichrestype(atom):
+def whichrestype(atom: Atom | OBAtom) -> str | None:
     """Returns the residue name of an Pybel or OpenBabel atom."""
     atom = atom if not isinstance(atom, Atom) else atom.OBAtom  # Convert to OpenBabel Atom
     return atom.GetResidue().GetName() if atom.GetResidue() is not None else None
 
 
-def whichresnumber(atom):
+def whichresnumber(atom: Atom | OBAtom) -> int | None:
     """Returns the residue number of an Pybel or OpenBabel atom (numbering as in original PDB file)."""
     atom = atom if not isinstance(atom, Atom) else atom.OBAtom  # Convert to OpenBabel Atom
     return atom.GetResidue().GetNum() if atom.GetResidue() is not None else None
 
 
-def whichchain(atom):
+def whichchain(atom: Atom | OBAtom) -> str | None:
     """Returns the residue number of an PyBel or OpenBabel atom."""
     atom = atom if not isinstance(atom, Atom) else atom.OBAtom  # Convert to OpenBabel Atom
     return atom.GetResidue().GetChain() if atom.GetResidue() is not None else None
 
 
-def residue_belongs_to_receptor(res, regions=None):
+def residue_belongs_to_receptor(res: OBResidue, regions: RegionPair | None = None) -> bool:
     """tests whether the residue is defined as receptor and is not part of a peptide or residue ligand."""
     if regions:
         ligand_region, bs_region = regions
@@ -86,14 +95,14 @@ def residue_belongs_to_receptor(res, regions=None):
 #########################
 
 
-def euclidean3d(v1, v2):
+def euclidean3d(v1: Coordinate, v2: Coordinate) -> float | None:
     """Faster implementation of euclidean distance for the 3D case."""
     if not len(v1) == 3 and len(v2) == 3:
         return None
     return np.sqrt((v1[0] - v2[0]) ** 2 + (v1[1] - v2[1]) ** 2 + (v1[2] - v2[2]) ** 2)
 
 
-def vector(p1, p2):
+def vector(p1: Coordinate, p2: Coordinate) -> np.ndarray | None:
     """Vector from p1 to p2.
     :param p1: coordinates of point p1
     :param p2: coordinates of point p2
@@ -102,7 +111,7 @@ def vector(p1, p2):
     return None if len(p1) != len(p2) else np.array([p2[i] - p1[i] for i in range(len(p1))])
 
 
-def vecangle(v1, v2, deg=True):
+def vecangle(v1: Coordinate, v2: Coordinate, deg: bool = True) -> float:
     """Calculate the angle between two vectors
     :param v1: coordinates of vector v1
     :param v2: coordinates of vector v2
@@ -117,7 +126,7 @@ def vecangle(v1, v2, deg=True):
     return np.degrees([angle, ])[0] if deg else angle
 
 
-def normalize_vector(v):
+def normalize_vector(v: np.ndarray) -> np.ndarray:
     """Take a vector and return the normalized vector
     :param v: a vector v
     :returns : normalized vector v
@@ -126,7 +135,7 @@ def normalize_vector(v):
     return v / norm if not norm == 0 else v
 
 
-def centroid(coo):
+def centroid(coo: Sequence[Coordinate]) -> list[float]:
     """Calculates the centroid from a 3D point cloud and returns the coordinates
     :param coo: Array of coordinate arrays
     :returns : centroid coordinates as list
@@ -134,7 +143,7 @@ def centroid(coo):
     return list(map(np.mean, (([c[0] for c in coo]), ([c[1] for c in coo]), ([c[2] for c in coo]))))
 
 
-def projection(pnormal1, ppoint, tpoint):
+def projection(pnormal1: Coordinate, ppoint: Coordinate, tpoint: Coordinate) -> list[float]:
     """Calculates the centroid from a 3D point cloud and returns the coordinates
     :param pnormal1: normal of plane
     :param ppoint: coordinates of point in the plane
@@ -153,7 +162,7 @@ def projection(pnormal1, ppoint, tpoint):
     return [c1 + c2 for c1, c2 in zip(tpoint, [sb * pn for pn in pnormal])]
 
 
-def cluster_doubles(double_list):
+def cluster_doubles(double_list: Sequence[tuple]) -> Iterator[tuple]:
     """Given a list of doubles, they are clustered if they share one element
     :param double_list: list of doubles
     :returns : list of clusters (tuples)
@@ -198,7 +207,7 @@ def cluster_doubles(double_list):
 # File operations
 #################
 
-def tilde_expansion(folder_paths):
+def tilde_expansion(folder_paths: str | list[str]) -> str | list[str]:
     """Tilde expansion, i.e. converts '~' in paths into <value of $HOME>."""
     if isinstance(folder_paths, list):
         expanded_paths = []
@@ -211,12 +220,12 @@ def tilde_expansion(folder_paths):
         return os.path.expanduser(folder_paths) if "~" in folder_paths else folder_paths
 
 
-def folder_exists(folder_path):
+def folder_exists(folder_path: str) -> bool:
     """Checks if a folder exists"""
     return os.path.exists(folder_path)
 
 
-def create_folder_if_not_exists(folder_path):
+def create_folder_if_not_exists(folder_path: str) -> None:
     """Creates a folder if it does not exists."""
     folder_path = tilde_expansion(folder_path)
     folder_path = "".join([folder_path, '/']) if not folder_path[-1] == '/' else folder_path
@@ -225,7 +234,7 @@ def create_folder_if_not_exists(folder_path):
         os.makedirs(direc)
 
 
-def cmd_exists(c):
+def cmd_exists(c: str) -> bool:
     return subprocess.call("type " + c, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
 
 
@@ -234,7 +243,7 @@ def cmd_exists(c):
 ################
 
 
-def initialize_pymol(options):
+def initialize_pymol(options: str) -> None:
     """Initializes PyMOL"""
     import pymol
     # Pass standard arguments of function to prevent PyMOL from printing out PDB headers (workaround)
@@ -242,7 +251,7 @@ def initialize_pymol(options):
     pymol.cmd.reinitialize()
 
 
-def start_pymol(quiet=False, options='-p', run=False):
+def start_pymol(quiet: bool = False, options: str = '-p', run: bool = False) -> None:
     """Starts up PyMOL and sets general options. Quiet mode suppresses all PyMOL output.
     Command line options can be passed as the second argument."""
     import pymol
@@ -253,7 +262,7 @@ def start_pymol(quiet=False, options='-p', run=False):
         pymol.cmd.feedback('disable', 'all', 'everything')
 
 
-def select_region(region):
+def select_region(region: Region) -> str:
     """region is a dictionary with chains as keys and a list of residue numbers as values."""
     selection = f"(chain "
     for i, (chain, res_numbers) in enumerate(region.items()):
@@ -265,7 +274,7 @@ def select_region(region):
     return selection
 
 
-def nucleotide_linkage(residues):
+def nucleotide_linkage(residues: dict[LigandMember, object]) -> list[CovalentLink]:
     """Support for DNA/RNA ligands by finding missing covalent linkages to stitch DNA/RNA together."""
 
     nuc_covalent = []
@@ -274,7 +283,6 @@ def nucleotide_linkage(residues):
     #######################################
     nucleotides = ['A', 'C', 'T', 'G', 'U', 'DA', 'DC', 'DT', 'DG', 'DU']
     dna_rna = {}  # Dictionary of DNA/RNA residues by chain
-    covlinkage = namedtuple("covlinkage", "id1 chain1 pos1 conf1 id2 chain2 pos2 conf2")
     # Create missing covlinkage entries for DNA/RNA
     for ligand in residues:
         resname, chain, pos = ligand
@@ -290,14 +298,14 @@ def nucleotide_linkage(residues):
                 name, pos = nucleotide
                 nextnucleotide = nuc_list[i + 1]
                 nextname, nextpos = nextnucleotide
-                newlink = covlinkage(id1=name, chain1=chain, pos1=pos, conf1='',
-                                     id2=nextname, chain2=chain, pos2=nextpos, conf2='')
+                newlink = CovalentLink(id1=name, chain1=chain, pos1=pos, conf1='',
+                                       id2=nextname, chain2=chain, pos2=nextpos, conf2='')
                 nuc_covalent.append(newlink)
 
     return nuc_covalent
 
 
-def ring_is_planar(ring, r_atoms):
+def ring_is_planar(ring: OBRing, r_atoms: Sequence[Atom]) -> bool:
     """Given a set of ring atoms, check if the ring is sufficiently planar
     to be considered aromatic"""
     normals = []
@@ -315,7 +323,7 @@ def ring_is_planar(ring, r_atoms):
     return True
 
 
-def classify_by_name(names):
+def classify_by_name(names: Sequence[str]) -> str:
     """Classify a (composite) ligand by the HETID(s)"""
     if len(names) > 3:  # Polymer
         if len(set(config.RNA).intersection(set(names))) != 0:
@@ -337,7 +345,7 @@ def classify_by_name(names):
     return ligtype
 
 
-def sort_members_by_importance(members):
+def sort_members_by_importance(members: Sequence[LigandMember]) -> list[LigandMember]:
     """Sort the members of a composite ligand according to two criteria:
     1. Split up in main and ion group. Ion groups are located behind the main group.
     2. Within each group, sort by chain and position."""
@@ -348,7 +356,10 @@ def sort_members_by_importance(members):
     return sorted_main + sorted_ion
 
 
-def get_isomorphisms(reference, lig):
+def get_isomorphisms(
+    reference: pybel.Molecule,
+    lig: pybel.Molecule,
+) -> Iterable[Iterable[tuple[int, int]]]:
     """Get all isomorphisms of the ligand."""
     query = pybel.ob.CompileMoleculeQuery(reference.OBMol)
     mappr = pybel.ob.OBIsomorphismMapper.GetInstance(query)
@@ -364,7 +375,7 @@ def get_isomorphisms(reference, lig):
     return isomorphs
 
 
-def canonicalize(lig, preserve_bond_order=False):
+def canonicalize(lig: pybel.Molecule, preserve_bond_order: bool = False) -> list[int] | None:
     """Get the canonical atom order for the ligand."""
     atomorder = None
     # Get canonical atom order
@@ -396,7 +407,7 @@ def canonicalize(lig, preserve_bond_order=False):
     return atomorder
 
 
-def int32_to_negative(int32):
+def int32_to_negative(int32: int) -> int:
     """Checks if a suspicious number (e.g. ligand position) is in fact a negative number represented as a
     32 bit integer and returns the actual number.
     """
@@ -411,13 +422,13 @@ def int32_to_negative(int32):
         return int32
 
 
-def read_pdb(pdbfname, as_string=False):
+def read_pdb(pdbfname: str, as_string: bool = False) -> tuple[pybel.Molecule, str]:
     """Reads a given PDB file and returns a Pybel Molecule."""
     pybel.ob.obErrorLog.StopLogging()  # Suppress all OpenBabel warnings
     return readmol(pdbfname, as_string=as_string)
 
 
-def read(fil):
+def read(fil: str) -> IO[str] | gzip.GzipFile | zipfile.ZipExtFile:
     """Returns a file handler and detects gzipped files."""
     if os.path.splitext(fil)[-1] == '.gz':
         return gzip.open(fil, 'rb')
@@ -428,7 +439,7 @@ def read(fil):
         return open(fil, 'r')
 
 
-def readmol(path, as_string=False):
+def readmol(path: str, as_string: bool = False) -> tuple[pybel.Molecule, str]:
     """Reads the given molecule file and returns the corresponding Pybel molecule as well as the input file type.
     In contrast to the standard Pybel implementation, the file is closed properly."""
     supported_formats = ['pdb']

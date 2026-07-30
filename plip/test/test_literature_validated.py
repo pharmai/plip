@@ -17,7 +17,7 @@ class LiteratureValidatedTest(unittest.TestCase):
     # Literature-validated cases from publication #
     ###############################################
 
-    def test_1eve(self):
+    def test_1eve(self) -> None:
         """Binding of anti-Alzheimer drug E2020 to acetylcholinesterase from Torpedo californica (1eve)
         Reference: Chakrabarti et al. Geometry of nonbonded interactions involving planar groups in proteins. (2007)
         """
@@ -35,7 +35,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         pication = {pication.resnr for pication in s.pication_paro}
         self.assertTrue({330}.issubset(pication))
 
-    def test_1h2t(self):
+    def test_1h2t(self) -> None:
         """Binding of methylated guanosine to heterodimeric nuclear-cap binding complex (1h2t)
         Reference: Chakrabarti et al. Geometry of nonbonded interactions involving planar groups in proteins. (2007)
         """
@@ -56,7 +56,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         saltb = {saltbridge.resnr for saltbridge in s.saltbridge_pneg}
         self.assertTrue({116}.issubset(saltb))
 
-    def test_3pxf(self):
+    def test_3pxf(self) -> None:
         """Binding of ANS to CDK2 (3pxf)
         Reference: Betzi et al. Discovery of a potential allosteric ligand binding site in CDK2 (2012)
         """
@@ -86,7 +86,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         hydroph = {hydroph.resnr for hydroph in s.hydrophobic_contacts}
         self.assertTrue({52, 76}.issubset(hydroph))
 
-    def test_2reg(self):
+    def test_2reg(self) -> None:
         """Binding of choline to ChoX (2reg)
         Reference: Oswald et al. Crystal structures of the choline/acetylcholine substrate-binding protein ChoX
         from Sinorhizobium meliloti in the liganded and unliganded-closed states. (2008)
@@ -105,7 +105,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         saltb = {saltbridge.resnr for saltbridge in s.saltbridge_pneg}
         self.assertEqual({45}, saltb)
 
-    def test_1osn(self):
+    def test_1osn(self) -> None:
         """Binding of VZV-tk to BVDU-MP (2reg)
         Reference: Bird et al. Crystal structures of Varicella Zoster Virus Thyrimidine Kinase. (2003)
         """
@@ -123,7 +123,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
         self.assertTrue({90}.issubset(hbonds))
 
-    def test_2w0s(self):
+    def test_2w0s(self) -> None:
         """Binding of Vacc-TK to TDP (2w0s)
         Reference: Caillat et al. Crystal structure of poxvirus thymidylate kinase: An unexpected dimerization
         has implications for antiviral therapy (2008)
@@ -148,7 +148,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         saltb = {saltbridge.resnr for saltbridge in s.saltbridge_lneg}
         self.assertTrue({41, 93}.issubset(saltb))
 
-    def test_1vsn(self):
+    def test_1vsn(self) -> None:
         """Binding of NFT to Cathepsin K (1vsn)
         Reference: Li et al. Identification of a potent and selective non-basic cathepsin K inhibitor. (2006)
         """
@@ -163,7 +163,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         hbonds = {hbond.resnr for hbond in s.hbonds_pdon}
         self.assertTrue({66}.issubset(hbonds))
 
-    def test_1p5e(self):
+    def test_1p5e(self) -> None:
         """Binding of TBS to CDK2(1p5e)
         Reference: De Moliner et al. Alternative binding modes of an inhibitor to two different kinases. (2003)
         """
@@ -178,7 +178,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         halogens = {halogen.resnr for halogen in s.halogen_bonds}
         self.assertTrue({10, 83}.issubset(halogens))
 
-    def test_1acj(self):
+    def test_1acj(self) -> None:
         """Binding of Tacrine (THA) to active-site gorge of acetylcholinesterase (1acj)
         Reference: Harel et al. Quaternary ligand binding to aromatic residues in the active-site gorge of
         acetylcholinesterase.. (1993)
@@ -194,7 +194,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         pistackres = {pistack.resnr for pistack in s.pistacking}
         self.assertTrue({330, 84}.issubset(pistackres))
 
-    def test_2zoz(self):
+    def test_2zoz(self) -> None:
         """Binding of CgmR to ethidium(2z0z)
         Reference: Itou et al. Crystal Structures of the Multidrug Binding Repressor Corynebacterium
         glutamicum CgmR in Complex with Inducers and with an Operator. (2010)
@@ -214,7 +214,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         self.assertTrue({59, 88, 63, 113, 147}.issubset(hydrophobics))
         self.assertTrue({59, 88, 63, 92, 113, 147}.issubset(hydrophobics))
 
-    def test_1xdn(self):
+    def test_1xdn(self) -> None:
         """Binding of ATP to RNA editing ligase 1 (1xdn)
         Reference: Deng et al. High resolution crystal structure of a key editosome enzyme from Trypanosoma brucei:
         RNA editing ligase 1. (2004)
@@ -240,7 +240,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         pistackres = {pistack.resnr for pistack in s.pistacking}
         self.assertTrue({209}.issubset(pistackres))
 
-    def test_1bma(self):
+    def test_1bma(self) -> None:
         """Binding of aminimide to porcine pancreatic elastase(1bma)
         Reference: Peisach et al. Interaction of a Peptidomimetic Aminimide Inhibitor with Elastase. (1995)
         """
@@ -262,7 +262,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         waterbridges = {wb.resnr for wb in s.water_bridges}
         self.assertTrue(set().issubset(waterbridges))
 
-    def test_4rao(self):
+    def test_4rao(self) -> None:
         """Binding of (4rao)
         Reference: Keough et al. Aza-acyclic Nucleoside Phosphonates Containing a Second Phosphonate Group
         As Inhibitors of the Human, Plasmodium falciparum and vivax 6‑Oxopurine Phosphoribosyltransferases
@@ -285,7 +285,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         pistackres = {pistack.resnr for pistack in s.pistacking}
         self.assertTrue({186}.issubset(pistackres))
 
-    def test_4qnb(self):
+    def test_4qnb(self) -> None:
         """Binding of (4qnb)
         Reference:  Bhattacharya et al. Structural basis of HIV-1 capsid recognition by PF74 and CPSF6(2014)
         """
@@ -303,7 +303,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         picat = {pication.resnr for pication in s.pication_laro}
         self.assertEqual({70}, picat)
 
-    def test_4kya(self):
+    def test_4kya(self) -> None:
         """Binding of non-classical TS inhibitor 3 with Toxoplasma gondii TS-DHFR(4kya)
         Reference:  Zaware et al. Structural basis of HIV-1 capsid recognition by PF74 and CPSF6(2014)
         """
@@ -329,7 +329,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         pistackres = {pistack.resnr for pistack in s.pistacking}
         self.assertTrue({403, 520}.issubset(pistackres))
 
-    def test_1n7g(self):
+    def test_1n7g(self) -> None:
         """Binding of NADPH to MURI from Arabidopsis thaliana (1n7g)
         Reference:  Mulichak et al. Structure of the MUR1 GDP-mannose 4, 6-dehydratase from Arabidopsis thaliana:
         implications for ligand binding and specificity(2002)
@@ -359,7 +359,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         picat = {pication.resnr for pication in s.pication_laro}
         self.assertEqual({60}, picat)
 
-    def test_4alw(self):
+    def test_4alw(self) -> None:
         """Binding of benzofuropyrimidinones compound 3 to PIM-1 (4alw)
         Reference:  Tsuhako et al. The design, synthesis, and biological evaluation of PIM kinase inhibitors.(2012)
         """
@@ -377,7 +377,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         saltb = {saltbridge.resnr for saltbridge in s.saltbridge_pneg}
         self.assertTrue({186, 171}.issubset(saltb))
 
-    def test_3o1h(self):
+    def test_3o1h(self) -> None:
         """Binding of TMAO to TorT-TorS system(3o1h)
         Reference:  Hendrickson et al. An Asymmetry-to-Symmetry Switch in Signal Transmission by the Histidine Kinase Receptor
         for TMAO.(2013)
@@ -397,7 +397,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         picat = {pication.resnr for pication in s.pication_paro}
         self.assertEqual({44}, picat)
 
-    def test_3thy(self):
+    def test_3thy(self) -> None:
         """Binding of ADP tp MutS(3thy)
         Reference:  Shikha et al. Mechanism of mismatch recognition revealed by human MutSβ bound to unpaired DNA loops.(2012)
         """
@@ -415,7 +415,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         pistackres = {pistack.resnr for pistack in s.pistacking}
         self.assertTrue({815}.issubset(pistackres))
 
-    def test_3tah(self):
+    def test_3tah(self) -> None:
         """Binding of BGO to an an N11A mutant of the G-protein domain of FeoB.(3tah)
         Reference:  Ash et al. The structure of an N11A mutant of the G-protein domain of FeoB.(2011)
         """
@@ -434,7 +434,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         saltb = {saltbridge.resnr for saltbridge in s.saltbridge_pneg}
         self.assertTrue({116}.issubset(saltb))
 
-    def test_3r0t(self):
+    def test_3r0t(self) -> None:
         """Binding of protein kinase CK2 alpha subunit in with the inhibitor CX-5279 (3r0t)
         Reference:  Battistutta et al. Unprecedented selectivity and structural determinants of a new class of protein
         kinase CK2 inhibitors in clinical trials for the treatment of cancer (2011).
@@ -462,7 +462,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         pistackres = {pistack.resnr for pistack in s.pistacking}
         self.assertTrue({160}.issubset(pistackres))
 
-    def test_1aku(self):
+    def test_1aku(self) -> None:
         """Binding of Flavin mononucleotido with D.Vulgaris(1aku)
         Reference:  McCarthy et al. Crystallographic Investigation of the Role of Aspartate 95 in the Modulation of the
         Redox Potentials of DesulfoVibrio Vulgaris Flavodoxin.(2002)
@@ -488,7 +488,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         pistackres = {pistack.resnr for pistack in s.pistacking}
         self.assertTrue({98}.issubset(pistackres))
 
-    def test_4pjt(self):
+    def test_4pjt(self) -> None:
         """Binding of BMN 673 to catPARP1(4pj7)
         Reference:  Aoyagi-Scharber et al. Structural basis for the inhibition of poly(ADP-ribose) polymerases 1 and 2 by BMN
         673, a potent inhibitor derived from dihydropyridophthalazinone.(2014)
@@ -507,7 +507,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         pistackres = {pistack.resnr for pistack in s.pistacking}
         self.assertTrue({889, 907}.issubset(pistackres))
 
-    def test_1bju(self):
+    def test_1bju(self) -> None:
         """Binding of ACPU to bovine tripsin(1bju)
         Reference:  Presnell et al. Oxyanion-Mediated Inhibition of Serine Proteases.(1998)
         """
@@ -537,7 +537,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         pistackres = {pistack.resnr for pistack in s.pistacking}
         self.assertTrue({57}.issubset(pistackres))
 
-    def test_4agl(self):
+    def test_4agl(self) -> None:
         """Binding of P53 to PhiKan784(4agl)
         Reference:  Wilcken et al. Halogen-Enriched Fragment Libraries as Leads for Drug Rescue of Mutant p53.(2012)
         """
@@ -558,7 +558,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         halogens = {halogen.resnr for halogen in s.halogen_bonds}
         self.assertTrue({145}.issubset(halogens))
 
-    def test_2efj(self):
+    def test_2efj(self) -> None:
         """Binding of teobromine to 1,7 dimethylxanthine methyltransferase(2efj)
         Reference:  McCarthy et al. The Structure of Two N-Methyltransferases from the Caffeine Biosynthetic
         Pathway.(2007)
@@ -577,7 +577,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         pistackres = {pistack.resnr for pistack in s.pistacking}
         self.assertTrue({157}.issubset(pistackres))
 
-    def test_2iuz(self):
+    def test_2iuz(self) -> None:
         """Binding of C2-dicaffeine to Aspergilius fumigates(2iuz)
         Reference:  Schüttelkopf et al. Screening-based discovery and structural dissection of a novel family 18 chitinase
         inhibitor.(2006)
@@ -603,7 +603,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         pistackres = {pistack.resnr for pistack in s.pistacking}
         self.assertTrue({52, 137, 384}.issubset(pistackres))
 
-    def test_3shy(self):
+    def test_3shy(self) -> None:
         """Binding of 5FO to PDE5A1 catalytic domain(3shy)
         Reference:  Xu et al. Utilization of halogen bond in lead optimization: A case study of rational design of potent
         phosphodiesterase type 5 (PDE5) inhibitors.(2011)
@@ -628,7 +628,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         halogens = {halogen.resnr for halogen in s.halogen_bonds}
         self.assertTrue({612}.issubset(halogens))
 
-    def test_1ay8(self):
+    def test_1ay8(self) -> None:
         """Binding of PLP to aromatic amino acid aminotransferase(1ay8)
         Reference:  Okamoto et al. Crystal structures of Paracoccus denitrificans aromatic amino acid aminotransferase: a
         substrate recognition site constructed by rearrangement of hydrogen bond network..(1998)
@@ -650,7 +650,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         pistackres = {pistack.resnr for pistack in s.pistacking}
         self.assertTrue({140}.issubset(pistackres))
 
-    def test_4rdl(self):
+    def test_4rdl(self) -> None:
         """Binding of Norovirus Boxer P domain with Lewis y tetrasaccharide(4rdl)
         Reference:  Hao et al. Crystal structures of GI.8 Boxer virus P dimers in complex with HBGAs, a novel
         evolutionary path selected by the Lewis epitope..(2014)
@@ -676,7 +676,7 @@ class LiteratureValidatedTest(unittest.TestCase):
     # Additional literature-validated cases #
     #########################################
 
-    def test_1hii(self):
+    def test_1hii(self) -> None:
         """HIV-2 protease in complex with novel inhibitor CGP 53820 (1hii)
         Reference:  Comparative analysis of the X-ray structures of HIV-1 and HIV-2 proteases in complex
         with CGP 53820, a novel pseudosymmetric inhibitor (1995)
@@ -697,7 +697,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         # #@todo Publication mentions additional possible hydrogen bond with Asp28B
         # Hydrogen bonds with Asp-A25 are reported as a salt bridge as both partners have (potential) charges
 
-    def test_1hvi(self):
+    def test_1hvi(self) -> None:
         """HIV-1 protease in complex with Diol inhibitor (1hvi)
         Reference: Influence of Stereochemistry on Activity and Binding Modes for C2 Symmetry-Based
          Diol Inhibitors of HIV-1 Protease (1994)
@@ -723,7 +723,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         self.assertTrue({'25B', '27A', '27B', '48A', '48B'}.issubset(hbonds))
         # #@todo Paper describes additional hydrogen bond with Asp25A
 
-    def test_3o7g(self):
+    def test_3o7g(self) -> None:
         """Inhibitor PLX4032 binding to B-RAF(V600E) (3og7)
         Reference: Clinical efficacy of a RAF inhibitor needs broad target blockade in BRAF-mutant
         melanoma (2010)
@@ -740,7 +740,7 @@ class LiteratureValidatedTest(unittest.TestCase):
         # Additional hydrogen bond to residue 530A reported
         self.assertTrue({'594A'}.issubset(hbonds))
 
-    def test_1hpx(self):
+    def test_1hpx(self) -> None:
         """
         HIV-1 Protease complexes with the inhibitor KNI-272
         Reference: Structure of HIV-1 protease with KNI-272, a tight-binding transition-state analog

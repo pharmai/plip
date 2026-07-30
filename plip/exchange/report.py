@@ -1,18 +1,20 @@
 import time
+from collections.abc import Sequence
 from operator import itemgetter
 
 import lxml.etree as et
 import gzip
+from typing import TextIO
 
 from plip.basic import config
 from plip.basic.config import __version__
-from plip.structure.preparation import PDBComplex
+from plip.structure.preparation import PDBComplex, PLInteraction
 
 
 class StructureReport:
     """Creates reports (xml or txt) for one structure/"""
 
-    def __init__(self, mol: PDBComplex, outputprefix: str = 'report'):
+    def __init__(self, mol: PDBComplex, outputprefix: str = 'report') -> None:
         self.mol = mol
         self.excluded = self.mol.excluded
         self.xmlreport = self.construct_xml_tree()
@@ -21,7 +23,7 @@ class StructureReport:
         self.outpath = mol.output_path
         self.outputprefix = outputprefix
 
-    def construct_xml_tree(self):
+    def construct_xml_tree(self) -> et._Element:
         """Construct the basic XML tree"""
         report = et.Element('report')
         plipversion = et.SubElement(report, 'plipversion')
@@ -63,7 +65,7 @@ class StructureReport:
             f2.text = ":".join([covlinkage.id2, covlinkage.chain2, str(covlinkage.pos2)])
         return report
 
-    def construct_txt_file(self):
+    def construct_txt_file(self) -> list[str]:
         """Construct the header of the txt file"""
         textlines = ['Prediction of noncovalent interactions for PDB structure %s' % self.mol.pymol_name.upper(), ]
         textlines.append("=" * len(textlines[0]))
@@ -77,7 +79,7 @@ class StructureReport:
         textlines.append(f'Analysis was done on model {config.MODEL}.\n')
         return textlines
 
-    def get_bindingsite_data(self):
+    def get_bindingsite_data(self) -> None:
         """Get the additional data for the binding sites"""
         for i, site in enumerate(sorted(self.mol.interaction_sets)):
             s = self.mol.interaction_sets[site]
@@ -92,7 +94,7 @@ class StructureReport:
             else:
                 self.txtreport.append('No interactions detected.')
 
-    def write_xml(self, as_string: bool = False):
+    def write_xml(self, as_string: bool = False) -> None:
         """Write the XML report"""
         if not as_string:
             tree = et.ElementTree(self.xmlreport)
@@ -106,7 +108,7 @@ class StructureReport:
             output = et.tostring(self.xmlreport, pretty_print=True)
             print(output.decode('utf8'))
 
-    def write_txt(self, as_string: bool = False):
+    def write_txt(self, as_string: bool = False) -> None:
         """Write the TXT report"""
         if not as_string:
             if config.COMPRESS:
@@ -125,7 +127,7 @@ class StructureReport:
 class BindingSiteReport:
     """Gather report data and generate reports for one binding site in different formats."""
 
-    def __init__(self, plcomplex):
+    def __init__(self, plcomplex: PLInteraction) -> None:
 
         ################
         # GENERAL DATA #
@@ -313,7 +315,7 @@ class BindingSiteReport:
                  m.target.atom.coords))
 
     @staticmethod
-    def write_section(name, features, info, f):
+    def write_section(name: str, features: list[str], info: list, f: TextIO) -> None:
         """Provides formatting for one section (e.g. hydrogen bonds)"""
         if not len(info) == 0:
             f.write('\n\n### %s ###\n' % name)
@@ -322,7 +324,7 @@ class BindingSiteReport:
                 f.write('%s\n' % '\t'.join(map(str, line)))
 
     @staticmethod
-    def rst_table(array):
+    def rst_table(array: Sequence[Sequence[str]]) -> str:
         """Given an array, the function formats and returns and table in rST format."""
         # Determine cell width for each column
         cell_dict = {}
@@ -363,7 +365,7 @@ class BindingSiteReport:
             form += '\n'
         return form
 
-    def generate_txt(self):
+    def generate_txt(self) -> list[str]:
         """Generates an flat text report for a single binding site"""
 
         txt = []
@@ -402,7 +404,7 @@ class BindingSiteReport:
         txt.append('\n')
         return txt
 
-    def generate_xml(self):
+    def generate_xml(self) -> et._Element:
         """Generates an XML-formatted report for a single binding site"""
         report = et.Element('bindingsite')
         identifiers = et.SubElement(report, 'identifiers')
@@ -464,7 +466,11 @@ class BindingSiteReport:
             m.text = bsid
         interactions = et.SubElement(report, 'interactions')
 
-        def format_interactions(element_name, features, interaction_information):
+        def format_interactions(
+            element_name: str,
+            features: Sequence[str],
+            interaction_information: list,
+        ) -> et._Element:
             """Returns a formatted element with interaction information."""
             interaction = et.Element(element_name)
             # Sort results first by res number, then by distance and finally ligand coordinates to get a unique order

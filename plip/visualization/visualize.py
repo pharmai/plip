@@ -1,13 +1,14 @@
 from pymol import cmd
 
 from plip.basic import config, logger
+from plip.basic.remote import VisualizerData
 from plip.basic.supplemental import start_pymol, select_region
 from plip.visualization.pymol import PyMOLVisualizer
 
 logger = logger.get_logger()
 
 
-def visualize_in_pymol(plcomplex):
+def visualize_in_pymol(plcomplex: VisualizerData) -> None:
     """Visualizes the given Protein-Ligand complex at one site in PyMOL."""
 
     vis = PyMOLVisualizer(plcomplex)

@@ -14,12 +14,27 @@ from plip.basic.supplemental import euclidean3d, vector, vecangle, projection
 from plip.basic.supplemental import normalize_vector, cluster_doubles, centroid
 # Own modules
 from plip.structure.preparation import PDBComplex
+from plip.structure.records import CovalentLink
+
+
+class StructureRecordTest(unittest.TestCase):
+    def test_records_reuse_one_named_tuple_type(self) -> None:
+        first = CovalentLink('CYS', 'A', 1, '', 'LIG', 'A', 2, '')
+        second = CovalentLink('CYS', 'B', 3, '', 'LIG', 'B', 4, '')
+
+        self.assertIs(type(first), type(second))
+        self.assertIsInstance(first, tuple)
+        self.assertEqual(first.id1, first[0])
+        self.assertEqual(
+            CovalentLink.__annotations__['pos1'],
+            int,
+        )
 
 
 class TestLigandSupport(unittest.TestCase):
     """Test for support of different ligands"""
 
-    def test_dna_rna(self):
+    def test_dna_rna(self) -> None:
         """Test if DNA and RNA is correctly processed as ligands"""
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/1tf6.pdb')
@@ -30,7 +45,7 @@ class TestLigandSupport(unittest.TestCase):
                 # DNA only contains four bases
                 self.assertEqual(ligset, {'DG', 'DC', 'DA', 'DT'})
 
-    def test_composite_ligand_alternate_locations(self):
+    def test_composite_ligand_alternate_locations(self) -> None:
         pdb_complex = PDBComplex()
         pdb_complex.load_pdb('./pdb/4gql.pdb')
         for ligand in pdb_complex.ligands:
@@ -41,7 +56,7 @@ class TestLigandSupport(unittest.TestCase):
 class TestMapping(unittest.TestCase):
     """Test"""
 
-    def test_ids(self):
+    def test_ids(self) -> None:
         """Test if the atom IDs are correctly mapped from internal to original PDB."""
         tmpmol = PDBComplex()
         tmpmol.load_pdb('./pdb/1vsn.pdb')
@@ -80,17 +95,17 @@ class GeometryTest(unittest.TestCase):
     """Tests for geometrical calculations in PLIP"""
 
     @staticmethod
-    def vector_magnitude(v):
+    def vector_magnitude(v: list[float]) -> float:
         return numpy.sqrt(sum(x ** 2 for x in v))
 
     # noinspection PyUnusedLocal
-    def setUp(self):
+    def setUp(self) -> None:
         """Generate random data for the tests"""
         # Generate two random n-dimensional float vectors, with -100 <= n <= 100 and values 0 <= i <= 1
         dim = random.randint(1, 100)
         self.rnd_vec = [random.uniform(-100, 100) for i in range(dim)]
 
-    def test_euclidean(self):
+    def test_euclidean(self) -> None:
         """Tests for mathematics.euclidean"""
         # Are the results correct?
         self.assertEqual(euclidean3d([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]), 0)
@@ -103,7 +118,7 @@ class GeometryTest(unittest.TestCase):
         # Is the output a float?
         self.assertIsInstance(euclidean3d([2.0, 3.0, 4.0], [2.0, 3.0, 4.0]), float)
 
-    def test_vector(self):
+    def test_vector(self) -> None:
         """Tests for mathematics.vector"""
         # Are the results correct?
         self.assertEqual(list(vector([1, 1, 1], [0, 1, 0])), [-1, 0, -1])
@@ -113,7 +128,7 @@ class GeometryTest(unittest.TestCase):
         # Do I get 'None' if the points have different dimensions?
         self.assertEqual(vector([1, 1, 1], [0, 1, 0, 1]), None)
 
-    def test_vecangle(self):
+    def test_vecangle(self) -> None:
         """Tests for mathematics.vecangle"""
         # Are the results correct?
         self.assertEqual(vecangle([3, 4], [-8, 6], deg=False), numpy.radians(90.0))
@@ -122,23 +137,23 @@ class GeometryTest(unittest.TestCase):
         # Correct if both vectors are equal?
         self.assertEqual(vecangle([3, 3], [3, 3]), 0.0)
 
-    def test_centroid(self):
+    def test_centroid(self) -> None:
         """Tests for mathematics.centroid"""
         # Are the results correct?
         self.assertEqual(centroid([[0, 0, 0], [2, 2, 2]]), [1.0, 1.0, 1.0])
         self.assertEqual(centroid([[-5, 1, 2], [10, 2, 2]]), [2.5, 1.5, 2.0])
 
-    def test_normalize_vector(self):
+    def test_normalize_vector(self) -> None:
         """Tests for mathematics.normalize_vector"""
         # Are the results correct?
         self.assertAlmostEqual(self.vector_magnitude(normalize_vector(self.rnd_vec)), 1)
 
-    def test_projection(self):
+    def test_projection(self) -> None:
         """Tests for mathematics.projection"""
         # Are the results correct?
         self.assertEqual(projection([-1, 0, 0], [3, 3, 3], [1, 1, 1]), [3, 1, 1])
 
-    def test_cluster_doubles(self):
+    def test_cluster_doubles(self) -> None:
         """Tests for mathematics.cluster_doubles"""
         # Are the results correct?
         self.assertEqual(set(cluster_doubles([(1, 3), (4, 1), (5, 6), (7, 5)])), {(1, 3, 4), (5, 6, 7)})

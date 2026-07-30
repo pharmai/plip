@@ -7,7 +7,7 @@ from plip.structure.preparation import PDBComplex
 
 class IntraTest(unittest.TestCase):
 
-    def test_4day(self):
+    def test_4day(self) -> None:
         config.PEPTIDES = ['C']
         pdb_complex = PDBComplex()
         pdb_complex.load_pdb('./pdb/4day.pdb')

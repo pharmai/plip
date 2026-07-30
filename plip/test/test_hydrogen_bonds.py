@@ -15,21 +15,21 @@ def characterize_complex(pdb_file: str, binding_site_id: str) -> PLInteraction:
 
 class HydrogenBondTestCase(unittest.TestCase):
 
-    def test_4dst_nondeterministic_protonation(self):
+    def test_4dst_nondeterministic_protonation(self) -> None:
         config.NOHYDRO = False
         for i in range(0, 10):
             interactions = characterize_complex('./pdb/4dst.pdb', 'GCP:A:202')
             all_hbonds = interactions.hbonds_ldon + interactions.hbonds_pdon
             self.assertTrue(len(all_hbonds) == 16 or len(all_hbonds) == 17)
 
-    def test_4dst_deterministic_protonation(self):
+    def test_4dst_deterministic_protonation(self) -> None:
         config.NOHYDRO = True
         for i in range(0, 10):
             interactions = characterize_complex('./pdb/4dst_protonated.pdb', 'GCP:A:202')
             all_hbonds = interactions.hbonds_ldon + interactions.hbonds_pdon
             self.assertTrue(len(all_hbonds) == 16)
 
-    def test_no_protonation(self):
+    def test_no_protonation(self) -> None:
         config.NOHYDRO = True
         interactions1 = characterize_complex('./pdb/1x0n_state_1.pdb', 'DTF:A:174')
         self.assertEqual(len(interactions1.hbonds_ldon), 0)

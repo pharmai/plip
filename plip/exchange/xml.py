@@ -5,7 +5,11 @@ class XMLStorage:
     """Generic class for storing XML data from PLIP XML files."""
 
     @staticmethod
-    def getdata(tree, location, force_string=False):
+    def getdata(
+        tree: etree._Element | etree._ElementTree,
+        location: str,
+        force_string: bool = False,
+    ) -> str | int | float | bool | None:
         """Gets XML data from a specific element and handles types."""
         found = tree.xpath('%s/text()' % location)
         if not found:
@@ -29,7 +33,7 @@ class XMLStorage:
                     return data
 
     @staticmethod
-    def getcoordinates(tree, location):
+    def getcoordinates(tree: etree._Element, location: str) -> tuple[float, ...]:
         """Gets coordinates from a specific element in PLIP XML"""
         return tuple(float(x) for x in tree.xpath('.//%s/*/text()' % location))
 
@@ -37,7 +41,7 @@ class XMLStorage:
 class Interaction(XMLStorage):
     """Stores information on a specific interaction type"""
 
-    def __init__(self, interaction_part):
+    def __init__(self, interaction_part: etree._Element) -> None:
         self.id = interaction_part.get('id')
         self.resnr = self.getdata(interaction_part, 'resnr')
         self.restype = self.getdata(interaction_part, 'restype', force_string=True)
@@ -52,7 +56,7 @@ class Interaction(XMLStorage):
 class HydrophobicInteraction(Interaction):
     """Stores information on a hydrophobic interaction"""
 
-    def __init__(self, hydrophobic_part):
+    def __init__(self, hydrophobic_part: etree._Element) -> None:
         Interaction.__init__(self, hydrophobic_part)
         self.dist = self.getdata(hydrophobic_part, 'dist')
         self.ligcarbonidx = self.getdata(hydrophobic_part, 'ligcarbonidx')
@@ -62,7 +66,7 @@ class HydrophobicInteraction(Interaction):
 class HydrogenBond(Interaction):
     """Stores information on a hydrogen bond interaction"""
 
-    def __init__(self, hbond_part):
+    def __init__(self, hbond_part: etree._Element) -> None:
         Interaction.__init__(self, hbond_part)
         self.sidechain = self.getdata(hbond_part, 'sidechain')
         self.dist_h_a = self.getdata(hbond_part, 'dist_h-a')
@@ -80,7 +84,7 @@ class HydrogenBond(Interaction):
 class WaterBridge(Interaction):
     """Stores information on a water bridge interaction"""
 
-    def __init__(self, wbridge_part):
+    def __init__(self, wbridge_part: etree._Element) -> None:
         Interaction.__init__(self, wbridge_part)
         self.dist_a_w = self.getdata(wbridge_part, 'dist_a-w')
         self.dist_d_w = self.getdata(wbridge_part, 'dist_d-w')
@@ -100,7 +104,7 @@ class WaterBridge(Interaction):
 class SaltBridge(Interaction):
     """Stores information on a salt bridge interaction"""
 
-    def __init__(self, sbridge_part):
+    def __init__(self, sbridge_part: etree._Element) -> None:
         Interaction.__init__(self, sbridge_part)
         self.dist = self.getdata(sbridge_part, 'dist')
         self.protispos = self.getdata(sbridge_part, 'protispos')
@@ -114,7 +118,7 @@ class SaltBridge(Interaction):
 class PiStacking(Interaction):
     """Stores information on a pi stacking interaction"""
 
-    def __init__(self, pistack_part):
+    def __init__(self, pistack_part: etree._Element) -> None:
         Interaction.__init__(self, pistack_part)
         self.centdist = self.getdata(pistack_part, 'centdist')
         self.dist = self.centdist
@@ -130,7 +134,7 @@ class PiStacking(Interaction):
 class PiCation(Interaction):
     """Stores information on a pi cation interaction"""
 
-    def __init__(self, pication_part):
+    def __init__(self, pication_part: etree._Element) -> None:
         Interaction.__init__(self, pication_part)
         self.dist = self.getdata(pication_part, 'dist')
         self.offset = self.getdata(pication_part, 'offset')
@@ -142,7 +146,7 @@ class PiCation(Interaction):
 class HalogenBond(Interaction):
     """Stores information on a halogen bond interaction"""
 
-    def __init__(self, halogen_part):
+    def __init__(self, halogen_part: etree._Element) -> None:
         Interaction.__init__(self, halogen_part)
         self.dist = self.getdata(halogen_part, 'dist')
         self.don_angle = self.getdata(halogen_part, 'don_angle')
@@ -157,7 +161,7 @@ class HalogenBond(Interaction):
 class MetalComplex(Interaction):
     """Stores information on a metal complexe interaction"""
 
-    def __init__(self, metalcomplex_part):
+    def __init__(self, metalcomplex_part: etree._Element) -> None:
         Interaction.__init__(self, metalcomplex_part)
         self.metal_idx = self.getdata(metalcomplex_part, 'metal_idx')
         self.metal_type = self.getdata(metalcomplex_part, 'metal_type', force_string=True)
@@ -176,7 +180,7 @@ class MetalComplex(Interaction):
 class BSite(XMLStorage):
     """Stores all information about an specific binding site."""
 
-    def __init__(self, bindingsite, pdbid):
+    def __init__(self, bindingsite: etree._Element, pdbid: str) -> None:
         self.bindingsite = bindingsite
         self.pdbid = pdbid
         self.bsid = ":".join(bindingsite.xpath('identifiers/*/text()')[2:5])
@@ -241,7 +245,7 @@ class BSite(XMLStorage):
         self.get_atom_mapping()
         self.counts = self.get_counts()
 
-    def get_atom_mapping(self):
+    def get_atom_mapping(self) -> None:
         """Parses the ligand atom mapping."""
         # Atom mappings
         smiles_to_pdb_mapping = self.bindingsite.xpath('mappings/smiles_to_pdb/text()')
@@ -253,7 +257,7 @@ class BSite(XMLStorage):
             self.mappings = {'smiles_to_pdb': smiles_to_pdb_mapping}
             self.mappings['pdb_to_smiles'] = {v: k for k, v in self.mappings['smiles_to_pdb'].items()}
 
-    def get_counts(self):
+    def get_counts(self) -> dict[str, int]:
         """counts the interaction types and backbone hydrogen bonding in a binding site"""
 
         hbondsback = len([hb for hb in self.hbonds if not hb.sidechain])
@@ -270,7 +274,7 @@ class BSite(XMLStorage):
 class PlipXML(XMLStorage):
     """Parses and stores all information from a PLIP XML file."""
 
-    def __init__(self, xmlfile):
+    def __init__(self, xmlfile: str) -> None:
         self.load_data(xmlfile)
 
         # Parse general information
@@ -285,6 +289,6 @@ class PlipXML(XMLStorage):
         self.bsites = {BSite(bs, self.pdbid).bsid: BSite(bs, self.pdbid) for bs in self.doc.xpath('//bindingsite')}
         self.num_bsites = len(self.bsites)
 
-    def load_data(self, xmlfile):
+    def load_data(self, xmlfile: str) -> None:
         """Loads/parses an XML file and saves it as a tree if successful."""
         self.doc = etree.parse(xmlfile)

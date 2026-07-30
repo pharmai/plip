@@ -6,11 +6,12 @@ from time import sleep
 from pymol import cmd
 
 from plip.basic import config
+from plip.basic.remote import VisualizerData
 
 
 class PyMOLVisualizer:
 
-    def __init__(self, plcomplex):
+    def __init__(self, plcomplex: VisualizerData | None) -> None:
         if plcomplex is not None:
             self.plcomplex = plcomplex
             self.protname = plcomplex.pdbid  # Name of protein with binding site
@@ -19,7 +20,7 @@ class PyMOLVisualizer:
             self.ligname = "Ligand_" + self.hetid  # Name of ligand
             self.metal_ids = plcomplex.metal_ids
 
-    def set_initial_representations(self):
+    def set_initial_representations(self) -> None:
         """General settings for PyMOL"""
         self.standard_settings()
         cmd.set('dash_gap', 0)  # Show not dashes, but lines for the pliprofiler
@@ -31,7 +32,7 @@ class PyMOLVisualizer:
         cmd.clip('near', 1000)
 
     @staticmethod
-    def make_initial_selections():
+    def make_initial_selections() -> None:
         """Make empty selections for structures and interactions"""
         for group in ['Hydrophobic-P', 'Hydrophobic-L', 'HBondDonor-P',
                       'HBondDonor-L', 'HBondAccept-P', 'HBondAccept-L',
@@ -42,7 +43,7 @@ class PyMOLVisualizer:
                       'Unpaired-RINGS']:
             cmd.select(group, 'None')
 
-    def standard_settings(self):
+    def standard_settings(self) -> None:
         """Sets up standard settings for a nice visualization."""
         cmd.set('bg_rgb', [1.0, 1.0, 1.0])  # White background
         cmd.set('depth_cue', 0)  # Turn off depth cueing (no fog)
@@ -53,7 +54,7 @@ class PyMOLVisualizer:
         self.set_custom_colorset()
 
     @staticmethod
-    def set_custom_colorset():
+    def set_custom_colorset() -> None:
         """Defines a colorset with matching colors. Provided by Joachim."""
         cmd.set_color('myorange', '[253, 174, 97]')
         cmd.set_color('mygreen', '[171, 221, 164]')
@@ -63,7 +64,7 @@ class PyMOLVisualizer:
         cmd.set_color('mylightgreen', '[229, 245, 224]')
 
     @staticmethod
-    def select_by_ids(selname, idlist, selection_exists=False, chunksize=20, restrict=None):
+    def select_by_ids(selname: str, idlist: list[int], selection_exists: bool = False, chunksize: int = 20, restrict: str | None = None) -> None:
         """Selection with a large number of ids concatenated into a selection
         list can cause buffer overflow in PyMOL. This function takes a selection
         name and and list of IDs (list of integers) as input and makes a careful
@@ -78,11 +79,11 @@ class PyMOLVisualizer:
             cmd.select(selname, '%s and %s' % (selname, restrict))
 
     @staticmethod
-    def object_exists(object_name):
+    def object_exists(object_name: str) -> bool:
         """Checks if an object exists in the open PyMOL session."""
         return object_name in cmd.get_names("objects")
 
-    def show_hydrophobic(self):
+    def show_hydrophobic(self) -> None:
         """Visualizes hydrophobic contacts."""
         hydroph = self.plcomplex.hydrophobic_contacts
         if not len(hydroph.bs_ids) == 0:
@@ -99,7 +100,7 @@ class PyMOLVisualizer:
         else:
             cmd.select('Hydrophobic-P', 'None')
 
-    def show_hbonds(self):
+    def show_hbonds(self) -> None:
         """Visualizes hydrogen bonds."""
         hbonds = self.plcomplex.hbonds
         for group in [['HBondDonor-P', hbonds.prot_don_id],
@@ -121,7 +122,7 @@ class PyMOLVisualizer:
         if self.object_exists('HBonds'):
             cmd.set('dash_color', 'blue', 'HBonds')
 
-    def show_halogen(self):
+    def show_halogen(self) -> None:
         """Visualize halogen bonds."""
         halogen = self.plcomplex.halogen_bonds
         all_don_x, all_acc_o = [], []
@@ -138,7 +139,7 @@ class PyMOLVisualizer:
         if self.object_exists('HalogenBonds'):
             cmd.set('dash_color', 'greencyan', 'HalogenBonds')
 
-    def show_stacking(self):
+    def show_stacking(self) -> None:
         """Visualize pi-stacking interactions."""
         stacks = self.plcomplex.pistacking
         for i, stack in enumerate(stacks):
@@ -167,7 +168,7 @@ class PyMOLVisualizer:
             cmd.set('dash_gap', 0.3, 'PiStackingT')
             cmd.set('dash_length', 0.6, 'PiStackingT')
 
-    def show_cationpi(self):
+    def show_cationpi(self) -> None:
         """Visualize cation-pi interactions."""
         for i, p in enumerate(self.plcomplex.pication):
             cmd.pseudoatom('ps-picat-1-%i' % i, pos=p.ring_center)
@@ -192,7 +193,7 @@ class PyMOLVisualizer:
             cmd.set('dash_gap', 0.3, 'PiCation')
             cmd.set('dash_length', 0.6, 'PiCation')
 
-    def show_sbridges(self):
+    def show_sbridges(self) -> None:
         """Visualize salt bridges."""
         for i, saltb in enumerate(self.plcomplex.saltbridges):
             if saltb.protispos:
@@ -220,7 +221,7 @@ class PyMOLVisualizer:
             cmd.set('dash_color', 'yellow', 'Saltbridges')
             cmd.set('dash_gap', 0.5, 'Saltbridges')
 
-    def show_wbridges(self):
+    def show_wbridges(self) -> None:
         """Visualize water bridges."""
         for bridge in self.plcomplex.waterbridges:
             if bridge.protisdon:
@@ -243,7 +244,7 @@ class PyMOLVisualizer:
         cmd.color('lightblue', 'Water')
         cmd.show('spheres', 'Water')
 
-    def show_metal(self):
+    def show_metal(self) -> None:
         """Visualize metal coordination."""
         metal_complexes = self.plcomplex.metal_complexes
         if not len(metal_complexes) == 0:
@@ -268,7 +269,7 @@ class PyMOLVisualizer:
             cmd.show('spheres', 'Metal-W')
             cmd.color('lightblue', 'Metal-W')
 
-    def selections_cleanup(self):
+    def selections_cleanup(self) -> None:
         """Cleans up non-used selections"""
 
         if not len(self.plcomplex.unpaired_hba_idx) == 0:
@@ -290,7 +291,7 @@ class PyMOLVisualizer:
         cmd.delete('tmp*')
         cmd.delete('ps-*')
 
-    def selections_group(self):
+    def selections_group(self) -> None:
         """Group all selections"""
         cmd.group('Structures', '%s %s %sCartoon' % (self.protname, self.ligname, self.protname))
         cmd.group('Interactions', 'Hydrophobic HBonds HalogenBonds WaterBridges PiCation PiStackingP PiStackingT '
@@ -304,7 +305,7 @@ class PyMOLVisualizer:
         cmd.group('Atoms.Other', 'Water Metal-W')
         cmd.order('*', 'y')
 
-    def additional_cleanup(self):
+    def additional_cleanup(self) -> None:
         """Cleanup of various representations"""
 
         cmd.remove('not alt ""+A')  # Remove alternate conformations
@@ -312,7 +313,7 @@ class PyMOLVisualizer:
         cmd.disable('%sCartoon' % self.protname)
         cmd.hide('everything', 'hydrogens')
 
-    def zoom_to_ligand(self):
+    def zoom_to_ligand(self) -> None:
         """Zoom in too ligand and its interactions."""
         cmd.center(self.ligname)
         cmd.orient(self.ligname)
@@ -324,7 +325,7 @@ class PyMOLVisualizer:
                 cmd.zoom(self.ligname, 3)
         cmd.origin(self.ligname)
 
-    def save_session(self, outfolder, override=None):
+    def save_session(self, outfolder: str, override: str | None = None) -> None:
         """Saves a PyMOL session file."""
         filename = '%s_%s' % (self.protname.upper(), "_".join(
             [self.hetid, self.plcomplex.chain, self.plcomplex.position]))
@@ -333,7 +334,7 @@ class PyMOLVisualizer:
         cmd.save("/".join([outfolder, "%s.pse" % filename]))
 
     @staticmethod
-    def png_workaround(filepath, width=1200, height=800):
+    def png_workaround(filepath: str, width: int = 1200, height: int = 800) -> None:
         """Workaround for (a) severe bug(s) in PyMOL preventing ray-traced images to be produced in command-line mode.
         Use this function in case neither cmd.ray() or cmd.png() work.
         """
@@ -389,13 +390,13 @@ class PyMOLVisualizer:
         else:
             sys.stderr.write('Imagemagick not available. Images will not be resized or cropped.')
 
-    def save_picture(self, outfolder, filename):
+    def save_picture(self, outfolder: str, filename: str) -> None:
         """Saves a picture"""
         self.set_fancy_ray()
         self.png_workaround("/".join([outfolder, filename]))
 
     @staticmethod
-    def set_fancy_ray():
+    def set_fancy_ray() -> None:
         """Give the molecule a flat, modern look."""
         cmd.set('light_count', 6)
         cmd.set('spec_count', 1.5)
@@ -408,7 +409,7 @@ class PyMOLVisualizer:
         cmd.set('ambient_occlusion_mode', 1)
         cmd.set('ray_opaque_background', 0)  # Transparent background
 
-    def adapt_for_peptides(self):
+    def adapt_for_peptides(self) -> None:
         """Adapt visualization for peptide ligands and interchain contacts"""
         cmd.hide('sticks', self.ligname)
         cmd.set('cartoon_color', 'lightorange', self.ligname)
@@ -418,10 +419,10 @@ class PyMOLVisualizer:
         cmd.remove('%sCartoon and chain %s' % (self.protname, self.plcomplex.chain))
         cmd.set('cartoon_side_chain_helper', 0)
 
-    def adapt_for_intra(self):
+    def adapt_for_intra(self) -> None:
         """Adapt visualization for intra-protein interactions"""
 
-    def refinements(self):
+    def refinements(self) -> None:
         """Refinements for the visualization"""
 
         # Show sticks for all residues interacing with the ligand

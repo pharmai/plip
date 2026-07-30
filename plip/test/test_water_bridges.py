@@ -14,7 +14,7 @@ def characterize_complex(pdb_file: str, binding_site_id: str) -> PLInteraction:
 
 class WaterBridgeTest(unittest.TestCase):
 
-    def test_3ems(self):
+    def test_3ems(self) -> None:
         interactions = characterize_complex('./pdb/3ems.pdb', 'ARG:A:131')
         water_bridges = interactions.water_bridges
         self.assertEqual(len(water_bridges), 4)

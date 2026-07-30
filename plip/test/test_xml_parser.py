@@ -13,12 +13,12 @@ from plip.exchange.xml import PlipXML
 class XMLParserTest(unittest.TestCase):
     """Checks if the XML parser is working correctly"""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.px = PlipXML('./xml/1vsn.report.xml')
         self.bsite = self.px.bsites['NFT:A:283']
         self.smiles = 'CC(C)CC(NC(c1ccc(cc1)c1ccc(cc1)S(N)(=O)=O)C(F)(F)F)C(=O)NCC=N'
 
-    def test_general_information(self):
+    def test_general_information(self) -> None:
         """Test if general information is correctly parsed."""
         self.assertEqual(self.px.version, '1.4.2')
         self.assertEqual(self.px.pdbid, '1VSN')
@@ -26,7 +26,7 @@ class XMLParserTest(unittest.TestCase):
         self.assertEqual(self.px.filename, '1vsn.pdb')
         self.assertEqual(self.px.excluded, [])
 
-    def test_bsite_information(self):
+    def test_bsite_information(self) -> None:
         """Test if the binding site information is correctly parsed."""
         self.assertEqual(self.bsite.pdbid, '1VSN')
         self.assertEqual(self.bsite.uniqueid, '1VSN:NFT:A:283')
@@ -65,7 +65,7 @@ class XMLParserTest(unittest.TestCase):
         # Has Interactions?
         self.assertTrue(self.bsite.has_interactions, True)
 
-    def test_interactions(self):
+    def test_interactions(self) -> None:
         """Test if interaction information is correctly parsed."""
 
         # Hydrophobic Contacts

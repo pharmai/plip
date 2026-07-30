@@ -14,7 +14,7 @@ def characterize_complex(pdb_file: str, binding_site_id: str) -> PLInteraction:
 
 class SaltBridgeTest(unittest.TestCase):
 
-    def test_4yb0(self):
+    def test_4yb0(self) -> None:
         '''test salt bridge detection for nucleic acids as part of the receptor'''
 
         config.DNARECEPTOR = True

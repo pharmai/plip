@@ -5,7 +5,7 @@ from plip.structure.preparation import PDBComplex
 
 
 class XMLWriterTest(unittest.TestCase):
-    def test_pi_stacking(self):
+    def test_pi_stacking(self) -> None:
         pdb_complex = PDBComplex()
         pdb_complex.load_pdb('./pdb/4dst_protonated.pdb')
         for ligand in pdb_complex.ligands:
@@ -14,7 +14,7 @@ class XMLWriterTest(unittest.TestCase):
                 structure_report = StructureReport(pdb_complex, outputprefix="test_")
                 structure_report.write_xml(as_string=True)
 
-    def test_pication(self):
+    def test_pication(self) -> None:
         pdb_complex = PDBComplex()
         pdb_complex.load_pdb('./pdb/6nhb.pdb')
         for ligand in pdb_complex.ligands:
