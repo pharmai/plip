@@ -12,7 +12,7 @@ import os
 import sys
 import ast
 from argparse import ArgumentParser
-from collections import namedtuple
+from typing import NamedTuple
 
 from plip.basic import config, logger
 
@@ -33,14 +33,19 @@ description = f"The Protein-Ligand Interaction Profiler (PLIP) Version {__versio
               f"Supported and maintained by: {config.__maintainer__}"
 
 
-def threshold_limiter(aparser, arg):
-    arg = float(arg)
-    if arg <= 0:
+class Threshold(NamedTuple):
+    name: str
+    type: str
+
+
+def threshold_limiter(aparser: ArgumentParser, arg: str) -> float:
+    value = float(arg)
+    if value <= 0:
         aparser.error("All thresholds have to be values larger than zero.")
-    return arg
+    return value
 
 
-def parse_report_filename(parser, name_config):
+def parse_report_filename(parser: ArgumentParser, name_config: str | None) -> str | None:
     if name_config is not None:
         dir_part, name_config = os.path.split(name_config)
         if not name_config:  # provided filename is a directory.
@@ -60,7 +65,7 @@ def parse_report_filename(parser, name_config):
     return name_config
 
 
-def process_pdb(pdbfile, outpath, as_string=False, batch_idx=None):
+def process_pdb(pdbfile: str, outpath: str, as_string: bool = False, batch_idx: int | None = None) -> None:
     """Analysis of a single PDB file with optional chain filtering."""
     if not as_string:
         pdb_file_name = pdbfile.split('/')[-1]
@@ -109,7 +114,7 @@ def process_pdb(pdbfile, outpath, as_string=False, batch_idx=None):
             streport.write_txt(as_string=config.STDOUT)
 
 
-def download_structure(inputpdbid):
+def download_structure(inputpdbid: str) -> tuple[str, str]:
     """Given a PDB ID, downloads the corresponding PDB structure.
     Checks for validity of ID and handles error while downloading.
     Returns the path of the downloaded file."""
@@ -130,7 +135,7 @@ def download_structure(inputpdbid):
         sys.exit(1)
 
 
-def remove_duplicates(slist):
+def remove_duplicates(slist: list[str]) -> list[str]:
     """Checks input lists for duplicates and returns
     a list with unique entries"""
     unique = list(set(slist))
@@ -142,7 +147,7 @@ def remove_duplicates(slist):
     return unique
 
 
-def run_analysis(inputstructs, inputpdbids):
+def run_analysis(inputstructs: list[str] | None, inputpdbids: list[str] | None) -> None:
     """Main function. Calls functions for processing, report generation and visualization."""
     pdbid, pdbpath = None, None
     batch_idx = None
@@ -188,7 +193,7 @@ def run_analysis(inputstructs, inputpdbids):
             logger.info(f'finished analysis, find the result files in {config.BASEPATH}')
 
 
-def main():
+def main() -> None:
     """Parse command line arguments and start main script for analysis."""
     parser = ArgumentParser(prog="PLIP", description=description)
     pdbstructure = parser.add_mutually_exclusive_group(required=True)  # Needs either PDB ID or file
@@ -252,17 +257,16 @@ def main():
     parser.add_argument("--model", dest="model", default=1, type=int,
                         help="Model number to be used for multi-model structures.")
     # Optional threshold arguments, not shown in help
-    thr = namedtuple('threshold', 'name type')
-    thresholds = [thr(name='aromatic_planarity', type='angle'),
-                  thr(name='hydroph_dist_max', type='distance'), thr(name='hbond_dist_max', type='distance'),
-                  thr(name='hbond_don_angle_min', type='angle'), thr(name='pistack_dist_max', type='distance'),
-                  thr(name='pistack_ang_dev', type='other'), thr(name='pistack_offset_max', type='distance'),
-                  thr(name='pication_dist_max', type='distance'), thr(name='saltbridge_dist_max', type='distance'),
-                  thr(name='halogen_dist_max', type='distance'), thr(name='halogen_acc_angle', type='angle'),
-                  thr(name='halogen_don_angle', type='angle'), thr(name='halogen_angle_dev', type='other'),
-                  thr(name='water_bridge_mindist', type='distance'), thr(name='water_bridge_maxdist', type='distance'),
-                  thr(name='water_bridge_omega_min', type='angle'), thr(name='water_bridge_omega_max', type='angle'),
-                  thr(name='water_bridge_theta_min', type='angle')]
+    thresholds = [Threshold(name='aromatic_planarity', type='angle'),
+                  Threshold(name='hydroph_dist_max', type='distance'), Threshold(name='hbond_dist_max', type='distance'),
+                  Threshold(name='hbond_don_angle_min', type='angle'), Threshold(name='pistack_dist_max', type='distance'),
+                  Threshold(name='pistack_ang_dev', type='other'), Threshold(name='pistack_offset_max', type='distance'),
+                  Threshold(name='pication_dist_max', type='distance'), Threshold(name='saltbridge_dist_max', type='distance'),
+                  Threshold(name='halogen_dist_max', type='distance'), Threshold(name='halogen_acc_angle', type='angle'),
+                  Threshold(name='halogen_don_angle', type='angle'), Threshold(name='halogen_angle_dev', type='other'),
+                  Threshold(name='water_bridge_mindist', type='distance'), Threshold(name='water_bridge_maxdist', type='distance'),
+                  Threshold(name='water_bridge_omega_min', type='angle'), Threshold(name='water_bridge_omega_max', type='angle'),
+                  Threshold(name='water_bridge_theta_min', type='angle')]
     for t in thresholds:
         parser.add_argument('--%s' % t.name, dest=t.name, type=lambda val: threshold_limiter(parser, val),
                             help=argparse.SUPPRESS)
@@ -321,7 +325,7 @@ def main():
     config.NOHYDRO = arguments.nohydro
     config.MODEL = arguments.model
 
-    def expand_ranges(residue_ranges):
+    def expand_ranges(residue_ranges: str) -> list[int]:
         """
         Takes '1-3, 5, 7' -> [1, 2, 3, 5, 7]
         """

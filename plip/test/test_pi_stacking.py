@@ -15,7 +15,7 @@ def characterize_complex(pdb_file: str, binding_site_id: str) -> PLInteraction:
 
 class RingDetectionTest(unittest.TestCase):
 
-    def test_consistent_ring_detection(self):
+    def test_consistent_ring_detection(self) -> None:
         config.NOHYDRO = True
         angles = set()
         for i in range(0, 10):

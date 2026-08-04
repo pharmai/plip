@@ -1,79 +1,79 @@
-__version__ = '3.0.1'
-__maintainer__ = 'PharmAI GmbH (2020-2021) - www.pharm.ai - hello@pharm.ai'
-__citation_information__ = "Schake,P. Bolz,SN. et al. PLIP 2025: introducing protein–protein interactions to the protein–ligand interaction profiler. " \
+__version__: str = '3.0.1'
+__maintainer__: str = 'PharmAI GmbH (2020-2021) - www.pharm.ai - hello@pharm.ai'
+__citation_information__: str = "Schake,P. Bolz,SN. et al. PLIP 2025: introducing protein–protein interactions to the protein–ligand interaction profiler. " \
                            "Nucl. Acids Res. (10 May 2025), gkaf361. doi: 10.1093/nar/gkaf361"
 
 import logging
 
-DEFAULT_LOG_LEVEL = logging.INFO
-VERBOSE = False  # Set verbose mode
-QUIET = False  # Set verbose mode
-SILENT = False  # Set verbose mode
-MAXTHREADS = 1  # Maximum number of main threads for binding site visualization
-XML = False
-TXT = False
-PICS = False
-PYMOL = False
-STDOUT = False
-RAWSTRING = False  # use raw strings for input / output
-OUTPATH = './'
-BASEPATH = './'
-BREAKCOMPOSITE = False  # Break up composite ligands with covalent bonds
-ALTLOC = False  # Consider alternate locations
-PLUGIN_MODE = False  # Special mode for PLIP in Plugins (e.g. PyMOL)
-NOFIX = False  # Turn off fixing of errors in PDB files
-NOFIXFILE = False  # Turn off writing to files for fixed PDB structures
-PEPTIDES = []  # Definition which chains should be considered as peptide ligands
-INTRA = None
-RESIDUES = {}
-KEEPMOD = False
-DNARECEPTOR = False
-OUTPUTFILENAME = None  # Naming for the TXT and XML report files
-NOPDBCANMAP = False  # Skip calculation of mapping canonical atom order: PDB atom order
-NOHYDRO = False  # Do not add hydrogen bonds (in case already present in the structure)
-MODEL = 1  # The model to be selected for multi-model structures (default = 1).
-CHAINS = None  # Define chains for protein-protein interaction detection
-REGIONS = None
-COMPRESS = False  # Compress XML and TXT report files
+DEFAULT_LOG_LEVEL: int = logging.INFO
+VERBOSE: bool = False  # Set verbose mode
+QUIET: bool = False  # Set verbose mode
+SILENT: bool = False  # Set verbose mode
+MAXTHREADS: int = 1  # Maximum number of main threads for binding site visualization
+XML: bool = False
+TXT: bool = False
+PICS: bool = False
+PYMOL: bool = False
+STDOUT: bool = False
+RAWSTRING: bool = False  # use raw strings for input / output
+OUTPATH: str = './'
+BASEPATH: str = './'
+BREAKCOMPOSITE: bool = False  # Break up composite ligands with covalent bonds
+ALTLOC: bool = False  # Consider alternate locations
+PLUGIN_MODE: bool = False  # Special mode for PLIP in Plugins (e.g. PyMOL)
+NOFIX: bool = False  # Turn off fixing of errors in PDB files
+NOFIXFILE: bool = False  # Turn off writing to files for fixed PDB structures
+PEPTIDES: list[str] = []  # Definition which chains should be considered as peptide ligands
+INTRA: str | None = None
+RESIDUES: dict = {}
+KEEPMOD: bool = False
+DNARECEPTOR: bool = False
+OUTPUTFILENAME: str | None = None  # Naming for the TXT and XML report files
+NOPDBCANMAP: bool = False  # Skip calculation of mapping canonical atom order: PDB atom order
+NOHYDRO: bool = False  # Do not add hydrogen bonds (in case already present in the structure)
+MODEL: int = 1  # The model to be selected for multi-model structures (default = 1).
+CHAINS: list[list[str]] | None = None  # Define chains for protein-protein interaction detection
+REGIONS: list[tuple[dict[str, list[int]], dict[str, list[int]] | None]] | None = None
+COMPRESS: bool = False  # Compress XML and TXT report files
 
 
 # Configuration file for Protein-Ligand Interaction Profiler (PLIP)
 # Set thresholds for detection of interactions
 
 # Thresholds for detection (global variables)
-BS_DIST = 7.5  # Determines maximum distance to include binding site residues
-AROMATIC_PLANARITY = 5.0  # Determines allowed deviation from planarity in aromatic rings
-MIN_DIST = 0.5  # Minimum distance for all distance thresholds
+BS_DIST: float = 7.5  # Determines maximum distance to include binding site residues
+AROMATIC_PLANARITY: float = 5.0  # Determines allowed deviation from planarity in aromatic rings
+MIN_DIST: float = 0.5  # Minimum distance for all distance thresholds
 # Some distance thresholds were extended (max. 1.0A) if too restrictive too account for low-quality structures
-HYDROPH_DIST_MAX = 4.0  # Distance cutoff for detection of hydrophobic contacts
-HBOND_DIST_MAX = 4.1  # Max. distance between hydrogen bond donor and acceptor (Hubbard & Haider, 2001) + 0.6 A
-HBOND_DON_ANGLE_MIN = 100  # Min. angle at the hydrogen bond donor (Hubbard & Haider, 2001) + 10
-PISTACK_DIST_MAX = 5.5  # Max. distance for parallel or offset pistacking (McGaughey, 1998)
-PISTACK_ANG_DEV = 30  # Max. Deviation from parallel or perpendicular orientation (in degrees)
-PISTACK_OFFSET_MAX = 2.0  # Maximum offset of the two rings (corresponds to the radius of benzene + 0.5 A)
-PICATION_DIST_MAX = 6.0  # Max. distance between charged atom and aromatic ring center (Gallivan and Dougherty, 1999)
-SALTBRIDGE_DIST_MAX = 5.5  # Max. distance between centers of charge for salt bridges (Barlow and Thornton, 1983) + 1.5
-HALOGEN_DIST_MAX = 4.0  # Max. distance between oxy. and halogen (Halogen bonds in biological molecules., Auffinger)+0.5
-HALOGEN_ACC_ANGLE = 120  # Optimal acceptor angle (Halogen bonds in biological molecules., Auffinger)
-HALOGEN_DON_ANGLE = 165  # Optimal donor angle (Halogen bonds in biological molecules., Auffinger)
-HALOGEN_ANGLE_DEV = 30  # Max. deviation from optimal angle
-WATER_BRIDGE_MINDIST = 2.5  # Min. distance between water oxygen and polar atom (Jiang et al., 2005) -0.1
-WATER_BRIDGE_MAXDIST = 4.1  # Max. distance between water oxygen and polar atom (Jiang et al., 2005) +0.5
-WATER_BRIDGE_OMEGA_MIN = 71  # Min. angle between acceptor, water oxygen and donor hydrogen (Jiang et al., 2005) - 9
-WATER_BRIDGE_OMEGA_MAX = 140  # Max. angle between acceptor, water oxygen and donor hydrogen (Jiang et al., 2005)
-WATER_BRIDGE_THETA_MIN = 100  # Min. angle between water oxygen, donor hydrogen and donor atom (Jiang et al., 2005)
-METAL_DIST_MAX = 3.0  # Max. distance between metal ion and interacting atom (Harding, 2001)
+HYDROPH_DIST_MAX: float = 4.0  # Distance cutoff for detection of hydrophobic contacts
+HBOND_DIST_MAX: float = 4.1  # Max. distance between hydrogen bond donor and acceptor (Hubbard & Haider, 2001) + 0.6 A
+HBOND_DON_ANGLE_MIN: float = 100  # Min. angle at the hydrogen bond donor (Hubbard & Haider, 2001) + 10
+PISTACK_DIST_MAX: float = 5.5  # Max. distance for parallel or offset pistacking (McGaughey, 1998)
+PISTACK_ANG_DEV: float = 30  # Max. Deviation from parallel or perpendicular orientation (in degrees)
+PISTACK_OFFSET_MAX: float = 2.0  # Maximum offset of the two rings (corresponds to the radius of benzene + 0.5 A)
+PICATION_DIST_MAX: float = 6.0  # Max. distance between charged atom and aromatic ring center (Gallivan and Dougherty, 1999)
+SALTBRIDGE_DIST_MAX: float = 5.5  # Max. distance between centers of charge for salt bridges (Barlow and Thornton, 1983) + 1.5
+HALOGEN_DIST_MAX: float = 4.0  # Max. distance between oxy. and halogen (Halogen bonds in biological molecules., Auffinger)+0.5
+HALOGEN_ACC_ANGLE: float = 120  # Optimal acceptor angle (Halogen bonds in biological molecules., Auffinger)
+HALOGEN_DON_ANGLE: float = 165  # Optimal donor angle (Halogen bonds in biological molecules., Auffinger)
+HALOGEN_ANGLE_DEV: float = 30  # Max. deviation from optimal angle
+WATER_BRIDGE_MINDIST: float = 2.5  # Min. distance between water oxygen and polar atom (Jiang et al., 2005) -0.1
+WATER_BRIDGE_MAXDIST: float = 4.1  # Max. distance between water oxygen and polar atom (Jiang et al., 2005) +0.5
+WATER_BRIDGE_OMEGA_MIN: float = 71  # Min. angle between acceptor, water oxygen and donor hydrogen (Jiang et al., 2005) - 9
+WATER_BRIDGE_OMEGA_MAX: float = 140  # Max. angle between acceptor, water oxygen and donor hydrogen (Jiang et al., 2005)
+WATER_BRIDGE_THETA_MIN: float = 100  # Min. angle between water oxygen, donor hydrogen and donor atom (Jiang et al., 2005)
+METAL_DIST_MAX: float = 3.0  # Max. distance between metal ion and interacting atom (Harding, 2001)
 
 # Other thresholds
-MAX_COMPOSITE_LENGTH = 200  # Filter out ligands with more than 200 fragments
+MAX_COMPOSITE_LENGTH: int = 200  # Filter out ligands with more than 200 fragments
 
 #########
 # Names #
 #########
 
 # Names of RNA and DNA residues to be considered (detection by name)
-RNA = ['U', 'A', 'C', 'G']
-DNA = ['DT', 'DA', 'DC', 'DG']
+RNA: list[str] = ['U', 'A', 'C', 'G']
+DNA: list[str] = ['DT', 'DA', 'DC', 'DG']
 
 #############
 # Whitelist #
@@ -81,7 +81,7 @@ DNA = ['DT', 'DA', 'DC', 'DG']
 
 # Metal cations which can be complexed
 
-METAL_IONS = ['CA', 'CO', 'MG', 'MN', 'FE', 'CU', 'ZN', 'FE2', 'FE3', 'FE4', 'LI', 'NA', 'K', 'RB', 'SR', 'CS', 'BA',
+METAL_IONS: list[str] = ['CA', 'CO', 'MG', 'MN', 'FE', 'CU', 'ZN', 'FE2', 'FE3', 'FE4', 'LI', 'NA', 'K', 'RB', 'SR', 'CS', 'BA',
               'CR', 'NI', 'FE1', 'NI', 'RU', 'RU1', 'RH', 'RH1', 'PD', 'AG', 'CD', 'LA', 'W', 'W1', 'OS', 'IR', 'PT',
               'PT1', 'AU', 'HG', 'CE', 'PR', 'SM', 'EU', 'GD', 'TB', 'YB', 'LU', 'AL', 'GA', 'IN', 'SB', 'TL', 'PB']
 
@@ -90,13 +90,13 @@ METAL_IONS = ['CA', 'CO', 'MG', 'MN', 'FE', 'CU', 'ZN', 'FE2', 'FE3', 'FE4', 'LI
 ##############
 
 # Other Ions/Atoms (not yet supported)
-anions = ['CL', 'IOD', 'BR']
-other = ['MO', 'RE', 'HO']
-UNSUPPORTED = anions + other
+anions: list[str] = ['CL', 'IOD', 'BR']
+other: list[str] = ['MO', 'RE', 'HO']
+UNSUPPORTED: list[str] = anions + other
 
 # BioLiP list of suspicious ligands from http://zhanglab.ccmb.med.umich.edu/BioLiP/ligand_list (2014-07-10)
 # Add ligands here to get warnings for possible artifacts.
-biolip_list = ['ACE', 'HEX', 'TMA', 'SOH', 'P25', 'CCN', 'PR', 'PTN', 'NO3', 'TCN', 'BU1', 'BCN', 'CB3', 'HCS', 'NBN',
+biolip_list: list[str] = ['ACE', 'HEX', 'TMA', 'SOH', 'P25', 'CCN', 'PR', 'PTN', 'NO3', 'TCN', 'BU1', 'BCN', 'CB3', 'HCS', 'NBN',
                'SO2', 'MO6', 'MOH', 'CAC', 'MLT', 'KR', '6PH', 'MOS', 'UNL', 'MO3', 'SR', 'CD3', 'PB', 'ACM', 'LUT',
                'PMS', 'OF3', 'SCN', 'DHB', 'E4N', '13P', '3PG', 'CYC', 'NC', 'BEN', 'NAO', 'PHQ', 'EPE', 'BME', 'TB',
                'ETE', 'EU', 'OES', 'EAP', 'ETX', 'BEZ', '5AD', 'OC2', 'OLA', 'GD3', 'CIT', 'DVT', 'OC6', 'MW1', 'OC3',

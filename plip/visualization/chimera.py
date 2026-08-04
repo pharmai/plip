@@ -1,7 +1,12 @@
+from typing import Any
+
+from plip.basic.remote import VisualizerData
+
+
 class ChimeraVisualizer:
     """Provides visualization for Chimera."""
 
-    def __init__(self, plcomplex, chimera_module, tid):
+    def __init__(self, plcomplex: VisualizerData, chimera_module: Any, tid: int) -> None:
         self.chimera = chimera_module
         self.tid = tid
         self.uid = plcomplex.uid
@@ -27,14 +32,14 @@ class ChimeraVisualizer:
 
             self.atoms = self.atom_by_serialnumber()
 
-    def set_initial_representations(self):
+    def set_initial_representations(self) -> None:
         """Set the initial representations"""
         self.update_model_dict()
         self.rc("background solid white")
         self.rc("setattr g display 0")  # Hide all pseudobonds
         self.rc("~display #%i & :/isHet & ~:%s" % (self.model_dict[self.plipname], self.hetid))
 
-    def update_model_dict(self):
+    def update_model_dict(self) -> None:
         """Updates the model dictionary"""
         dct = {}
         models = self.chimera.openModels
@@ -42,14 +47,14 @@ class ChimeraVisualizer:
             dct[md.name] = md.id
         self.model_dict = dct
 
-    def atom_by_serialnumber(self):
+    def atom_by_serialnumber(self) -> dict[int, object]:
         """Provides a dictionary mapping serial numbers to their atom objects."""
         atm_by_snum = {}
         for atom in self.model.atoms:
             atm_by_snum[atom.serialNumber] = atom
         return atm_by_snum
 
-    def show_hydrophobic(self):
+    def show_hydrophobic(self) -> None:
         """Visualizes hydrophobic contacts."""
         grp = self.getPseudoBondGroup("Hydrophobic Interactions-%i" % self.tid, associateWith=[self.model])
         grp.lineType = self.chimera.Dash
@@ -58,7 +63,7 @@ class ChimeraVisualizer:
         for i in self.plcomplex.hydrophobic_contacts.pairs_ids:
             self.bs_res_ids.append(i[0])
 
-    def show_hbonds(self):
+    def show_hbonds(self) -> None:
         """Visualizes hydrogen bonds."""
         grp = self.getPseudoBondGroup("Hydrogen Bonds-%i" % self.tid, associateWith=[self.model])
         grp.lineWidth = 3
@@ -71,7 +76,7 @@ class ChimeraVisualizer:
             b.color = self.colorbyname('blue')
             self.bs_res_ids.append(i[1])
 
-    def show_halogen(self):
+    def show_halogen(self) -> None:
         """Visualizes halogen bonds."""
         grp = self.getPseudoBondGroup("HalogenBonds-%i" % self.tid, associateWith=[self.model])
         grp.lineWidth = 3
@@ -81,7 +86,7 @@ class ChimeraVisualizer:
 
             self.bs_res_ids.append(i.acc_id)
 
-    def show_stacking(self):
+    def show_stacking(self) -> None:
         """Visualizes pi-stacking interactions."""
         grp = self.getPseudoBondGroup("pi-Stacking-%i" % self.tid, associateWith=[self.model])
         grp.lineWidth = 3
@@ -105,7 +110,7 @@ class ChimeraVisualizer:
 
             self.bs_res_ids += stack.proteinring_atoms
 
-    def show_cationpi(self):
+    def show_cationpi(self) -> None:
         """Visualizes cation-pi interactions"""
         grp = self.getPseudoBondGroup("Cation-Pi-%i" % self.tid, associateWith=[self.model])
         grp.lineWidth = 3
@@ -132,7 +137,7 @@ class ChimeraVisualizer:
             else:
                 self.bs_res_ids += cat.ring_atoms
 
-    def show_sbridges(self):
+    def show_sbridges(self) -> None:
         """Visualizes salt bridges."""
         # Salt Bridges
         grp = self.getPseudoBondGroup("Salt Bridges-%i" % self.tid, associateWith=[self.model])
@@ -160,7 +165,7 @@ class ChimeraVisualizer:
             else:
                 self.bs_res_ids += sbridge.negative_atoms
 
-    def show_wbridges(self):
+    def show_wbridges(self) -> None:
         """Visualizes water bridges"""
         grp = self.getPseudoBondGroup("Water Bridges-%i" % self.tid, associateWith=[self.model])
         grp.lineWidth = 3
@@ -176,7 +181,7 @@ class ChimeraVisualizer:
             else:
                 self.bs_res_ids.append(wbridge.acc_id)
 
-    def show_metal(self):
+    def show_metal(self) -> None:
         """Visualizes metal coordination."""
         grp = self.getPseudoBondGroup("Metal Coordination-%i" % self.tid, associateWith=[self.model])
         grp.lineWidth = 3
@@ -190,7 +195,7 @@ class ChimeraVisualizer:
             if metal.location.startswith('protein'):
                 self.bs_res_ids.append(metal.target_id)
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up the visualization."""
 
         if not len(self.water_ids) == 0:
@@ -206,11 +211,11 @@ class ChimeraVisualizer:
         self.rc("display :%s" % ",".join([str(self.atoms[bsid].residue.id) for bsid in self.bs_res_ids]))
         self.rc("color lightblue :HOH")
 
-    def zoom_to_ligand(self):
+    def zoom_to_ligand(self) -> None:
         """Centers the view on the ligand and its binding site residues."""
         self.rc("center #%i & :%s" % (self.model_dict[self.plipname], self.hetid))
 
-    def refinements(self):
+    def refinements(self) -> None:
         """Details for the visualization."""
         self.rc("setattr a color gray @CENTROID")
         self.rc("setattr a radius 0.3 @CENTROID")

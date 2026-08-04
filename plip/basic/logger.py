@@ -2,7 +2,7 @@ import inspect
 import logging
 
 
-def get_logger():
+def get_logger() -> logging.Logger:
     """
     Configures a base logger and returns a module-specific sub-logger of the calling module.
     """

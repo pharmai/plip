@@ -1,20 +1,25 @@
 import itertools
 import multiprocessing
 from builtins import zip
+from collections.abc import Callable, Iterable, Iterator
 from functools import partial
+from typing import Any, TypeVar
 
 from numpy import asarray
 
+T = TypeVar("T")
+R = TypeVar("R")
+
 
 class SubProcessError(Exception):
-    def __init__(self, e, exitcode=1):
+    def __init__(self, e: Exception, exitcode: int = 1) -> None:
         self.exitcode = exitcode
         super(SubProcessError, self).__init__(e)
 
     pass
 
 
-def universal_worker(input_pair):
+def universal_worker(input_pair: tuple[Callable[..., R], T, dict[str, Any]]) -> R:
     """This is a wrapper function expecting a tiplet of function, single
        argument, dict of keyword arguments. The provided function is called
        with the appropriate arguments."""
@@ -22,17 +27,25 @@ def universal_worker(input_pair):
     return function(arg, **kwargs)
 
 
-def pool_args(function, sequence, kwargs):
+def pool_args(
+    function: Callable[..., R],
+    sequence: Iterable[T],
+    kwargs: dict[str, Any],
+) -> Iterator[tuple[Callable[..., R], T, dict[str, Any]]]:
     """Return a single iterator of n elements of lists of length 3, given a sequence of len n."""
     return zip(itertools.repeat(function), sequence, itertools.repeat(kwargs))
 
 
-def parallel_fn(f):
+def parallel_fn(f: Callable[..., R]) -> Callable[..., object]:
     """Simple wrapper function, returning a parallel version of the given function f.
        The function f must have one argument and may have an arbitray number of
        keyword arguments. """
 
-    def simple_parallel(func, sequence, **args):
+    def simple_parallel(
+        func: Callable[..., R],
+        sequence: Iterable[T],
+        **args: Any,
+    ) -> object:
         """ f takes an element of sequence as input and the keyword args in **args"""
         if 'processes' in args:
             processes = args.get('processes')
